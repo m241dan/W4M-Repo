@@ -2635,6 +2635,7 @@ struct area_data
    int illegal_pk;
    int high_economy;
    int low_economy;
+   int area_center;
    short status;  /* h, 8/11 */
    short age;
    short nplayer;
@@ -2784,6 +2785,7 @@ struct room_index_data
    int mpactnum;  /* mudprogs */
    int vnum;
    int coord[3];
+   bool coordset;
    int tele_vnum;
    short light;   /* amount of light in the room */
    short sector_type;
@@ -2793,9 +2795,6 @@ struct room_index_data
    short tunnel;  /* max people that will fit */
 };
 
-#define x 0
-#define y 1
-#define z 2
 #define X 0
 #define Y 1
 #define Z 2

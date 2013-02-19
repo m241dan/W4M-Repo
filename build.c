@@ -1065,6 +1065,12 @@ void do_goto( CHAR_DATA* ch, const char* argument)
       char_to_room( ch->mount, location );
    }
    char_to_room( ch, location );
+   if( location->area->area_center == 0 )
+   {
+      send_to_char( "Creating center of the Area.\r\n", ch );
+      location->area->area_center = location->vnum;
+      location->coordset = TRUE;
+   }
 
    if( !xIS_SET( ch->act, PLR_WIZINVIS ) )
       act( AT_IMMORT, "$n $T", ch, NULL,
@@ -6376,7 +6382,8 @@ void fwrite_fuss_room( FILE * fpout, ROOM_INDEX_DATA * room, bool install )
 
    fprintf( fpout, "%s", "#ROOM\n" );
    fprintf( fpout, "Vnum     %d\n", room->vnum );
-   fprintf( fpout, "Coord    %d %d %d \n", room->coord[x], room->coord[y], room->coord[z] );
+   fprintf( fpout, "Coord    %d %d %d \n", room->coord[X], room->coord[Y], room->coord[Z] );
+   fprintf( fpout, "CoordSet %d\n", ( room->coordset ? 1 : 0 ) );
    fprintf( fpout, "Name     %s~\n", room->name );
    fprintf( fpout, "Sector   %s~\n", strip_cr( sec_flags[room->sector_type] ) );
    if( !xIS_EMPTY( room->room_flags ) )
@@ -6622,6 +6629,7 @@ void fwrite_area_header( FILE * fpout, AREA_DATA * tarea, bool install )
    fprintf( fpout, "Author       %s~\n", tarea->author );
    fprintf( fpout, "WeatherX     %d\n", tarea->weatherx );
    fprintf( fpout, "WeatherY     %d\n", tarea->weathery );
+   fprintf( fpout, "AreaCenter   %d\n", tarea->area_center );
    if( tarea->credits && tarea->credits[0] != '\0' )
       fprintf( fpout, "Credits      %s~\n", tarea->credits );
    fprintf( fpout, "Ranges       %d %d %d %d\n",

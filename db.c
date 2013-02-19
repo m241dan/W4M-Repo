@@ -6180,9 +6180,18 @@ void fread_fuss_room( FILE * fp, AREA_DATA * tarea )
          case 'C':
             if( !str_cmp( word, "Coord" ) )
             {
-               room->coord[x] = fread_number( fp ) );
-               room->coord[y] = fread_number( fp ) );
-               room->coord[z] = fread_number( fp ) );
+               pRoomIndex->coord[X] = fread_number( fp );
+               pRoomIndex->coord[Y] = fread_number( fp );
+               pRoomIndex->coord[Z] = fread_number( fp );
+               break;
+            }
+            if( !str_cmp( word, "CoordSet" ) )
+            {
+               int set;
+               if( ( set = fread_number( fp ) ) == 1 )
+                  pRoomIndex->coordset = TRUE;
+               else
+                  pRoomIndex->coordset = FALSE;
                break;
             }
             break;
@@ -7463,6 +7472,7 @@ void fread_fuss_areadata( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'A':
+            KEY( "AreaCenter", tarea->area_center, fread_number( fp ) );
             KEY( "Author", tarea->author, fread_string( fp ) );
             break;
 

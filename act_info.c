@@ -1185,10 +1185,17 @@ void print_compass( CHAR_DATA * ch )
                     exit_info[DIR_WEST] ? "W" : "-", exit_colors[exit_info[DIR_UP]], exit_info[DIR_UP] ? "U" : "-",
                     exit_colors[exit_info[DIR_DOWN]], exit_info[DIR_DOWN] ? "D" : "-", exit_colors[exit_info[DIR_EAST]],
                     exit_info[DIR_EAST] ? "E" : "-" );
-   ch_printf_color( ch, "                                                           %s%s    %s%s    %s%s\r\n\r\n",
-                    exit_colors[exit_info[DIR_SOUTHWEST]], exit_info[DIR_SOUTHWEST] ? "SW" : "- ",
-                    exit_colors[exit_info[DIR_SOUTH]], exit_info[DIR_SOUTH] ? "S" : "-",
-                    exit_colors[exit_info[DIR_SOUTHEAST]], exit_info[DIR_SOUTHEAST] ? "SE" : " -" );
+   if( IS_IMMORTAL( ch ) && xIS_SET( ch->act, PLR_ROOMVNUM ) )
+      ch_printf_color( ch, "&zX: &R%-6d &zY: &R%-6d &zZ: &R%-6d &zSET: &R%-6s                  %s%s    %s%s    %s%s\r\n\r\n",
+                       ch->in_room->coord[X], ch->in_room->coord[Y], ch->in_room->coord[Z], ( ch->in_room->coordset ? "True" : "False" ),
+                       exit_colors[exit_info[DIR_SOUTHWEST]], exit_info[DIR_SOUTHWEST] ? "SW" : "- ",
+                       exit_colors[exit_info[DIR_SOUTH]], exit_info[DIR_SOUTH] ? "S" : "-",
+                       exit_colors[exit_info[DIR_SOUTHEAST]], exit_info[DIR_SOUTHEAST] ? "SE" : " -" );
+   else
+      ch_printf_color( ch, "                                                           %s%s    %s%s    %s%s\r\n\r\n",
+                       exit_colors[exit_info[DIR_SOUTHWEST]], exit_info[DIR_SOUTHWEST] ? "SW" : "- ",
+                       exit_colors[exit_info[DIR_SOUTH]], exit_info[DIR_SOUTH] ? "S" : "-",
+                       exit_colors[exit_info[DIR_SOUTHEAST]], exit_info[DIR_SOUTHEAST] ? "SE" : " -" );
    return;
 }
 
