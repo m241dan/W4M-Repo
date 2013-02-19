@@ -6376,6 +6376,7 @@ void fwrite_fuss_room( FILE * fpout, ROOM_INDEX_DATA * room, bool install )
 
    fprintf( fpout, "%s", "#ROOM\n" );
    fprintf( fpout, "Vnum     %d\n", room->vnum );
+   fprintf( fpout, "Coord    %d %d %d \n", room->coord[x], room->coord[y], room->coord[z] );
    fprintf( fpout, "Name     %s~\n", room->name );
    fprintf( fpout, "Sector   %s~\n", strip_cr( sec_flags[room->sector_type] ) );
    if( !xIS_EMPTY( room->room_flags ) )

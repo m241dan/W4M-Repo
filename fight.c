@@ -778,7 +778,7 @@ ch_ret multi_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       return rVICT_OOR;
    }
 
-   else if( dt > TYPE_UNDEFINED & dt < TYPE_HIT && skill_table[dt]->type == SKILL_SKILL
+   else if( dt > TYPE_UNDEFINED && dt < TYPE_HIT && skill_table[dt]->type == SKILL_SKILL
             && target_copy->range > ( get_skill_range( ch, dt ) +1 ) )
    {
       ch_printf( ch, "Your target is out of the skill range of %s.\r\n", skill_table[dt]->name );

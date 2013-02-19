@@ -6177,6 +6177,16 @@ void fread_fuss_room( FILE * fp, AREA_DATA * tarea )
             }
             break;
 
+         case 'C':
+            if( !str_cmp( word, "Coord" ) )
+            {
+               room->coord[x] = fread_number( fp ) );
+               room->coord[y] = fread_number( fp ) );
+               room->coord[z] = fread_number( fp ) );
+               break;
+            }
+            break;
+
          case 'D':
             KEY( "Desc", pRoomIndex->description, fread_string( fp ) );
             break;

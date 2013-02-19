@@ -2783,6 +2783,7 @@ struct room_index_data
    const char *description;
    int mpactnum;  /* mudprogs */
    int vnum;
+   int coord[3];
    int tele_vnum;
    short light;   /* amount of light in the room */
    short sector_type;
@@ -2791,6 +2792,14 @@ struct room_index_data
    short tele_delay;
    short tunnel;  /* max people that will fit */
 };
+
+#define x 0
+#define y 1
+#define z 2
+#define X 0
+#define Y 1
+#define Z 2
+
 
 /*
  * Delayed teleport type.
