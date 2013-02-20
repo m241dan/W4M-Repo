@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include "mud.h"
 
+extern ROOM_INDEX_DATA *room_index_hash[MAX_KEY_HASH];
 ROOM_INDEX_DATA *vroom_hash[64];
 
 const short movement_loss[SECT_MAX] = {
@@ -1080,6 +1081,20 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
       {
          char_from_room( ch->mount );
          char_to_room( ch->mount, to_room );
+      }
+   }
+
+   if( IS_IMMORTAL( ch ) && !ch->in_room->coordset && from_room->coordset )
+   {
+      switch( pexit->vdir )
+      {
+         case DIR_NORTH:
+           ch->in_room->coord[X] = from_room->coord[X];
+           ch->in_room->coord[Y] = from_room->coord[Y] + 1;
+           ch->in_room->coord[Z] = from_room->coord[Z];
+           if( !is_conflict( ch->in_room ) )
+              ch->in_room->coordset = TRUE;
+           break; 
       }
    }
 
@@ -2934,4 +2949,27 @@ ch_ret pullcheck( CHAR_DATA * ch, int pulse )
       }
    }
    return rNONE;
+}
+
+/*
+ * Make sure that no other room in the same area
+ * has the same coordinate address -Davenge
+ */
+
+bool is_conflict( ROOM_INDEX_DATA *in_room )
+{ 
+   ROOM_INDEX_DATA *pRoomIndex;
+
+   for( pRoomIndex = in_room->area->first_room; pRoomIndex; pRoomIndex = pRoomIndex->next_aroom )
+   {
+      if( pRoomIndex->area != in_room->area )
+         return FALSE;
+      if( pRoomIndex->coord[X] == in_room->coord[X] && pRoomIndex->coord[Y] == in_room->coord[Y]
+          && pRoomIndex->coord[Z] == in_room->coord[Z] && pRoomIndex->vnum != in_room->vnum )
+      {
+         bug( "Room: %d's coordinate address in conflict with %d's.", in_room->vnum, pRoomIndex->vnum );
+         return TRUE;
+      }
+   }
+   return FALSE;
 }

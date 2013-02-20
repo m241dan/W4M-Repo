@@ -4373,6 +4373,7 @@ bool will_fall args( ( CHAR_DATA * ch, int fall ) );
 ch_ret pullcheck args( ( CHAR_DATA * ch, int pulse ) );
 const char *rev_exit args( ( short vdir ) );
 ROOM_INDEX_DATA *generate_exit( ROOM_INDEX_DATA * in_room, EXIT_DATA ** pexit );
+bool is_conflict( ROOM_INDEX_DATA *in_room );
 
 /* act_obj.c */
 obj_ret damage_obj args( ( OBJ_DATA * obj ) );
