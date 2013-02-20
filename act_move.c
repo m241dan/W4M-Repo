@@ -1085,18 +1085,7 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
    }
 
    if( IS_IMMORTAL( ch ) && !ch->in_room->coordset && from_room->coordset )
-   {
-      switch( pexit->vdir )
-      {
-         case DIR_NORTH:
-           ch->in_room->coord[X] = from_room->coord[X];
-           ch->in_room->coord[Y] = from_room->coord[Y] + 1;
-           ch->in_room->coord[Z] = from_room->coord[Z];
-           if( !is_conflict( ch->in_room ) )
-              ch->in_room->coordset = TRUE;
-           break; 
-      }
-   }
+      update_coords( ch->in_room, from_room, pexit->vdir );
 
    if( !IS_AFFECTED( ch, AFF_SNEAK ) && ( IS_NPC( ch ) || !xIS_SET( ch->act, PLR_WIZINVIS ) ) )
    {
@@ -2973,3 +2962,74 @@ bool is_conflict( ROOM_INDEX_DATA *in_room )
    }
    return FALSE;
 }
+
+/*
+ * When moving to a room that doesn't have "SET" coords
+ * update the coordinates based on the room you came from
+ * if it was set, and make sure it's not in conflict
+ * with any of the other area's room's coordinate address
+ * -Davenge
+ */
+
+void update_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, int dir )
+{
+   switch( dir )
+   {
+      case DIR_NORTH:
+         in_room->coord[X] = from_room->coord[X];
+         in_room->coord[Y] = from_room->coord[Y] + 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_SOUTH:
+         in_room->coord[X] = from_room->coord[X];
+         in_room->coord[Y] = from_room->coord[Y] - 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_EAST:
+         in_room->coord[X] = from_room->coord[X] + 1;
+         in_room->coord[Y] = from_room->coord[Y];
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_WEST:
+         in_room->coord[X] = from_room->coord[X] - 1;
+         in_room->coord[Y] = from_room->coord[Y];
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_UP:
+         in_room->coord[X] = from_room->coord[X];
+         in_room->coord[Y] = from_room->coord[Y];
+         in_room->coord[Z] = from_room->coord[Z] + 1;
+         break;
+      case DIR_DOWN:
+         in_room->coord[X] = from_room->coord[X];
+         in_room->coord[Y] = from_room->coord[Y];
+         in_room->coord[Z] = from_room->coord[Z] - 1;
+         break;
+      case DIR_NORTHEAST:
+         in_room->coord[X] = from_room->coord[X] + 1;
+         in_room->coord[Y] = from_room->coord[Y] + 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_NORTHWEST:
+         in_room->coord[X] = from_room->coord[X] - 1;
+         in_room->coord[Y] = from_room->coord[Y] + 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_SOUTHEAST:
+         in_room->coord[X] = from_room->coord[X] + 1;
+         in_room->coord[Y] = from_room->coord[Y] - 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_SOUTHWEST:
+         in_room->coord[X] = from_room->coord[X] - 1;
+         in_room->coord[Y] = from_room->coord[Y] - 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+   }
+
+   if( !is_conflict( in_room ) )
+      in_room->coordset = TRUE;
+
+   return;
+}
+
