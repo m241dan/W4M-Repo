@@ -221,6 +221,9 @@ AREA_DATA *last_asort;
 AREA_DATA *first_bsort;
 AREA_DATA *last_bsort;
 
+REALM_DATA *first_realm;
+REALM_DATA *last_realm;
+
 SYSTEM_DATA sysdata;
 
 int top_affect;
@@ -241,8 +244,9 @@ int top_vroom;
  */
 bool fBootDb;
 char strArea[MAX_INPUT_LENGTH];
+char strRealm[MAX_INPUT_LENGTH];
 FILE *fpArea;
-
+FILE *fpRealm;
 /*
  * Local booting procedures.
  */
@@ -664,6 +668,40 @@ void boot_db( bool fCopyOver )
       fclose( fpList );
       fpList = NULL;
    }
+
+   /*
+    * Read in all the realm files.
+    * -Davenge
+    */
+   {
+      FILE *fpList;
+
+      log_string( "Reading in realm files..." );
+      if( !( fpList = fopen( REALM_LIST, "r" ) ) )
+      {
+         perror( REALM_LIST );
+         shutdown_mud( "Unable to open realm list" );
+         exit( 1 );
+      }
+
+      for( ;; )
+      {
+         if( feof( fpList ) )
+         {
+            bug( "%s: EOF encountered reading area list - no $ found at end of file.", __FUNCTION__ );
+            break;
+         }
+         mudstrlcpy( strRealm, fread_word( fpList ), MAX_INPUT_LENGTH );
+         if( strRealm[0] == '$' )
+            break;
+
+         load_realm_file( NULL, strRealm );
+      }
+      fclose( fpList );
+      fpList = NULL;
+   }
+
+
 
 #ifdef PLANES
    log_string( "Making sure rooms are planed..." );
@@ -7589,6 +7627,33 @@ AREA_DATA *create_area( void )
    return pArea;
 }
 
+
+void fread_fuss_realm( REALM_DATA * realm, FILE * fp )
+{
+   AREA_DATA *area;
+
+   if( !realm )
+      CREATE( realm, REALM_DATA, 1 );
+   LINK( realm, first_realm, last_realm, next, prev );
+
+   log_string( "got here" );
+
+   realm->rfilename = str_dup( strRealm ); 
+   realm->name = fread_string_nohash( fp );
+   log_string( "got here to name" );
+   for( ; ; )
+   {
+      const char *word;
+   log_string( realm->name );
+      word = fread_word( fp );
+      if( word[0] == '$' )
+         break;
+      for( area = first_area; area; area = area->next )
+         if( !str_cmp( area->filename, word ) )
+            LINK( area,  realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
+   }
+}
+
 AREA_DATA *fread_fuss_area( AREA_DATA * tarea, FILE * fp )
 {
    for( ;; )
@@ -7641,6 +7706,48 @@ AREA_DATA *fread_fuss_area( AREA_DATA * tarea, FILE * fp )
    }
    return tarea;
 }
+
+void load_realm_file( REALM_DATA * realm, const char *filename )
+{
+   char *word;
+
+   if( !( fpRealm = fopen( filename, "r" ) ) )
+   {
+      perror( filename );
+      bug( "%s: error loading file (can't open) %s", __FUNCTION__, filename );
+      return;
+   }
+
+   if( fread_letter( fpRealm ) != '#' )
+   {
+      if( fBootDb )
+      {
+         bug( "%s: No # found at start of realm file.", __FUNCTION__ );
+         exit( 1 );
+      }
+      else
+      {
+         bug( "%s: No # found at start of realm file.", __FUNCTION__ );
+         fclose( fpRealm );
+         fpArea = NULL;
+         return;
+      }
+   }
+
+   word = fread_word( fpRealm );
+
+   if( !str_cmp( word, "REALMDATA" ) )
+   {
+      fread_fuss_realm( realm, fpRealm );
+      fclose( fpRealm );
+      fpRealm = NULL;
+
+      return;
+   }
+}
+
+
+
 
 void load_area_file( AREA_DATA * tarea, const char *filename )
 {

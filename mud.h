@@ -161,7 +161,7 @@ typedef struct game_board_data GAME_BOARD_DATA;
 typedef struct mpsleep_data MPSLEEP_DATA;
 typedef struct lmsg_data LMSG_DATA;
 typedef struct target_data TARGET_DATA;
-
+typedef struct realm_data REALM_DATA;
 /*
  * Function types.
  */
@@ -2597,6 +2597,21 @@ struct reset_data
 #define BIT_RESET_FREEBITS	  0x3FFF0000   /* For reference */
 
 /*
+ * Realm data definition.
+ * -Davenge
+ */
+
+struct realm_data
+{
+   REALM_DATA *next;
+   REALM_DATA *prev;
+   AREA_DATA *first_area_in_realm;
+   AREA_DATA *last_area_in_realm;
+   const char *rfilename;
+   const char *name;
+};
+
+/*
  * Area definition.
  */
 struct area_data
@@ -2607,6 +2622,8 @@ struct area_data
    AREA_DATA *prev_sort;
    AREA_DATA *next_sort_name; /* Used for alphanum. sort */
    AREA_DATA *prev_sort_name; /* Ditto, Fireblade */
+   AREA_DATA *next_realm_area;
+   AREA_DATA *prev_realm_area;
    ROOM_INDEX_DATA *first_room;
    ROOM_INDEX_DATA *last_room;
    const char *name;
@@ -3621,6 +3638,8 @@ extern DEITY_DATA *first_deity;
 extern DEITY_DATA *last_deity;
 extern AREA_DATA *first_area;
 extern AREA_DATA *last_area;
+extern REALM_DATA *first_realm;
+extern REALM_DATA *last_realm;
 extern AREA_DATA *first_build;
 extern AREA_DATA *last_build;
 extern AREA_DATA *first_asort;
@@ -4273,7 +4292,7 @@ DECLARE_SPELL_FUN( spell_sacral_divinity );
  * that contains output from "player watches". The name of each file
  * in this directory is the name of the immortal who requested the watch
  */
-
+#define REALM_LIST      "realms.lst" /* List of realms */
 #define AREA_LIST	      "area.lst"  /* List of areas     */
 #define WATCH_LIST      "watch.lst" /* List of watches              */
 #define BAN_LIST        "ban.lst"   /* List of bans                 */
@@ -4550,6 +4569,7 @@ ED *make_exit args( ( ROOM_INDEX_DATA * pRoomIndex, ROOM_INDEX_DATA * to_room, s
 void add_help args( ( HELP_DATA * pHelp ) );
 void fix_area_exits args( ( AREA_DATA * tarea ) );
 void load_area_file( AREA_DATA * tarea, const char *filename );
+void load_realm_file( REALM_DATA * realm, const char *filename );
 void randomize_exits args( ( ROOM_INDEX_DATA * room, short maxdir ) );
 void make_wizlist args( ( void ) );
 void tail_chain args( ( void ) );

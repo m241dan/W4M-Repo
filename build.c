@@ -6618,6 +6618,32 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
    fprintf( fpout, "%s", "#ENDMOBILE\n\n" );
 }
 
+void fwrite_realms( void )
+{
+   FILE *fpout;
+   REALM_DATA *realm;
+   AREA_DATA *area;
+
+   for( realm = first_realm; realm; realm = realm->next )
+   {
+      if( !( fpout = fopen( realm->rfilename, "w" ) ) )
+      {
+         bug( "%s: fopen", __FUNCTION__ );
+         perror( realm->rfilename );
+         return;
+      }
+
+      fprintf( fpout, "%s", "#REALMDATA\n");
+      fprintf( fpout, "%s~\n", realm->name );
+      for( area = realm->first_area_in_realm; area; area = area->next_realm_area )
+         fprintf( fpout, "%s\n", area->filename );
+      fprintf( fpout, "$\n" );
+      fclose( fpout );
+      fpout = NULL;
+      return;
+   }
+}
+
 void fwrite_area_header( FILE * fpout, AREA_DATA * tarea, bool install )
 {
    if( install )
