@@ -4395,7 +4395,7 @@ ch_ret pullcheck args( ( CHAR_DATA * ch, int pulse ) );
 const char *rev_exit args( ( short vdir ) );
 ROOM_INDEX_DATA *generate_exit( ROOM_INDEX_DATA * in_room, EXIT_DATA ** pexit );
 bool is_conflict( ROOM_INDEX_DATA *in_room );
-void update_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, int dir );
+void update_room_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, int dir );
 
 /* act_obj.c */
 obj_ret damage_obj args( ( OBJ_DATA * obj ) );

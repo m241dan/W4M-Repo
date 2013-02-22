@@ -1085,7 +1085,7 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
    }
 
    if( IS_IMMORTAL( ch ) && !ch->in_room->coordset && from_room->coordset )
-      update_coords( ch->in_room, from_room, pexit->vdir );
+      update_room_coords( ch->in_room, from_room, pexit->vdir );
 
    if( !IS_AFFECTED( ch, AFF_SNEAK ) && ( IS_NPC( ch ) || !xIS_SET( ch->act, PLR_WIZINVIS ) ) )
    {
@@ -2971,7 +2971,7 @@ bool is_conflict( ROOM_INDEX_DATA *in_room )
  * -Davenge
  */
 
-void update_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, int dir )
+void update_room_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, int dir )
 {
    switch( dir )
    {
