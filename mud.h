@@ -2662,6 +2662,7 @@ struct area_data
    short weatherx; /* Weather Cell Assignment for the X-Axis */
    short weathery; /* Weather Cell Assignment for the Y-Axis */
    bool realmed;
+   REALM_DATA *realm;
 };
 
 /*

@@ -7650,6 +7650,7 @@ void fread_fuss_realm( REALM_DATA * realm, FILE * fp )
          {
             LINK( area,  realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
             area->realmed = TRUE;
+            area->realm = realm;
          }
    }
 }

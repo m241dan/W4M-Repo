@@ -1084,7 +1084,7 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
       }
    }
 
-   if( IS_IMMORTAL( ch ) && !ch->in_room->coordset && from_room->coordset )
+   if( IS_IMMORTAL( ch ) && !ch->in_room->coordset && from_room->coordset && ch->in_room->area->realmed )
       update_room_coords( ch->in_room, from_room, pexit->vdir );
 
    if( !IS_AFFECTED( ch, AFF_SNEAK ) && ( IS_NPC( ch ) || !xIS_SET( ch->act, PLR_WIZINVIS ) ) )
@@ -2941,25 +2941,29 @@ ch_ret pullcheck( CHAR_DATA * ch, int pulse )
 }
 
 /*
- * Make sure that no other room in the same area
+ * Make sure that no other room in the same realm
  * has the same coordinate address -Davenge
  */
 
 bool is_conflict( ROOM_INDEX_DATA *in_room )
 { 
+   REALM_DATA *realm;
+   AREA_DATA *area;
    ROOM_INDEX_DATA *pRoomIndex;
-
-   for( pRoomIndex = in_room->area->first_room; pRoomIndex; pRoomIndex = pRoomIndex->next_aroom )
-   {
-      if( pRoomIndex->area != in_room->area )
-         return FALSE;
-      if( pRoomIndex->coord[X] == in_room->coord[X] && pRoomIndex->coord[Y] == in_room->coord[Y]
-          && pRoomIndex->coord[Z] == in_room->coord[Z] && pRoomIndex->vnum != in_room->vnum )
+   
+   realm = in_room->area->realm;
+   for( area = realm->first_area_in_realm; area; area = area->next_realm_area )
+      for( pRoomIndex = area->first_room; pRoomIndex; pRoomIndex = pRoomIndex->next_aroom )
       {
-         bug( "Room: %d's coordinate address in conflict with %d's.", in_room->vnum, pRoomIndex->vnum );
-         return TRUE;
+         if( pRoomIndex == in_room )
+            continue;
+         if( pRoomIndex->coord[X] == in_room->coord[X] && pRoomIndex->coord[Y] == in_room->coord[Y]
+             && pRoomIndex->coord[Z] == in_room->coord[Z] && pRoomIndex->vnum != in_room->vnum )
+         {
+            bug( "Room: %d's coordinate address in conflict with %d's.", in_room->vnum, pRoomIndex->vnum );
+            return TRUE;
+         }
       }
-   }
    return FALSE;
 }
 

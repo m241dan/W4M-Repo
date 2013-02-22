@@ -10228,6 +10228,7 @@ void do_realm( CHAR_DATA *ch, const char *argument )
       }
       LINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
       area->realmed = TRUE;
+      area->realm = realm;
       fwrite_realms( );
       pager_printf( ch, "Ok.\r\n" );
       return;
@@ -10245,6 +10246,7 @@ void do_realm( CHAR_DATA *ch, const char *argument )
          {
             UNLINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
             area->realmed = FALSE;
+            area->realm = NULL;
             fwrite_realms( );
             pager_printf( ch, "Ok.\r\n" );
             return;
