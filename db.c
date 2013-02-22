@@ -7636,21 +7636,21 @@ void fread_fuss_realm( REALM_DATA * realm, FILE * fp )
       CREATE( realm, REALM_DATA, 1 );
    LINK( realm, first_realm, last_realm, next, prev );
 
-   log_string( "got here" );
-
    realm->rfilename = str_dup( strRealm ); 
    realm->name = fread_string_nohash( fp );
-   log_string( "got here to name" );
    for( ; ; )
    {
       const char *word;
-   log_string( realm->name );
+
       word = fread_word( fp );
       if( word[0] == '$' )
          break;
       for( area = first_area; area; area = area->next )
          if( !str_cmp( area->filename, word ) )
+         {
             LINK( area,  realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
+            area->realmed = TRUE;
+         }
    }
 }
 

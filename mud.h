@@ -2661,6 +2661,7 @@ struct area_data
    short version;
    short weatherx; /* Weather Cell Assignment for the X-Axis */
    short weathery; /* Weather Cell Assignment for the Y-Axis */
+   bool realmed;
 };
 
 /*
@@ -3946,6 +3947,7 @@ DECLARE_DO_FUN( do_rank );
 DECLARE_DO_FUN( do_rap );
 DECLARE_DO_FUN( do_rat );
 DECLARE_DO_FUN( do_rdelete );
+DECLARE_DO_FUN( do_realm );
 DECLARE_DO_FUN( do_reboo );
 DECLARE_DO_FUN( do_reboot );
 DECLARE_DO_FUN( do_recall );
@@ -4470,8 +4472,8 @@ void stop_editing args( ( CHAR_DATA * ch ) );
 void edit_buffer args( ( CHAR_DATA * ch, char *argument ) );
 const char *copy_buffer( CHAR_DATA * ch );
 char *copy_buffer_nohash( CHAR_DATA * ch );
-
-
+void realm( CHAR_DATA * ch, const char * argument );
+void write_realm_list( void );
 
 /* clans.c */
 CL *get_clan( const char *name );
@@ -4856,6 +4858,8 @@ int reverse_dir( int dir );
 bool is_skill( int dt );
 TARGET_DATA *make_new_target( CHAR_DATA * victim, int range, int dir );
 void clear_target( CHAR_DATA *ch );
+REALM_DATA *get_realm( const char * argument );
+AREA_DATA *get_area_file( const char * name );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

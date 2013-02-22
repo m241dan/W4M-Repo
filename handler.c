@@ -5538,3 +5538,44 @@ TARGET_DATA *make_new_target( CHAR_DATA *victim, int range, int dir )
 
    return target;
 }
+
+REALM_DATA *get_realm( const char *argument )
+{
+   REALM_DATA *realm;
+
+   if( argument[0] == '\0' )
+      return NULL;
+
+   for( realm = first_realm; realm; realm = realm->next )
+      if( !strcmp( argument, realm->rfilename ) )
+         return realm;
+   return NULL;
+}
+AREA_DATA *get_area_file( const char *name )
+{
+   AREA_DATA *pArea;
+
+   if( !name )
+   {
+      bug( "get_area: NULL input string." );
+      return NULL;
+   }
+
+   for( pArea = first_area; pArea; pArea = pArea->next )
+   {
+      if( nifty_is_name( name, pArea->filename ) )
+         break;
+   }
+
+   if( !pArea )
+   {
+      for( pArea = first_build; pArea; pArea = pArea->next )
+      {
+         if( nifty_is_name( name, pArea->filename ) )
+            break;
+      }
+   }
+
+   return pArea;
+}
+

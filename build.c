@@ -6640,8 +6640,8 @@ void fwrite_realms( void )
       fprintf( fpout, "$\n" );
       fclose( fpout );
       fpout = NULL;
-      return;
    }
+   return;
 }
 
 void fwrite_area_header( FILE * fpout, AREA_DATA * tarea, bool install )
@@ -10102,3 +10102,189 @@ void do_alinks( CHAR_DATA* ch, const char* argument)
    else
       send_to_char( "&wNo links exists.\r\n", ch );
 }
+
+void do_realm( CHAR_DATA *ch, const char *argument )
+{
+   REALM_DATA *realm;
+   AREA_DATA *area;
+   char arg1[MAX_STRING_LENGTH];
+   char arg2[MAX_STRING_LENGTH];
+
+   if( argument[0] == '\0' )
+   {
+      pager_printf( ch, "&PUsage realm <command> <rFileName> <argument>\r\n" );
+      pager_printf( ch, "\r\n&PCommands that can be used:\r\n" );
+      pager_printf( ch, "   rFileName, Name, List, Add, ADelete, RDelete, Create\r\n"  );
+      return;
+   }
+
+   argument = one_argument( argument, arg1 );
+   if( arg1[0] == '\0' )
+   {
+      pager_printf( ch, "&RYou must enter a command!.\r\n" );
+      return;
+   } 
+
+   if( !strcmp( arg1, "list" ) )
+   {
+      int col = 0;
+      for( realm = first_realm; realm; realm = realm->next )
+      {
+         pager_printf( ch, "Name.....: %s\r\nrFileName: %s\r\n", realm->name, realm->rfilename );
+         pager_printf( ch, "-------------------------------------------------------\r\n" );
+         for( area = realm->first_area_in_realm; area; area = area->next_realm_area )
+         {
+            pager_printf( ch, "%-20s  ", area->filename );
+            if( ++col == 3 )
+            {
+               pager_printf( ch, "\r\n" );
+               col = 0;
+            }
+         }
+         if( col != 0 )
+            pager_printf( ch, "\r\n" );
+         pager_printf( ch, "-------------------------------------------------------\r\n\r\n" );
+      }
+      return;
+   }
+
+   if( !strcmp( arg1, "create" ) )
+   {
+      if( argument[0] == '\0' )
+      {
+         pager_printf( ch, "&Prealm create <rfilename> <name>\r\n" );
+         return;
+      }
+      argument = one_argument( argument, arg1 );
+      
+      if( argument[0] == '\0' )
+      {
+         pager_printf( ch, "&Prealm create %s <name>\r\n", arg1 );
+         return;
+      }
+      CREATE( realm, REALM_DATA, 1 );
+      realm->rfilename = str_dup( arg1 );
+      realm->name = str_dup( argument );
+      LINK( realm, first_realm, last_realm, next, prev );
+      fwrite_realms( );
+      write_realm_list( );
+      pager_printf( ch, "Ok.\r\n" );
+      return;
+   }
+
+   argument = one_argument( argument, arg2 );
+   if( ( realm = get_realm( arg2 ) ) == NULL )
+   {
+      pager_printf( ch, "No such realm exists.\r\n" );
+      return;
+   }
+
+   if( !strcmp( arg1, "name" ) )
+   {
+      if( argument[0] == '\0' )
+      {
+         pager_printf( ch, "&Prealm name %s <argument>\r\n", realm->rfilename );
+         return;
+      }
+
+      realm->name = argument;
+      fwrite_realms( );
+      pager_printf( ch, "Ok.\r\n" );
+      return;
+   }
+
+   if( !strcmp( arg1, "rfilename" ) )
+   {
+      char filename[256];
+
+      if( !is_valid_filename( ch, "", argument ) )
+         return;
+
+      mudstrlcpy( filename, realm->rfilename, 256 );
+      DISPOSE( realm->rfilename );
+      realm->rfilename = str_dup( argument );
+      rename( filename, realm->rfilename );
+      write_realm_list(  );
+      fwrite_realms( );
+      pager_printf( ch, "Ok.\r\n" );
+      return;
+   }
+   if( !strcmp( arg1, "add" ) )
+   {
+      if( argument[0] == '\0' )
+      {
+         pager_printf( ch, "realm add %s <area.are>\r\n", realm->rfilename );
+         return;
+      }
+      if( ( area = get_area_file( argument ) ) == NULL )
+      {
+         pager_printf( ch, "No such area exists.\r\n" );
+         return;
+      }
+      if( area->realmed )
+      {
+         pager_printf( ch, "This area already belongs to a realm!\r\n" );
+         return;
+      }
+      LINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
+      area->realmed = TRUE;
+      fwrite_realms( );
+      pager_printf( ch, "Ok.\r\n" );
+      return;
+   }
+   if( !strcmp( arg1, "adelete" ) )
+   {
+      if( argument[0] == '\0' )
+      {
+         pager_printf( ch, "realm adelete %s <area.are>\r\n", realm->rfilename );
+         return;
+      }
+      for( area = realm->first_area_in_realm; area; area = area->next_realm_area )
+      {
+         if( !strcmp( argument, area->filename ) )
+         {
+            UNLINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
+            area->realmed = FALSE;
+            fwrite_realms( );
+            pager_printf( ch, "Ok.\r\n" );
+            return;
+         }
+      }
+      pager_printf( ch, "No such area exists attached to %s.\r\n", realm->rfilename );
+      return;
+   }
+   if( !strcmp( arg1, "rdelete" ) )
+   {
+      AREA_DATA *area_next;
+
+      UNLINK( realm, first_realm, last_realm, next, prev );
+      for( area = realm->first_area_in_realm; area; area = area_next)
+      {
+         area_next = area->next_realm_area;
+         UNLINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
+      }
+      DISPOSE( realm );
+      fwrite_realms( );
+      write_realm_list( );
+      pager_printf( ch, "Ok.\r\n" );
+   }
+   return;
+}
+
+void write_realm_list( void )
+{
+   REALM_DATA *realm;
+   FILE *fpout;
+
+   fpout = fopen( REALM_LIST, "w" );
+   if( !fpout )
+   {
+      bug( "FATAL: cannot open %s for writing!", AREA_LIST );
+      return;
+   }
+   for( realm = first_realm; realm; realm = realm->next )
+      fprintf( fpout, "%s\n", realm->rfilename );
+   fprintf( fpout, "$\n" );
+   fclose( fpout );
+}
+
