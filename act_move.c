@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include "mud.h"
 
+extern ROOM_INDEX_DATA *room_index_hash[MAX_KEY_HASH];
 ROOM_INDEX_DATA *vroom_hash[64];
 
 const short movement_loss[SECT_MAX] = {
@@ -1082,6 +1083,9 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
          char_to_room( ch->mount, to_room );
       }
    }
+
+   if( IS_IMMORTAL( ch ) && !ch->in_room->coordset && from_room->coordset )
+      update_coords( ch->in_room, from_room, pexit->vdir );
 
    if( !IS_AFFECTED( ch, AFF_SNEAK ) && ( IS_NPC( ch ) || !xIS_SET( ch->act, PLR_WIZINVIS ) ) )
    {
@@ -2935,3 +2939,97 @@ ch_ret pullcheck( CHAR_DATA * ch, int pulse )
    }
    return rNONE;
 }
+
+/*
+ * Make sure that no other room in the same area
+ * has the same coordinate address -Davenge
+ */
+
+bool is_conflict( ROOM_INDEX_DATA *in_room )
+{ 
+   ROOM_INDEX_DATA *pRoomIndex;
+
+   for( pRoomIndex = in_room->area->first_room; pRoomIndex; pRoomIndex = pRoomIndex->next_aroom )
+   {
+      if( pRoomIndex->area != in_room->area )
+         return FALSE;
+      if( pRoomIndex->coord[X] == in_room->coord[X] && pRoomIndex->coord[Y] == in_room->coord[Y]
+          && pRoomIndex->coord[Z] == in_room->coord[Z] && pRoomIndex->vnum != in_room->vnum )
+      {
+         bug( "Room: %d's coordinate address in conflict with %d's.", in_room->vnum, pRoomIndex->vnum );
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+/*
+ * When moving to a room that doesn't have "SET" coords
+ * update the coordinates based on the room you came from
+ * if it was set, and make sure it's not in conflict
+ * with any of the other area's room's coordinate address
+ * -Davenge
+ */
+
+void update_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, int dir )
+{
+   switch( dir )
+   {
+      case DIR_NORTH:
+         in_room->coord[X] = from_room->coord[X];
+         in_room->coord[Y] = from_room->coord[Y] + 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_SOUTH:
+         in_room->coord[X] = from_room->coord[X];
+         in_room->coord[Y] = from_room->coord[Y] - 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_EAST:
+         in_room->coord[X] = from_room->coord[X] + 1;
+         in_room->coord[Y] = from_room->coord[Y];
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_WEST:
+         in_room->coord[X] = from_room->coord[X] - 1;
+         in_room->coord[Y] = from_room->coord[Y];
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_UP:
+         in_room->coord[X] = from_room->coord[X];
+         in_room->coord[Y] = from_room->coord[Y];
+         in_room->coord[Z] = from_room->coord[Z] + 1;
+         break;
+      case DIR_DOWN:
+         in_room->coord[X] = from_room->coord[X];
+         in_room->coord[Y] = from_room->coord[Y];
+         in_room->coord[Z] = from_room->coord[Z] - 1;
+         break;
+      case DIR_NORTHEAST:
+         in_room->coord[X] = from_room->coord[X] + 1;
+         in_room->coord[Y] = from_room->coord[Y] + 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_NORTHWEST:
+         in_room->coord[X] = from_room->coord[X] - 1;
+         in_room->coord[Y] = from_room->coord[Y] + 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_SOUTHEAST:
+         in_room->coord[X] = from_room->coord[X] + 1;
+         in_room->coord[Y] = from_room->coord[Y] - 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+      case DIR_SOUTHWEST:
+         in_room->coord[X] = from_room->coord[X] - 1;
+         in_room->coord[Y] = from_room->coord[Y] - 1;
+         in_room->coord[Z] = from_room->coord[Z];
+         break;
+   }
+
+   if( !is_conflict( in_room ) )
+      in_room->coordset = TRUE;
+
+   return;
+}
+
