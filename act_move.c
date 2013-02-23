@@ -2978,11 +2978,65 @@ bool is_conflict( ROOM_INDEX_DATA *in_room )
 
 void update_room_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, int dir )
 {
+   EXIT_DATA *exit;
+   int x, y, z;
+
+   x = y = z = 0;
+
+   if( ( exit = get_exit( from_room, dir ) ) == NULL )
+   {
+      bug( "Update_room_coords called without a from_room or given invalid dir, big problem!!!" );
+      return;
+   }
+
+   switch( exit->angle )
+   {
+      case DIR_NORTH:
+         y = 1;
+         break;
+      case DIR_SOUTH:
+         y = -1;
+         break;
+      case DIR_EAST:
+         x = 1;
+         break;
+      case DIR_WEST:
+         x = -1;
+      case DIR_UP:
+         z = 1;
+         break;
+      case DIR_DOWN:
+         z = -1;
+         break;
+      case DIR_NORTHEAST:
+         y = 1;
+         x = 1;
+         break;
+      case DIR_NORTHWEST:
+         y = 1;
+         x = -1;
+         break;
+      case DIR_SOUTHEAST:
+         y = -1;
+         x = 1;
+         break;
+      case DIR_SOUTHWEST:
+         y = -1;
+         x = -1;
+         break;
+   }
+
+   if( in_room->coordset )
+   {
+      bug( "Attempting to set coordinatesto a room that is already set." );
+      return;
+   }
+
    switch( dir )
    {
       case DIR_NORTH:
          in_room->coord[X] = from_room->coord[X];
-         in_room->coord[Y] = from_room->coord[Y] + 1;
+         in_room->coord[Y] = from_room->coord[Y]+ 1;
          in_room->coord[Z] = from_room->coord[Z];
          break;
       case DIR_SOUTH:
@@ -3032,6 +3086,12 @@ void update_room_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, i
          break;
    }
 
+   /* Add our angle stuff from earlier */
+   in_room->coord[X] += x;
+   in_room->coord[Y] += y;
+   in_room->coord[Z] += z;
+
+   /* Make sure this room isn't conflicting */
    if( !is_conflict( in_room ) )
       in_room->coordset = TRUE;
 
