@@ -4769,7 +4769,7 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       send_to_char( "  name desc ed rmed affect rmaffect permaffect rmpermaffect\r\n", ch );
       send_to_char( "  exit bexit exdesc exflags exname exkey\r\n", ch );
       send_to_char( "  flags sector teledelay televnum tunnel\r\n", ch );
-      send_to_char( "  rlist exdistance pulltype pull push\r\n", ch );
+      send_to_char( "  rlist exdistance pulltype pull push unset\r\n", ch );
       return;
    }
 
@@ -4976,6 +4976,13 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       }
       else
          send_to_char( "Done.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( arg, "unset" ) )
+   {
+      ch->in_room->coordset = FALSE;
+      pager_printf( ch, "Done.\r\n" );
       return;
    }
 
@@ -10229,7 +10236,7 @@ void do_realm( CHAR_DATA *ch, const char *argument )
       }
 
       /* Coordinate protection -Davenge */
-      pager_printf( ch, "Unsetting the entire area, be sure to move through the area to reset coordinates.\r\n", ch );
+      pager_printf( ch, "Unsetting the entire area, be sure to move through the area to reset coordinates.\r\n" );
       for( room = area->first_room; room; room = room->next_aroom )
          if( room->coordset )
             room->coordset = FALSE;
