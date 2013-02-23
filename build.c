@@ -1065,12 +1065,6 @@ void do_goto( CHAR_DATA* ch, const char* argument)
       char_to_room( ch->mount, location );
    }
    char_to_room( ch, location );
-   if( location->area->realmed )
-   {
-      send_to_char( "Creating center of the Realm.\r\n", ch );
-      location->area->realm->zero_zero_zero = location->vnum;
-      location->coordset = TRUE;
-   }
 
    if( !xIS_SET( ch->act, PLR_WIZINVIS ) )
       act( AT_IMMORT, "$n $T", ch, NULL,
@@ -1078,6 +1072,13 @@ void do_goto( CHAR_DATA* ch, const char* argument)
              && ch->pcdata->bamfin[0] != '\0' ) ? ch->pcdata->bamfin : ( char * )"appears in a swirling mist.", TO_ROOM );
 
    do_look( ch, "auto" );
+
+   if( location->area->realmed && location->area->realm->zero_zero_zero == 0 )
+   {
+      send_to_char( "&RCreating center of the Realm.\r\n", ch );
+      location->area->realm->zero_zero_zero = location->vnum;
+      location->coordset = TRUE;
+   }
 
    if( ch->in_room == in_room )
       return;
@@ -4981,6 +4982,12 @@ void do_redit( CHAR_DATA* ch, const char* argument)
 
    if( !str_cmp( arg, "unset" ) )
    {
+      if( ch->in_room->vnum == ch->in_room->area->realm->zero_zero_zero )
+      {
+         ch->in_room->area->realm->zero_zero_zero = 0;
+         pager_printf( ch, "Removing the Center of this Realm, be very careful, next goto will set the center.\r\n&RBest to unset the whole thing if you are actually moving the center.&w\r\n" );
+      }
+      
       ch->in_room->coordset = FALSE;
       pager_printf( ch, "Done.\r\n" );
       return;
