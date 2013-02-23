@@ -2547,6 +2547,7 @@ struct exit_data
    short distance;   /* how far to the next room   */
    short pull; /* pull of direction (current)   */
    short pulltype;   /* type of pull (current, wind)  */
+   int angle;
 };
 
 /*

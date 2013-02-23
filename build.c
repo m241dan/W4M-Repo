@@ -4767,7 +4767,7 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       send_to_char( "\r\n", ch );
       send_to_char( "Field being one of:\r\n", ch );
       send_to_char( "  name desc ed rmed affect rmaffect permaffect rmpermaffect\r\n", ch );
-      send_to_char( "  exit bexit exdesc exflags exname exkey\r\n", ch );
+      send_to_char( "  exit bexit exdesc exflags exname exkey exangle\r\n", ch );
       send_to_char( "  flags sector teledelay televnum tunnel\r\n", ch );
       send_to_char( "  rlist exdistance pulltype pull push unset\r\n", ch );
       return;
@@ -5015,7 +5015,82 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       send_to_char( "Done.\r\n", ch );
       return;
    }
+   if( !str_cmp( arg, "exangle" ) )
+   {
+      int adir;
 
+      argument = one_argument( argument, arg2 );
+      argument = one_argument( argument, arg3 );
+      if( arg2[0] == '\0' )
+      {
+         send_to_char( "&PProper Usage: redit exangle <dir> <dir>&w\r\n", ch );
+         return;
+      }
+      if( arg2[0] == '#' )
+      {
+         edir = atoi( arg2 + 1);
+         xit = get_exit_num( location, edir );
+      }
+      else
+      {
+         edir = get_dir( arg2 );
+         xit = get_exit( location, edir );
+      }
+      if( !xit )
+      {
+         send_to_char( "No exit in that direction, use rexit ...' first.\r\n", ch );
+         return;
+      }
+      if( arg3[0] == '\0' )
+      {
+         send_to_char( "You need to input a proper angle.\r\n", ch );
+         return;
+      }
+      if( arg3[0] == '#' )
+         adir = atoi( arg3 + 1 );
+      else
+         adir = get_dir( arg3 );
+
+      switch( edir )
+      {
+         case DIR_NORTH:
+         case DIR_EAST:
+         case DIR_SOUTH:
+         case DIR_WEST:
+            if( adir == DIR_UP || adir ==  DIR_DOWN )
+               xit->angle = adir;
+            else
+            {
+               send_to_char( "North, East, South and West exits can only angle up or down.\r\n", ch );
+               return;
+            }
+            break;
+         case DIR_UP:
+         case DIR_DOWN:
+            if( adir != DIR_UP && adir != DIR_DOWN )
+               xit->angle = adir;
+            else
+            {
+               send_to_char( "Up and Down exits cannot angle up or down.\r\n", ch );
+               return;
+            }
+            break;
+         case DIR_NORTHEAST:
+         case DIR_NORTHWEST:
+         case DIR_SOUTHEAST:
+         case DIR_SOUTHWEST:
+            if( adir == DIR_UP || adir == DIR_DOWN )
+              xit->angle = adir;
+            else
+            {
+               send_to_char( "Northeast, Northwest, Southeast and Southwest exits can only angle up or down.\r\n", ch );
+               return;
+            }
+            break;
+      }
+      send_to_char( "Ok.\r\n", ch );
+      return;
+   }
    if( !str_cmp( arg, "exname" ) )
    {
       argument = one_argument( argument, arg2 );
