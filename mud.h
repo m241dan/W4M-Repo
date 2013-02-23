@@ -2610,6 +2610,7 @@ struct realm_data
    AREA_DATA *last_area_in_realm;
    const char *rfilename;
    const char *name;
+   int zero_zero_zero;
 };
 
 /*
@@ -2653,7 +2654,6 @@ struct area_data
    int illegal_pk;
    int high_economy;
    int low_economy;
-   int area_center;
    short status;  /* h, 8/11 */
    short age;
    short nplayer;

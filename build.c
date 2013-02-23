@@ -1065,10 +1065,10 @@ void do_goto( CHAR_DATA* ch, const char* argument)
       char_to_room( ch->mount, location );
    }
    char_to_room( ch, location );
-   if( location->area->area_center == 0 )
+   if( location->area->realmed )
    {
-      send_to_char( "Creating center of the Area.\r\n", ch );
-      location->area->area_center = location->vnum;
+      send_to_char( "Creating center of the Realm.\r\n", ch );
+      location->area->realm->zero_zero_zero = location->vnum;
       location->coordset = TRUE;
    }
 
@@ -6725,6 +6725,7 @@ void fwrite_realms( void )
 
       fprintf( fpout, "%s", "#REALMDATA\n");
       fprintf( fpout, "%s~\n", realm->name );
+      fprintf( fpout, "%d\n", realm->zero_zero_zero );
       for( area = realm->first_area_in_realm; area; area = area->next_realm_area )
          fprintf( fpout, "%s\n", area->filename );
       fprintf( fpout, "$\n" );
@@ -6745,7 +6746,6 @@ void fwrite_area_header( FILE * fpout, AREA_DATA * tarea, bool install )
    fprintf( fpout, "Author       %s~\n", tarea->author );
    fprintf( fpout, "WeatherX     %d\n", tarea->weatherx );
    fprintf( fpout, "WeatherY     %d\n", tarea->weathery );
-   fprintf( fpout, "AreaCenter   %d\n", tarea->area_center );
    if( tarea->credits && tarea->credits[0] != '\0' )
       fprintf( fpout, "Credits      %s~\n", tarea->credits );
    fprintf( fpout, "Ranges       %d %d %d %d\n",

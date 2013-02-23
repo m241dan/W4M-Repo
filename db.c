@@ -7513,7 +7513,6 @@ void fread_fuss_areadata( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'A':
-            KEY( "AreaCenter", tarea->area_center, fread_number( fp ) );
             KEY( "Author", tarea->author, fread_string( fp ) );
             break;
 
@@ -7641,6 +7640,8 @@ void fread_fuss_realm( REALM_DATA * realm, FILE * fp )
 
    realm->rfilename = str_dup( strRealm ); 
    realm->name = fread_string_nohash( fp );
+   realm->zero_zero_zero = fread_number( fp );
+
    for( ; ; )
    {
       const char *word;
