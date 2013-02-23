@@ -10211,6 +10211,7 @@ void do_realm( CHAR_DATA *ch, const char *argument )
    }
    if( !strcmp( arg1, "add" ) )
    {
+      ROOM_INDEX_DATA *room;
       if( argument[0] == '\0' )
       {
          pager_printf( ch, "realm add %s <area.are>\r\n", realm->rfilename );
@@ -10226,6 +10227,13 @@ void do_realm( CHAR_DATA *ch, const char *argument )
          pager_printf( ch, "This area already belongs to a realm!\r\n" );
          return;
       }
+
+      /* Coordinate protection -Davenge */
+      pager_printf( ch, "Unsetting the entire area, be sure to move through the area to reset coordinates.\r\n", ch );
+      for( room = area->first_room; room; room = room->next_aroom )
+         if( room->coordset )
+            room->coordset = FALSE;
+
       LINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
       area->realmed = TRUE;
       area->realm = realm;
