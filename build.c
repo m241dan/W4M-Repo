@@ -5046,6 +5046,12 @@ void do_redit( CHAR_DATA* ch, const char* argument)
          send_to_char( "You need to input a proper angle.\r\n", ch );
          return;
       }
+      if( !str_cmp( arg3, "none" ) )
+      {
+         xit->angle = -1;
+         send_to_char( "Done.\r\n", ch );
+         return;
+      }
       if( arg3[0] == '#' )
          adir = atoi( arg3 + 1 );
       else
@@ -6328,6 +6334,8 @@ void fwrite_fuss_exit( FILE * fpout, EXIT_DATA * pexit )
       fprintf( fpout, "Key       %d\n", pexit->key );
    if( pexit->distance > 1 )
       fprintf( fpout, "Distance  %d\n", pexit->distance );
+   if( pexit->angle > -1 )
+      fprintf( fpout, "Angle     %d\n", pexit->angle );
    if( pexit->pull )
       fprintf( fpout, "Pull      %d %d\n", pexit->pulltype, pexit->pull );
    if( pexit->description && pexit->description[0] != '\0' )

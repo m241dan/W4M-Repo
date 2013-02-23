@@ -5676,6 +5676,7 @@ EXIT_DATA *make_exit( ROOM_INDEX_DATA * pRoomIndex, ROOM_INDEX_DATA * to_room, s
    pexit->to_room = to_room;
    pexit->distance = 1;
    pexit->key = -1;
+   pexit->angle = -1;
    if( to_room )
    {
       pexit->vnum = to_room->vnum;
@@ -5907,7 +5908,9 @@ void fread_fuss_exit( FILE * fp, ROOM_INDEX_DATA * pRoomIndex )
                return;
             }
             break;
-
+         case 'A':
+            KEY( "Angle", pexit->angle, fread_number( fp ) );
+            break;
          case 'D':
             KEY( "Desc", pexit->description, fread_string( fp ) );
             KEY( "Distance", pexit->distance, fread_number( fp ) );

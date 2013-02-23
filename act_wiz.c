@@ -1621,7 +1621,7 @@ void do_rstat( CHAR_DATA* ch, const char* argument)
       ch_printf_color( ch, "&cExits for room '&W%s&c'  Vnum &W%d\r\n", location->name, location->vnum );
       for( cnt = 0, pexit = location->first_exit; pexit; pexit = pexit->next )
          ch_printf_color( ch,
-                          "&W%2d) &w%2s to %-5d  &cKey: &w%d  &cFlags: &w%d  &cKeywords: '&w%s&c'\r\n     Exdesc: &w%s     &cBack link: &w%d  &cVnum: &w%d  &cDistance: &w%d  &cPulltype: &w%s  &cPull: &w%d\r\n",
+                          "&W%2d) &w%2s to %-5d  &cKey: &w%d  &cFlags: &w%d  &cKeywords: '&w%s&c'\r\n     Exdesc:  &w%s     &cExAngle: &w%s\r\n&cBack link: &w%d  &cVnum: &w%d  &cDistance: &w%d  &cPulltype: &w%s  &cPull: &w%d\r\n",
                           ++cnt,
                           dir_text[pexit->vdir],
                           pexit->to_room ? pexit->to_room->vnum : 0,
@@ -1630,6 +1630,8 @@ void do_rstat( CHAR_DATA* ch, const char* argument)
                           pexit->keyword,
                           pexit->description[0] != '\0'
                           ? pexit->description : "(none).\r\n",
+                          pexit->angle == -1 
+                          ? "(none)." : dir_name[pexit->angle], 
                           pexit->rexit ? pexit->rexit->vnum : 0,
                           pexit->rvnum, pexit->distance, pull_type_name( pexit->pulltype ), pexit->pull );
       return;
