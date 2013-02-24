@@ -49,6 +49,7 @@
    -----
 
    1. Add a way of displaying up and down directions effectively
+   Here's a new comment.
  */
 #include <stdio.h>
 #include <string.h>
