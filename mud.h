@@ -1364,6 +1364,7 @@ struct smaug_affect
 #define ACT_ANNOYING		 28   /* Other mobs will attack */
 #define ACT_STATSHIELD		 29   /* prevent statting */
 #define ACT_PROTOTYPE		 30   /* A prototype mob   */
+#define ACT_AGGRO_EVIL           31
 /* 28 acts */
 
 /*
@@ -2610,6 +2611,7 @@ struct realm_data
    AREA_DATA *last_area_in_realm;
    const char *rfilename;
    const char *name;
+   int zero_zero_zero;
 };
 
 /*
@@ -2653,7 +2655,6 @@ struct area_data
    int illegal_pk;
    int high_economy;
    int low_economy;
-   int area_center;
    short status;  /* h, 8/11 */
    short age;
    short nplayer;
