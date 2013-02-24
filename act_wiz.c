@@ -3795,6 +3795,7 @@ void do_advance( CHAR_DATA* ch, const char* argument)
       if( level < LEVEL_IMMORTAL )
          send_to_char( "You raise a level!!\r\n", victim );
       victim->level += 1;
+      victim->top_level += 1;
       advance_level( victim );
    }
    victim->experience[victim->Class] = exp_level( victim, victim->level );
@@ -3894,11 +3895,6 @@ void do_immortalize( CHAR_DATA* ch, const char* argument)
       ch_printf( ch, "Don't be silly, %s is already immortal.\r\n", victim->name );
       return;
    }
-   if( victim->level != LEVEL_AVATAR )
-   {
-      send_to_char( "This player is not yet worthy of immortality.\r\n", ch );
-      return;
-   }
 
    send_to_char( "Immortalizing a player...\r\n", ch );
    set_char_color( AT_IMMORT, victim );
@@ -3912,6 +3908,7 @@ void do_immortalize( CHAR_DATA* ch, const char* argument)
    while( victim->first_carrying )
       extract_obj( victim->first_carrying );
    victim->level = LEVEL_IMMORTAL;
+   victim->top_level = LEVEL_IMMORTAL;
    advance_level( victim );
 
    /*
