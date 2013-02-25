@@ -3726,7 +3726,8 @@ void do_kill( CHAR_DATA* ch, const char* argument)
          ch->position = POS_FIGHTING;
          return;
       }
-
+      
+      /* If no direction is specified, check the room */
       if( argument[0] == '\0' )
       {
          if( ( victim = get_char_room( ch, arg ) ) == NULL )
@@ -3753,28 +3754,22 @@ void do_kill( CHAR_DATA* ch, const char* argument)
    else
    {
       if( arg[0] == '\0' )
-      {
          send_to_char( "You drop into a fighting stance!\r\n", ch );
-         ch->position = POS_FIGHTING;
-         return;
-      }
-      
-      if( !strcmp( arg, ch->target->victim->name ) )
+      else if( !strcmp( arg, ch->target->victim->name ) )
       {
          send_to_char( "You can't auto-attack something you are not targetting!\r\n", ch );
          return;
-      }      
+      }
    }
-     
 
 /*   if( IS_NPC( victim ) && victim->morph )
    {
       send_to_char( "This creature appears strange to you.  Look upon it more closely before attempting to kill it.", ch );
       return;
    } NO idea what this morph shit is */
- 
+
    range = get_max_range( ch );
-   
+
    if( range < target->range )
    {
       ch_printf( ch, "%s is too far away.\r\n", capitalize( target->victim->name ) );
