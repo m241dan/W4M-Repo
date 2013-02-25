@@ -3795,7 +3795,8 @@ void do_advance( CHAR_DATA* ch, const char* argument)
       if( level < LEVEL_IMMORTAL )
          send_to_char( "You raise a level!!\r\n", victim );
       victim->level += 1;
-      victim->top_level += 1;
+      if( victim->level < 50 || victim->level > 50 )
+         victim->top_level += 1;
       advance_level( victim );
    }
    victim->experience[victim->Class] = exp_level( victim, victim->level );
