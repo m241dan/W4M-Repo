@@ -722,15 +722,12 @@ void violence_update( void )
 /*
  * Do one group of attacks.
  */
-ch_ret multi_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
+ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
 {
    OBJ_DATA *offhand;
    TARGET_DATA *target_copy;
-   ROOM_INDEX_DATA *was_in_room;
    int schance;
    ch_ret retcode;
-
-   was_in_room = ch->in_room;
 
    /*
     * add timer to pkillers 
@@ -752,23 +749,11 @@ ch_ret multi_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    /* Make sure we have target for auto-attacks -Davenge */
 
    if( dt == TYPE_UNDEFINED && !ch->target )
-      if( ( ch->target = get_target_2( ch, victim, -1 ) ) == NULL )
-      {
-         send_to_char( "Your victim has disappeared.\r\n", ch );
-         return rNONE;
-      }
-
-   /*
-    *  Because you can only auto-attack your current target, but you can still
-    *  cast spells on someone who isn't your target, we need flesh out the 
-    *  range if-checks to a more streamlined variable -Davenge
-    */
-
-   if( ch->target->victim != victim )
-      target_copy = get_target_2( ch, victim, -1 );
-   else
-      target_copy = ch->target;
-
+   {
+      bug( "CH: %s autoattacking without a target." ch->name );
+      return rNONE;
+   }
+   
    /* Range Checks -Davenge */
 
    if( dt > TYPE_UNDEFINED && dt < TYPE_HIT && skill_table[dt]->type == SKILL_SPELL 
@@ -790,14 +775,12 @@ ch_ret multi_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       return rVICT_OOR;
    }
    else if( IS_NPC( ch ) && dt == TYPE_UNDEFINED && get_max_range( ch ) > target_copy->range )
-       move_char( ch, get_exit( ch->in_room, ch->target->dir ), 0 );      
+       move_char( ch, get_exit( ch->in_room, ch->target->dir ), 0 );
 //   else if( !ch->target->range )
  //  {
   //    send_to_char( "here's the null\r\n", ch );
    //   return rVICT_OOR;
   // }
-   else if( dt == TYPE_UNDEFINED && victim != target_copy->victim )
-      victim = ch->target->victim;
    
    if( ch->in_room != victim->in_room )
    {
