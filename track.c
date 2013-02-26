@@ -336,7 +336,6 @@ void hunt_victim( CHAR_DATA * ch )
    bool found;
    CHAR_DATA *tmp;
    EXIT_DATA *pexit;
-   short ret;
 
    if( !ch || !ch->hunting || ch->position < 5 )
       return;
@@ -348,6 +347,12 @@ void hunt_victim( CHAR_DATA * ch )
       if( ch->hunting->who == tmp )
          found = TRUE;
 
+   /* Should have a target, but if for some reason they don't, let's give em one. -Davenge */
+
+   if( !ch->target )
+      if ( (ch->target = get_target_2( ch, ch->hunting->who, -1 ) ) == NULL )
+         found = FALSE;
+
    if( !found )
    {
       do_say( ch, "Damn!  My prey is gone!!" );
@@ -355,23 +360,22 @@ void hunt_victim( CHAR_DATA * ch )
       return;
    }
 
-   if( ch->in_room == ch->hunting->who->in_room )
+   if( ch->target->range < get_max_range( ch ) )
    {
       if( ch->fighting )
          return;
       found_prey( ch, ch->hunting->who );
       return;
    }
-   ret = find_first_step( ch->in_room, ch->hunting->who->in_room, 500 + ch->level * 25 );
-   if( ret < 0 )
+   if( ch->target->dir < 0 && ch->target->dir != -2 ) //Add minor bug functionality for "BFS_ALREADY_THERE" -Davenge
    {
       do_say( ch, "Damn!  Lost my prey!" );
       stop_hunting( ch );
       return;
    }
-   else
+   else if( ch->target->dir != -2 )
    {
-      if( ( pexit = get_exit( ch->in_room, ret ) ) == NULL )
+      if( ( pexit = get_exit( ch->in_room, ch->target->dir ) ) == NULL )
       {
          bug( "%s", "Hunt_victim: lost exit?" );
          return;
@@ -395,29 +399,9 @@ void hunt_victim( CHAR_DATA * ch )
          do_say( ch, "Damn!  Lost my prey!" );
          return;
       }
-      if( ch->in_room == ch->hunting->who->in_room )
+      if( ch->target->range < get_max_range( ch ) )
          found_prey( ch, ch->hunting->who );
-      else
-      {
-         CHAR_DATA *vch;
 
-         /*
-          * perform a ranged attack if possible 
-          */
-         /*
-          * Changed who to name as scan_for_victim expects the name and
-          * * Not the char struct. --Shaddai
-          */
-         if( ( vch = scan_for_victim( ch, pexit, ch->hunting->name ) ) != NULL )
-         {
-            if( !mob_fire( ch, ch->hunting->who->name ) )
-            {
-               /*
-                * ranged spell attacks go here 
-                */
-            }
-         }
-      }
       return;
    }
 }
