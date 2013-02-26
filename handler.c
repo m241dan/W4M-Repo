@@ -5364,9 +5364,6 @@ TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir )
 {
    TARGET_DATA *target;
    CHAR_DATA *rch;
-   ROOM_INDEX_DATA *was_in_room;
-   ROOM_INDEX_DATA *to_room;
-   EXIT_DATA *pexit;
    short dist;
    bool found = FALSE;
 
@@ -5429,6 +5426,56 @@ TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir )
    return NULL;
 }
 
+int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir )
+{
+   ROOM_INDEX_DATA *current_room, dest_room;
+   EXIT_DATA *pexit;
+   int dir, dist;
+
+   current_room = ch->in_room;
+   dest_room = victim->in_room;
+
+   /*
+    * If they are in the same room, return 0 - Davenge
+    */
+
+   if( current_room == dest_room )
+      return 0;
+
+   /*
+    * Not in same room, what direction should we head in? -Davenge
+    */
+
+   if( init_dir > -1 )
+      dir = init_dir;
+   else
+      dir = find_first_step( current_room, dest_room, 20 );
+
+   for( dist = 1; dist <= 20; dist ++ )
+   {
+      /* 
+       *If somehow an exit does not exist in this direction return -1 which is error for this function
+       * -Davenge
+       */
+      if( ( pexit = get_exit( current_room, dir ) ) == NULL )
+         return -1;
+      /*
+       * Change current_room to the exit's to_room, basically the next one in our tracking path
+       * -Davenge
+       */
+      if( ( current_room = pexit->to_room ) == dest_room )
+         return dist;
+      /*
+       * Haven't got their next, so find the direction we need for our next step -Davenge
+       */
+      dir = find_first_step( current_room, 20 );
+   }
+   return 21;
+}
+void update_target( ch )
+{
+
+}
 /* Function that checks Line of Sight -Davenge */
 
 bool check_los( CHAR_DATA *ch, CHAR_DATA *victim, int range )
