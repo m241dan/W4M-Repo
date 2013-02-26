@@ -736,8 +736,6 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    int schance;
    ch_ret retcode;
 
-   send_to_char( "multi_hit being called\r\n", ch );
-
    /*
     * add timer to pkillers 
     */
@@ -1838,8 +1836,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
             set_new_target( victim, get_target_2( victim, ch, -1 ) );
          }
 
-         ch_printf( ch, "Victim's Name: %s\r\n Victim's Direction: %s\r\nVictim Target's Range: %d\r\nVictim's Max Range: %d\r\n", 
-                    victim->target->victim->name, dir_name[victim->target->dir], victim->target->range, get_max_range( victim ) );
          if( !victim->fighting && victim->target->range < get_max_range( victim ) )
             set_fighting( victim, ch );
          else

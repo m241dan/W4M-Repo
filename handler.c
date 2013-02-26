@@ -5499,6 +5499,11 @@ void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
    clear_target( ch );
 
    ch->target = target;
+   if( !target->victim )
+   {
+      bug( "%s: somehow passed a NULL victim within target_data passed.", __FUNCTION__ );
+      return;
+   }
    LINK( ch, target->victim->first_targetedby, target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
    return;
 }
