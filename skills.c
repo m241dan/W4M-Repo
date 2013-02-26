@@ -444,7 +444,9 @@ bool check_ability( CHAR_DATA * ch, char *command, char *argument )
             vch_next = vch->next_in_room;
             if( victim == vch && !victim->fighting && victim->master != ch )
             {
-               retcode = multi_hit( victim, ch, TYPE_UNDEFINED );
+               TARGET_DATA *temp_target;
+               if( ( temp_target = get_target_2( victim, ch, -1 ) ) != NULL )
+                  retcode = multi_hit( victim, ch, TYPE_UNDEFINED );
                break;
             }
          }

@@ -675,7 +675,9 @@ void violence_update( void )
 
             /*
              * NPC's assist NPC's of same type or 12.5% chance regardless.
-             */
+             *
+             * Will revisit this later with more PvE style friendly mechanics 
+             * -Davenge
             if( IS_NPC( rch ) && !IS_AFFECTED( rch, AFF_CHARM ) && !xIS_SET( rch->act, ACT_NOASSIST )
                 && !xIS_SET( rch->act, ACT_PET ) )
             {
@@ -706,13 +708,26 @@ void violence_update( void )
                   if( target )
                      multi_hit( rch, target, TYPE_UNDEFINED );
                }
-            }
+            } */
          }
       }
       trv_dispose( &lcr );
    }
    trworld_dispose( &lcw );
    return;
+}
+
+ch_ret multi_hit( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
+{
+   TARGET_DATA *temp_target;
+   ch_ret retcode;
+   if( ( temp_target = get_target_2( ch, victim, -1 ) ) != NULL )
+   {
+      retcode = multi_hit( ch, temp_target, dt );
+      return retcode;
+   }
+   else
+      return rERROR;
 }
 
 /*
@@ -727,12 +742,12 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    /*
     * add timer to pkillers 
     */
-   if( !IS_NPC( ch ) && !IS_NPC( victim ) )
+   if( !IS_NPC( ch ) && !IS_NPC( target->victim ) )
    {
       if( xIS_SET( ch->act, PLR_NICE ) )
          return rNONE;
       add_timer( ch, TIMER_RECENTFIGHT, 11, NULL, 0 );
-      add_timer( victim, TIMER_RECENTFIGHT, 11, NULL, 0 );
+      add_timer( target->victim, TIMER_RECENTFIGHT, 11, NULL, 0 );
    }
 
    if( is_attack_supressed( ch ) )
@@ -749,9 +764,16 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
       return rNONE;
    }
 
+   /*
+    * The temp_targets I setup don't link, saving lines of code by linking themhere 
+    * -Davenge
+    */
+   if( dt == TYPE_UNDEFINED && !ch->target )
+      ch->target = target;
+
    /* Range Checks -Davenge */
 
-   if( !range_check( ch, target, dt, FALSE )
+   if( !range_check( ch, target, dt, FALSE ) )
       return rVICT_OOR;
 
    if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
@@ -763,7 +785,7 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    offhand = get_eq_char( ch, WEAR_DUAL_WIELD );
    if( offhand && offhand->item_type == ITEM_WEAPON  )
    {
-      retcode = one_hit( ch, victim, dt );
+      retcode = one_hit( ch, target->victim, dt );
       if( retcode != rNONE || who_fighting( ch ) != target->victim )
          return retcode;
    }
@@ -776,8 +798,8 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    {
       for( schance = 0; schance < ch->numattacks; schance++ )
       {
-         retcode = one_hit( ch, victim, dt );
-         if( retcode != rNONE || who_fighting( ch ) != victim )
+         retcode = one_hit( ch, target->victim, dt );
+         if( retcode != rNONE || who_fighting( ch ) != target->victim )
             return retcode;
       }
       return retcode;
@@ -785,8 +807,6 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
 
    retcode = rNONE;
 
-   char_from_room( ch );
-   char_to_room( ch, was_in_room );
    return retcode;
 }
 
@@ -1839,7 +1859,10 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
              && victim->master && victim->master->in_room == ch->in_room && number_bits( 3 ) == 0 )
          {
             stop_fighting( ch, FALSE );
-            retcode = multi_hit( ch, victim->master, TYPE_UNDEFINED );
+            TARGET_DATA *temp_target;
+            if( ( temp_target = get_target_2( ch, victim->master, -1 ) ) == NULL )
+               return rNONE;
+            retcode = multi_hit( ch, temp_target, TYPE_UNDEFINED );
             return retcode;
          }
       }
@@ -3734,7 +3757,6 @@ void do_kill( CHAR_DATA* ch, const char* argument)
    if( target->victim == ch )
    {
       send_to_char( "You hit yourself.  Ouch!\r\n", ch );
-      multi_hit( ch, ch, TYPE_UNDEFINED );
       return;
    }
    
@@ -3759,7 +3781,7 @@ void do_kill( CHAR_DATA* ch, const char* argument)
    set_new_target( ch, target );
    WAIT_STATE( ch, 1 * PULSE_VIOLENCE );
    check_attacker( ch, target->victim );
-   multi_hit( ch, target->victim, TYPE_UNDEFINED );
+   multi_hit( ch, target, TYPE_UNDEFINED );
    return;
 }
 
@@ -3771,6 +3793,10 @@ void do_murde( CHAR_DATA* ch, const char* argument)
 
 void do_murder( CHAR_DATA* ch, const char* argument)
 {
+   send_to_char( "Murder currently disabled.\r\n", ch );
+   return;
+}
+/*
    char buf[MAX_STRING_LENGTH];
    char arg[MAX_INPUT_LENGTH];
    CHAR_DATA *victim;
@@ -3823,9 +3849,9 @@ void do_murder( CHAR_DATA* ch, const char* argument)
       send_to_char( "You feel too nice to do that!\r\n", ch );
       return;
    }
-/*
+*
     if ( !IS_NPC( victim ) && xIS_SET(victim->act, PLR_PK ) )
-*/
+*
 
    if( !IS_NPC( victim ) )
    {
@@ -3842,7 +3868,7 @@ void do_murder( CHAR_DATA* ch, const char* argument)
    check_attacker( ch, victim );
    multi_hit( ch, victim, TYPE_UNDEFINED );
    return;
-}
+} */
 
 /*
  * Check to see if the player is in an "Arena".
@@ -4103,6 +4129,8 @@ bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart )
 {
    int range;
 
+   range = target->range;
+
    if( dt > TYPE_UNDEFINED && dt < TYPE_HIT )
    {
       switch( skill_table[dt]->type )
@@ -4116,7 +4144,7 @@ bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart )
          case SKILL_SKILL:
             if( CastStart && range > get_skill_range( ch, dt ) )
                return FALSE;
-            if( !CastStart && range ( get_skill_range( ch, dt ) + 1 ) )
+            if( !CastStart && range > ( get_skill_range( ch, dt ) + 1 ) )
                return FALSE;
             break;
       }

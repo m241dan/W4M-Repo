@@ -1773,7 +1773,11 @@ void do_cast( CHAR_DATA* ch, const char* argument)
          if( vch == victim )
          {
             if( vch->master != ch && !vch->fighting )
-               retcode = multi_hit( vch, ch, TYPE_UNDEFINED );
+            {
+               TARGET_DATA *temp_target;
+               if( ( temp_target = get_target_2( vch, ch, -1 ) ) != NULL )
+                  retcode = multi_hit( vch, temp_target, TYPE_UNDEFINED );
+            }
             break;
          }
       }
@@ -1931,7 +1935,9 @@ ch_ret obj_cast_spell( int sn, int level, CHAR_DATA * ch, CHAR_DATA * victim, OB
          vch_next = vch->next_in_room;
          if( victim == vch && !vch->fighting && vch->master != ch )
          {
-            retcode = multi_hit( vch, ch, TYPE_UNDEFINED );
+            TARGET_DATA *temp_target;
+            if( ( temp_target = get_target_2( vch, ch, -1 ) ) != NULL )
+               retcode = multi_hit( vch, temp_target, TYPE_UNDEFINED );
             break;
          }
       }
@@ -3767,7 +3773,9 @@ ch_ret spell_sleep( int sn, int level, CHAR_DATA * ch, void *vo )
          return rSPELL_FAILED;
       if( !victim->fighting )
       {
-         retcode = multi_hit( victim, ch, TYPE_UNDEFINED );
+         TARGET_DATA *temp_target;
+         if( ( temp_target = get_target_2( victim, ch, -1 ) ) != NULL )
+            retcode = multi_hit( victim, temp_target, TYPE_UNDEFINED );
          if( retcode == rNONE )
             retcode = rSPELL_FAILED;
          return retcode;

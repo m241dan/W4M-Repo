@@ -4593,6 +4593,7 @@ size_t mudstrlcat args( ( char *dst, const char *src, size_t siz ) );
 
 /* fight.c */
 void violence_update args( ( void ) );
+ch_ret multi_hit args( ( CHAR_DATA * ch, CHAR_DATA *victim, int dt ) );
 ch_ret multi_hit args( ( CHAR_DATA * ch, TARGET_DATA * target, int dt ) );
 ch_ret projectile_hit args( ( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ_DATA * projectile, short dist ) );
 short ris_damage args( ( CHAR_DATA * ch, short dam, int ris ) );
