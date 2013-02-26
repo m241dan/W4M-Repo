@@ -667,11 +667,8 @@ void violence_update( void )
             {
                if( ( ( !IS_NPC( rch ) && rch->desc )
                      || IS_AFFECTED( rch, AFF_CHARM ) ) && is_same_group( ch, rch ) && !is_safe( rch, victim, TRUE ) )
-               {
-                  TARGET_DATA *temp_target;
-                  if( ( temp_target = get_target_2( rch, victim, -1 ) ) != NULL )
-                     multi_hit( rch, temp_target, TYPE_UNDEFINED );
-               }
+                     multi_hit( rch, victim, TYPE_UNDEFINED );
+
                continue;
             }
 
@@ -773,9 +770,9 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
     * -Davenge
     */
    if( dt == TYPE_UNDEFINED && !ch->target )
-      ch->target = target;
+      set_new_target( ch, target );
 
-   /* Range Checks -Davenge */
+    /* Range Checks -Davenge */
 
    if( !range_check( ch, target, dt, FALSE ) )
       return rVICT_OOR;
@@ -1840,9 +1837,7 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
          if( !victim->target )
          {
             send_to_char( "Creating target_data for victim.\r\n", ch );
-            TARGET_DATA *vic_target;
-            vic_target = get_target_2( victim, ch, -1);
-            victim->target = vic_target;
+            set_new_target( victim, get_target_2( victim, ch, -1 ) );
          }
 
          ch_printf( ch, "Victim's Name: %s\r\n Victim's Direction: %s\r\nVictim Target's Range: %d\r\nVictim's Max Range: %d\r\n", 
@@ -1867,10 +1862,7 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
              && victim->master && victim->master->in_room == ch->in_room && number_bits( 3 ) == 0 )
          {
             stop_fighting( ch, FALSE );
-            TARGET_DATA *temp_target;
-            if( ( temp_target = get_target_2( ch, victim->master, -1 ) ) == NULL )
-               return rNONE;
-            retcode = multi_hit( ch, temp_target, TYPE_UNDEFINED );
+            retcode = multi_hit( ch, victim->master, TYPE_UNDEFINED );
             return retcode;
          }
       }
@@ -2890,9 +2882,9 @@ void set_fighting( CHAR_DATA * ch, CHAR_DATA * victim )
    ch->position = POS_FIGHTING; 
 
    if( !ch->target )
-      ch->target = get_target_2( ch, victim, -1 );
+      set_new_target( ch, get_target_2( ch, victim, -1 ) );
    if( !victim->target )
-      victim->target = get_target_2( victim, ch, -1 );
+      set_new_target( victim, get_target_2( victim, ch, -1 ) );
 
    victim->num_fighting++;
    if( victim->switched && IS_AFFECTED( victim->switched, AFF_POSSESS ) )

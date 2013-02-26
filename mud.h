@@ -2316,14 +2316,14 @@ struct char_data
    int resetnum;
    int range;
    TARGET_DATA *target;
-   TARGET_DATA *first_targetedby;
-   TARGET_DATA *last_targetedby;
+   CHAR_DATA *first_targetedby;
+   CHAR_DATA *last_targetedby;
+   CHAR_DATA *next_person_targetting_your_target;
+   CHAR_DATA *prev_person_targetting_your_target;
 };
 
 struct target_data
 {
-   TARGET_DATA *next_targeted;
-   TARGET_DATA *prev_targeted;
    CHAR_DATA *victim;
    int range;
    int dir;
@@ -4865,6 +4865,8 @@ TARGET_DATA *make_new_target( CHAR_DATA * victim, int range, int dir );
 void clear_target( CHAR_DATA *ch );
 REALM_DATA *get_realm( const char * argument );
 AREA_DATA *get_area_file( const char * name );
+int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir );
+void update_target_ch_moved( CHAR_DATA * ch );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

@@ -5362,73 +5362,35 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
 
 TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir )
 {
-   TARGET_DATA *target;
-   CHAR_DATA *rch;
-   short dist;
-   bool found = FALSE;
+   int range;
 
-   was_in_room = ch->in_room;
-
-   ch_printf( get_char_world(ch, "Davenge"), "&R%s In Room: %s\r\n&R%s In Room: %s\r\n", ch->name, ch->in_room->name, victim->name, victim->in_room->name );
+   if( ch->in_room == victim->in_room )
+      return make_new_target( victim, 0, -1 );
 
    if( dir == -1 )
-      dir = find_first_step( ch->in_room, victim->in_room, 10 );
+      dir = find_first_step( ch->in_room, victim->in_room, 20 );
 
-   if( dir == BFS_ALREADY_THERE )
+   if( dir != BFS_ERROR && dir != BFS_NO_PATH )
    {
-      send_to_char( "Target already there.\r\n", get_char_world( ch, "Davenge" ) );
-      return make_new_target( victim, 0, -1 );
-   }
-
-   if( ( pexit = get_exit( ch->in_room, dir ) ) == NULL || IS_SET( pexit->exit_info, EX_SECRET ) )
-      return NULL;
-
-   for( dist = 1; ; dist++ )
-   {
-      if( IS_SET( pexit->exit_info, EX_SECRET ) )
-         break;
-      if( IS_SET( pexit->exit_info, EX_CLOSED ) )
-         break;
-
-      to_room = NULL;
-
-      if( pexit->distance > 1 )
-         to_room = generate_exit( ch->in_room, &pexit );
-
-      if( to_room == NULL )
-         to_room = pexit->to_room;
-
-      char_from_room( ch );
-      char_to_room( ch, to_room );
-
-      for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
-         if( can_see( ch, rch ) && rch == victim )
-         {
-            found = TRUE;
-            break;
-         }
-
-      if( found == TRUE )
+      range = find_distance( ch, victim, dir );
+      if( range > 20 )
       {
-            char_from_room( ch );
-            char_to_room( ch, was_in_room );
-            CREATE( target, TARGET_DATA, 1 );
-            target->victim = victim;
-            target->dir = dir;
-            target->range = dist;
-            return target;
+         send_to_char( "Target distance greater than 20, losing target.\r\n", ch );
+         return NULL;
       }
-      if( ( pexit = get_exit( ch->in_room, dir ) ) == NULL )
-         break;
+      if( range < 0 && range != BFS_ALREADY_THERE )
+      {
+         bug( "An error occured during the targeting of CH: %s\r\n", ch->name );
+         return NULL;
+      }
+      return make_new_target( victim, range, dir );
    }
-   char_from_room( ch );
-   char_to_room( ch, was_in_room );
    return NULL;
 }
 
 int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir )
 {
-   ROOM_INDEX_DATA *current_room, dest_room;
+   ROOM_INDEX_DATA *current_room, *dest_room;
    EXIT_DATA *pexit;
    int dir, dist;
 
@@ -5453,7 +5415,7 @@ int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir )
 
    for( dist = 1; dist <= 20; dist ++ )
    {
-      /* 
+      /*
        *If somehow an exit does not exist in this direction return -1 which is error for this function
        * -Davenge
        */
@@ -5468,14 +5430,11 @@ int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir )
       /*
        * Haven't got their next, so find the direction we need for our next step -Davenge
        */
-      dir = find_first_step( current_room, 20 );
+      dir = find_first_step( current_room, dest_room, 20 );
    }
    return 21;
 }
-void update_target( ch )
-{
 
-}
 /* Function that checks Line of Sight -Davenge */
 
 bool check_los( CHAR_DATA *ch, CHAR_DATA *victim, int range )
@@ -5497,7 +5456,7 @@ bool check_los( CHAR_DATA *ch, CHAR_DATA *victim, int range )
    if( dir == reverse_dir( op_dir ) && ( los_data = get_target_2( ch, victim, dir ) ) != NULL )
       return TRUE;
 
-   return FALSE;   
+   return FALSE;
 }
 
 /* Reverse a direction integer given to it's oppsoite, ie south = north, east = west
@@ -5540,16 +5499,25 @@ void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
    clear_target( ch );
 
    ch->target = target;
-   LINK( target, target->victim->first_targetedby, target->victim->last_targetedby, next_targeted, prev_targeted );
+   LINK( ch, target->victim->first_targetedby, target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
    return;
 }
 
-/* Clear the taget pointer -Davenge */
+/*
+ * Clear the target pointer and the targeted by stuff
+ * -Davenge
+ */
 
 void clear_target( CHAR_DATA *ch )
 {
+   CHAR_DATA *tvictim;
+
    if( ch->target )
      DISPOSE( ch->target );
+
+   for( tvictim = ch->target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
+      if( ch == tvictim )
+         UNLINK( tvictim, tvictim->first_targetedby, tvictim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
    return;
 }
 
@@ -5629,4 +5597,20 @@ AREA_DATA *get_area_file( const char *name )
    return pArea;
 }
 
+void update_target_ch_moved( CHAR_DATA *ch )
+{
+   CHAR_DATA *targeted_by;
+   CHAR_DATA *victim;
 
+   if( !ch->target )
+   {
+      bug( "update_target_ch_moved called without %s having a target.", ch->name );
+      return;
+   }
+   victim = ch->target->victim; // to be safe -Davenge
+   set_new_target( ch, get_target_2( ch, victim, -1 ) );
+
+   if( ch->first_targetedby )
+      for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_targetting_your_target )
+         set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
+}

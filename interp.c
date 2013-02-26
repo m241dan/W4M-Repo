@@ -674,11 +674,7 @@ bool check_social( CHAR_DATA * ch, const char *command, const char *argument )
          {
             case 0:
                if( IS_EVIL( ch ) && !is_safe( victim, ch, TRUE ) )   /* was IS_EVIL(ch) ||.... didn't make sense to me - FB */
-               {
-                  TARGET_DATA *temp_target;
-                  if( ( temp_target = get_target_2( victim, ch, -1 ) ) != NULL )
-                     multi_hit( victim, temp_target, TYPE_UNDEFINED );
-               }
+                     multi_hit( victim, ch, TYPE_UNDEFINED );
                else if( IS_NEUTRAL( ch ) )
                {
                   act( AT_ACTION, "$n slaps $N.", victim, NULL, ch, TO_NOTVICT );

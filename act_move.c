@@ -1083,14 +1083,9 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
          char_to_room( ch->mount, to_room );
       }
    }
-/*
    if( ch->target )
-   {
-      TARGET_DATA *targeted_by;
+      update_target_ch_moved( ch );
 
-      for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_targeted )
-   }
-*/
    if( IS_IMMORTAL( ch ) && !ch->in_room->coordset && from_room->coordset && ch->in_room->area->realmed )
       update_room_coords( ch->in_room, from_room, pexit->vdir );
 

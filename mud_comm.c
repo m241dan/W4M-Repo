@@ -293,9 +293,7 @@ void do_mpkill( CHAR_DATA* ch, const char* argument)
       progbug( "MpKill - Already fighting", ch );
       return;
    }
-   TARGET_DATA *temp_target;
-   if( ( temp_target = get_target_2( ch, victim, -1 ) ) != NULL )
-      multi_hit( ch, temp_target, TYPE_UNDEFINED );
+   multi_hit( ch, victim, TYPE_UNDEFINED );
    return;
 }
 

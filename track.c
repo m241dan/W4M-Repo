@@ -350,9 +350,11 @@ void hunt_victim( CHAR_DATA * ch )
    /* Should have a target, but if for some reason they don't, let's give em one. -Davenge */
 
    if( !ch->target )
-      if ( (ch->target = get_target_2( ch, ch->hunting->who, -1 ) ) == NULL )
+   {
+      set_new_target( ch, get_target_2( ch, ch->hunting->who, -1 ) );
+      if( !ch->target )
          found = FALSE;
-
+   }
    if( !found )
    {
       do_say( ch, "Damn!  My prey is gone!!" );
