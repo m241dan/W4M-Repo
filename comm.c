@@ -3685,6 +3685,9 @@ void display_prompt( DESCRIPTOR_DATA * d )
       }
    }
    *pbuf = '\0';
+   if( ch->target )
+      ch_printf( ch, "&cTarget&C:&w %s &cRange&C:&w %d &cDir&C:&w %s&w\r\n", ch->target->victim->name, ch->target->range,
+      ch->target->dir == -1 ? "(null)" : dir_name[ch->target->dir] );
    send_to_char( buf, ch );
    return;
 }

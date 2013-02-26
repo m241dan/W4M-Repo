@@ -358,7 +358,7 @@ void violence_update( void )
       /*
        * Let the battle begin! 
        */
-      if( !ch->target || IS_AFFECTED( ch, AFF_PARALYSIS ) || ch->position != POS_FIGHTING )
+      if( !ch->target || IS_AFFECTED( ch, AFF_PARALYSIS ) ||  ch->position != POS_FIGHTING )
          continue;
 
       victim = ch->target->victim;
