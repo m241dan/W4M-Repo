@@ -5261,7 +5261,7 @@ int get_max_range( CHAR_DATA * ch )
    OBJ_DATA *obj2;
 
    obj = get_eq_char( ch, WEAR_WIELD );
-   obj2 = get_eq_char( ch, WEAR_HOLD );
+   obj2 = get_eq_char( ch, WEAR_DUAL_WIELD );
 
    if( obj && obj2 )
       if( obj2->range > obj->range )
@@ -5270,7 +5270,7 @@ int get_max_range( CHAR_DATA * ch )
    if( !obj )
       return ch->range;
    else
-      return ( ch->range + obj->range );   
+      return ( ch->range + obj->range );
 }
 
 /* Get target data when only a name is given. -Davenge */
@@ -5512,7 +5512,10 @@ int get_skill_range( CHAR_DATA *ch, int gsn )
 {
    int range = 0;
 
-   range += skill_table[gsn]->range;
+   if( skill_table[gsn]->range == 0 )
+      range = (get_eq_char( ch, WEAR_WIELD ))->range;
+   else
+      range = skill_table[gsn]->range;
 
    return range;
 }
@@ -5578,4 +5581,5 @@ AREA_DATA *get_area_file( const char *name )
 
    return pArea;
 }
+
 

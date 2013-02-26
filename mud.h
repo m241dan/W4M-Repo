@@ -4593,7 +4593,7 @@ size_t mudstrlcat args( ( char *dst, const char *src, size_t siz ) );
 
 /* fight.c */
 void violence_update args( ( void ) );
-ch_ret multi_hit args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dt ) );
+ch_ret multi_hit args( ( CHAR_DATA * ch, TARGET_DATA * target, int dt ) );
 ch_ret projectile_hit args( ( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ_DATA * projectile, short dist ) );
 short ris_damage args( ( CHAR_DATA * ch, short dam, int ris ) );
 ch_ret damage args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt ) );
@@ -4621,6 +4621,7 @@ bool check_illegal_pk args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 OBJ_DATA *raw_kill( CHAR_DATA * ch, CHAR_DATA * victim );
 bool in_arena args( ( CHAR_DATA * ch ) );
 bool can_astral args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
+bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart );
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );

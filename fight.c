@@ -358,9 +358,10 @@ void violence_update( void )
       /*
        * Let the battle begin! 
        */
-      if( !ch->target || IS_AFFECTED( ch, AFF_PARALYSIS ) )
+      if( !ch->target || IS_AFFECTED( ch, AFF_PARALYSIS ) || ch->position != POS_FIGHTING )
          continue;
 
+      victim = ch->target->victim;
       retcode = rNONE;
 
       if( xIS_SET( ch->in_room->room_flags, ROOM_SAFE ) )
@@ -368,13 +369,19 @@ void violence_update( void )
          log_printf( "violence_update: %s fighting %s in a SAFE room.", ch->name, victim->name );
          stop_fighting( ch, TRUE );
       }
-      else if( IS_AWAKE( ch ) && ch->position == POS_FIGHTING )
-         retcode = multi_hit( ch, ch->target->victim, TYPE_UNDEFINED );
+      else if( IS_AWAKE( ch ) )
+         retcode = multi_hit( ch, ch->target, TYPE_UNDEFINED );
       else
          stop_fighting( ch, FALSE );
 
       if( char_died( ch ) )
          continue;
+
+      if( retcode == rVICT_OOR )
+      {
+         ch_printf( ch, "%s is too far away to auto-attack them.\r\n", victim->name ); 
+         continue;
+      }
 
       if( retcode == rCHAR_DIED || ( victim = who_fighting( ch ) ) == NULL )
          continue;
@@ -649,21 +656,6 @@ void violence_update( void )
       lcr = trvch_create( ch, TR_CHAR_ROOM_FORW );
       for( rch = ch->in_room->first_person; rch; rch = trvch_next( lcr ) )
       {
-         /*
-          *   Group Fighting Styles Support:
-          *   If ch is tanking
-          *   If rch is using a more aggressive style than ch
-          *   Then rch is the new tank   -h
-          */
-         if( ( !IS_NPC( ch ) && !IS_NPC( rch ) )
-             && ( rch != ch )
-             && ( rch->fighting )
-             && ( who_fighting( rch->fighting->who ) == ch )
-             && ( !xIS_SET( rch->fighting->who->act, ACT_AUTONOMOUS ) ) && ( rch->style < ch->style ) )
-         {
-            rch->fighting->who->fighting->who = rch;
-         }
-
          if( IS_AWAKE( rch ) && !rch->fighting )
          {
             /*
@@ -673,7 +665,11 @@ void violence_update( void )
             {
                if( ( ( !IS_NPC( rch ) && rch->desc )
                      || IS_AFFECTED( rch, AFF_CHARM ) ) && is_same_group( ch, rch ) && !is_safe( rch, victim, TRUE ) )
-                  multi_hit( rch, victim, TYPE_UNDEFINED );
+               {
+                  TARGET_DATA *temp_target;
+                  if( ( temp_target = get_target_2( rch, victim, -1 ) ) != NULL )
+                     multi_hit( rch, temp_target, TYPE_UNDEFINED );
+               }
                continue;
             }
 
@@ -725,7 +721,6 @@ void violence_update( void )
 ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
 {
    OBJ_DATA *offhand;
-   TARGET_DATA *target_copy;
    int schance;
    ch_ret retcode;
 
@@ -746,69 +741,31 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    if( IS_NPC( ch ) && xIS_SET( ch->act, ACT_NOATTACK ) )
       return rNONE;
 
-   /* Make sure we have target for auto-attacks -Davenge */
+   /* Make sure  target was passed! -Davenge */
 
-   if( dt == TYPE_UNDEFINED && !ch->target )
+   if( !target )
    {
-      bug( "CH: %s autoattacking without a target." ch->name );
+      bug( "CH: %s called multi_hit called and passed a NULL target! uh oh...", ch->name );
       return rNONE;
    }
-   
+
    /* Range Checks -Davenge */
 
-   if( dt > TYPE_UNDEFINED && dt < TYPE_HIT && skill_table[dt]->type == SKILL_SPELL 
-       && target_copy->range > ( get_skill_range( ch, dt ) + 3 ) )
-   {
-      ch_printf( ch, "Your target is out of the spell range of %s.\r\n", skill_table[dt]->name );
+   if( !range_check( ch, target, dt, FALSE )
       return rVICT_OOR;
-   }
 
-   else if( dt > TYPE_UNDEFINED && dt < TYPE_HIT && skill_table[dt]->type == SKILL_SKILL
-            && target_copy->range > ( get_skill_range( ch, dt ) +1 ) )
-   {
-      ch_printf( ch, "Your target is out of the skill range of %s.\r\n", skill_table[dt]->name );
-      return rVICT_OOR;
-   }
-   else if( dt == TYPE_UNDEFINED && get_max_range( ch ) < target_copy->range )
-   {
-      send_to_char( "Enemy is out of your auto-attack range.\r\n", ch );
-      return rVICT_OOR;
-   }
-   else if( IS_NPC( ch ) && dt == TYPE_UNDEFINED && get_max_range( ch ) > target_copy->range )
-       move_char( ch, get_exit( ch->in_room, ch->target->dir ), 0 );
-//   else if( !ch->target->range )
- //  {
-  //    send_to_char( "here's the null\r\n", ch );
-   //   return rVICT_OOR;
-  // }
-   
-   if( ch->in_room != victim->in_room )
-   {
-      char_from_room( ch );
-      char_to_room( ch, victim->in_room );  
-   }
+   if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
+      return retcode; 
 
-   if( ( retcode = one_hit( ch, victim, dt ) ) != rNONE )
-   {
-      char_from_room( ch );
-      char_to_room( ch, was_in_room );
-      return retcode;
-   }
-
-   if( who_fighting( ch ) != victim || is_skill( dt ) )
+   if( who_fighting( ch ) != target->victim || is_skill( dt ) )
       return rNONE;
 
    offhand = get_eq_char( ch, WEAR_DUAL_WIELD );
    if( offhand && offhand->item_type == ITEM_WEAPON  )
    {
       retcode = one_hit( ch, victim, dt );
-      if( retcode != rNONE || who_fighting( ch ) != victim )
-      {
-         char_from_room( ch );
-         char_to_room( ch, was_in_room );
+      if( retcode != rNONE || who_fighting( ch ) != target->victim )
          return retcode;
-      }
-
    }
 
 
@@ -957,6 +914,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 {
    OBJ_DATA *wield;
    int victim_ac, thac0, thac0_00, thac0_32, plusris, dam, diceroll, attacktype, cnt, prof_bonus, prof_gsn = -1;
+   int max_range;
    ch_ret retcode = rNONE;
    static bool dual_flip = FALSE;
 
@@ -964,7 +922,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
     * Can't beat a dead char!
     * Guard against weird room-leavings.
     */
-   if( victim->position == POS_DEAD || ch->in_room != victim->in_room )
+   if( victim->position == POS_DEAD )
       return rVICT_DIED;
 
    used_weapon = NULL;
@@ -988,9 +946,18 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    used_weapon = wield;
 
    if( wield )
+   {
       prof_bonus = weapon_prof_bonus_check( ch, wield, &prof_gsn );
+      max_range = ch->range + wield->range;
+   }
    else
+   {
       prof_bonus = 0;
+      max_range = ch->range;
+   }
+
+   if( dt == TYPE_UNDEFINED && ch->target->range > max_range )
+      return rNONE;
 
    if( ch->fighting  /* make sure fight is already started */
        && dt == TYPE_UNDEFINED && IS_NPC( ch ) && !xIS_EMPTY( ch->attacks ) )
@@ -1862,13 +1829,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
           */
          if( victim->fighting )
             victim->position = POS_FIGHTING;
-	
-      }
-
-      if( victim->position > POS_STUNNED )
-      {
-         if( !ch->fighting && victim->in_room == ch->in_room )
-            set_fighting( ch, victim );
 
          /*
           * If victim is charmed, ch might attack victim's master.
@@ -2001,7 +1961,7 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
       /*
        * Check for disarm, trip, parry, dodge and tumble.
        */
-      if( dt >= TYPE_HIT && ch->in_room == victim->in_room )
+      if( dt >= TYPE_HIT  )
       {
          if( IS_NPC( ch ) && xIS_SET( ch->defenses, DFND_DISARM ) && ch->level > 9 && number_percent(  ) < ch->level / 3 ) /* Was 2 try this --Shaddai */
             disarm( ch, victim );
@@ -4137,4 +4097,31 @@ void do_slay( CHAR_DATA* ch, const char* argument)
    set_cur_char( victim );
    raw_kill( ch, victim );
    return;
+}
+
+bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart )
+{
+   int range;
+
+   if( dt > TYPE_UNDEFINED && dt < TYPE_HIT )
+   {
+      switch( skill_table[dt]->type )
+      {
+         case SKILL_SPELL:
+            if( CastStart && range > get_skill_range( ch, dt ) )
+               return FALSE;
+            if( !CastStart && range > ( get_skill_range( ch, dt ) + 3 ) )
+               return FALSE;
+            break;
+         case SKILL_SKILL:
+            if( CastStart && range > get_skill_range( ch, dt ) )
+               return FALSE;
+            if( !CastStart && range ( get_skill_range( ch, dt ) + 1 ) )
+               return FALSE;
+            break;
+      }
+   }
+   else if( dt == TYPE_UNDEFINED && range > get_max_range( ch ) )
+      return FALSE;
+   return TRUE;
 }
