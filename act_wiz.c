@@ -4703,7 +4703,8 @@ void do_peace( CHAR_DATA* ch, const char* argument)
          stop_fighting( rch, TRUE );
          do_sit( rch, "" );
       }
-
+      if( IS_NPC( rch ) )
+         clear_target( rch );
       /*
        * Added by Narn, Nov 28/95 
        */

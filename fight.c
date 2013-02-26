@@ -781,7 +781,10 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
       return rVICT_OOR;
 
    if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
-      return retcode; 
+      return retcode;
+
+   if( !target->victim->hunting )
+      send_to_char( "Mob isn't hunting you.\r\n", ch );
 
    if( who_fighting( ch ) != target->victim || is_skill( dt ) )
       return rNONE;
@@ -1842,7 +1845,8 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
             victim->target = vic_target;
          }
 
-         ch_printf( ch, "Victim's Name: %s\r\n Victim's Direction: %s\r\nVictim Target's Range: %d\r\nVictim's Max Range: %d\r\n", victim->target->victim->name, dir_name[victim->target->dir], victim->target->range, get_max_range( victim ) );
+         ch_printf( ch, "Victim's Name: %s\r\n Victim's Direction: %s\r\nVictim Target's Range: %d\r\nVictim's Max Range: %d\r\n", 
+                    victim->target->victim->name, dir_name[victim->target->dir], victim->target->range, get_max_range( victim ) );
          if( !victim->fighting && victim->target->range < get_max_range( victim ) )
             set_fighting( victim, ch );
          else
