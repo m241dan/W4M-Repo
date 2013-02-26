@@ -361,6 +361,8 @@ void violence_update( void )
       if( !ch->target || IS_AFFECTED( ch, AFF_PARALYSIS ) ||  ch->position != POS_FIGHTING )
          continue;
 
+      send_to_char( "Battle has not in-fact begun.\r\n", ch );
+
       victim = ch->target->victim;
       retcode = rNONE;
 
@@ -738,6 +740,8 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    OBJ_DATA *offhand;
    int schance;
    ch_ret retcode;
+
+   send_to_char( "multi_hit being called\r\n", ch );
 
    /*
     * add timer to pkillers 
@@ -3676,11 +3680,13 @@ void do_kill( CHAR_DATA* ch, const char* argument)
 {
    TARGET_DATA *target;
    CHAR_DATA *victim;
+   const char *orig_argument;
    char arg[MAX_INPUT_LENGTH];
    int range, dir;
 
+   orig_argument = str_dup( argument );
    argument = one_argument( argument, arg );
-   
+
    /* If player doesn't already have a target -Davenge */
 
    if( !ch->target )
@@ -3692,7 +3698,7 @@ void do_kill( CHAR_DATA* ch, const char* argument)
          ch->position = POS_FIGHTING;
          return;
       }
-      
+
       /* If no direction is specified, check the room */
       if( argument[0] == '\0' )
       {
@@ -3703,10 +3709,10 @@ void do_kill( CHAR_DATA* ch, const char* argument)
          }
          target = make_new_target( victim, 0, -1 );
       }
-      else 
+      else
       {
          if( ( dir = get_door( argument ) ) == -1 )
-         { 
+         {
             send_to_char( "That's not a valid direction.\r\n", ch );
             return;
          }
@@ -3719,20 +3725,16 @@ void do_kill( CHAR_DATA* ch, const char* argument)
    }
    else
    {
-      if( arg[0] == '\0' )
+      if( arg[0] == '\0' || !strcmp( arg, ch->target->victim->name ) )
          send_to_char( "You drop into a fighting stance!\r\n", ch );
-      else if( !strcmp( arg, ch->target->victim->name ) )
+      else
       {
-         send_to_char( "You can't auto-attack something you are not targetting!\r\n", ch );
+         clear_target( ch );
+         do_kill( ch, orig_argument );
          return;
       }
+      target = ch->target;
    }
-
-/*   if( IS_NPC( victim ) && victim->morph )
-   {
-      send_to_char( "This creature appears strange to you.  Look upon it more closely before attempting to kill it.", ch );
-      return;
-   } NO idea what this morph shit is */
 
    range = get_max_range( ch );
 
@@ -3741,25 +3743,13 @@ void do_kill( CHAR_DATA* ch, const char* argument)
       ch_printf( ch, "%s is too far away.\r\n", capitalize( target->victim->name ) );
       return;
    }
-   /*
-    *
-    else
-    {
-    if ( IS_AFFECTED(victim, AFF_CHARM) && victim->master != NULL )
-    {
-    send_to_char( "You must MURDER a charmed creature.\r\n", ch );
-    return;
-    }
-    }
-    *
-    */
 
    if( target->victim == ch )
    {
       send_to_char( "You hit yourself.  Ouch!\r\n", ch );
       return;
    }
-   
+
    ch_printf( ch, "Target name is: %s\r\n", target->victim->name );
 
    if( is_safe( ch, target->victim, TRUE ) )
@@ -3779,6 +3769,7 @@ void do_kill( CHAR_DATA* ch, const char* argument)
  
    ch_printf( ch, "You begin targeting %s and drop to a fighting stance.\r\n", target->victim->name );
    set_new_target( ch, target );
+   ch->position = POS_FIGHTING;
    WAIT_STATE( ch, 1 * PULSE_VIOLENCE );
    check_attacker( ch, target->victim );
    multi_hit( ch, target, TYPE_UNDEFINED );
