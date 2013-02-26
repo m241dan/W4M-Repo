@@ -361,8 +361,6 @@ void violence_update( void )
       if( !ch->target || IS_AFFECTED( ch, AFF_PARALYSIS ) ||  ch->position != POS_FIGHTING )
          continue;
 
-      send_to_char( "Battle has not in-fact begun.\r\n", ch );
-
       victim = ch->target->victim;
       retcode = rNONE;
 
@@ -2957,6 +2955,9 @@ void stop_fighting( CHAR_DATA * ch, bool fBoth )
    {
       if( who_fighting( fch ) == ch )
       {
+         stop_hunting( fch );
+         stop_hating( fch );
+         stop_fearing( fch );
          free_fight( fch );
          update_pos( fch );
       }

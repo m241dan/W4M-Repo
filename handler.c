@@ -5513,11 +5513,15 @@ void clear_target( CHAR_DATA *ch )
    CHAR_DATA *tvictim;
 
    if( ch->target )
-     DISPOSE( ch->target );
+   {
+      if( ch->target->victim->first_targetedby )
+         for( tvictim = ch->target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
+            if( ch == tvictim )
+               UNLINK( tvictim, tvictim->first_targetedby, tvictim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+      DISPOSE( ch->target );
+   }
 
-   for( tvictim = ch->target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
-      if( ch == tvictim )
-         UNLINK( tvictim, tvictim->first_targetedby, tvictim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+
    return;
 }
 
