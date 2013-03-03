@@ -2067,6 +2067,23 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
                           victim->pcdata->deity ? victim->pcdata->deity->name : "(none)",
                           victim->pcdata->favor, victim->pcdata->quest_curr, victim->pcdata->quest_accum );
    }
+   if( victim->target) 
+      pager_printf_color( ch, "&cTarget Data: &C%s &cDirection:&C %s &cRange: &C%d\r\n",
+                          victim->target->victim->name, dir_name[victim->target->dir], victim->target->range );
+   else
+      pager_printf_color( ch, "&cTarget Data: &C(null)\r\n" );
+   if( victim->first_targetedby )
+   {
+      CHAR_DATA *targeted_by;
+
+      pager_printf_color( ch, "&cTargeted By: " );
+      for( targeted_by = victim->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_targetting_your_target )
+         pager_printf_color( ch, "&C%s&c, ", targeted_by->name );
+      pager_printf_color( ch, "\r\n" );
+   }
+   else
+      pager_printf_color( ch, "&cTargeted By:&C No one\r\n" );
+
    if( IS_NPC( victim ) )
       pager_printf_color( ch,
                           "&cMob hitdie : &C%dd%d+%d    &cMob damdie : &C%dd%d+%3d    &cIndex damdie : &C%dd%d+%3d\r\n&cNumAttacks : &C%d     &cRange : &C%d\r\n",

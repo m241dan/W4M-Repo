@@ -1836,6 +1836,8 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
             set_new_target( victim, get_target_2( victim, ch, -1 ) );
          }
 
+         ch_printf( get_char_world( ch, "Davenge" ), "%s: My target's range is %d\r\n", ch->name, ch->target->range );
+
          if( !victim->fighting && victim->target->range < get_max_range( victim ) )
             set_fighting( victim, ch );
          else

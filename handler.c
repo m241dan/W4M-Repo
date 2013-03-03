@@ -5496,7 +5496,8 @@ int reverse_dir( int dir )
 
 void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
 {
-   clear_target( ch );
+   if( ch->target );
+      clear_target( ch );
 
    ch->target = target;
    if( !target->victim )
@@ -5523,7 +5524,7 @@ void clear_target( CHAR_DATA *ch )
          for( tvictim = ch->target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
             if( ch == tvictim )
                UNLINK( tvictim, tvictim->first_targetedby, tvictim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
-      DISPOSE( ch->target );
+      ch->target = NULL;
    }
 
 
@@ -5621,5 +5622,8 @@ void update_target_ch_moved( CHAR_DATA *ch )
 
    if( ch->first_targetedby )
       for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_targetting_your_target )
+      {
+         ch_printf( ch, "Updating range for %s targetting me.\r\n", targeted_by->name );
          set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
+      }
 }
