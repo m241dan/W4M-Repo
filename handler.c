@@ -5496,7 +5496,8 @@ int reverse_dir( int dir )
 
 void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
 {
-   if( ch->target );
+   ch_printf( get_char_world( ch, "Davenge"), "Set_New_Target: %s, Target->Victim: %s.\r\n", ch->name, target->victim->name );
+   if( ch->target )
       clear_target( ch );
 
    ch->target = target;
@@ -5517,14 +5518,16 @@ void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
 void clear_target( CHAR_DATA *ch )
 {
    CHAR_DATA *tvictim;
+   ch_printf( get_char_world( ch, "Davenge" ), "Clear_Target: %s\r\n", ch->name );
 
    if( ch->target )
    {
       if( ch->target->victim->first_targetedby )
          for( tvictim = ch->target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
             if( ch == tvictim )
-               UNLINK( tvictim, tvictim->first_targetedby, tvictim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
-      ch->target = NULL;
+               UNLINK( tvictim, tvictim->target->victim->first_targetedby, tvictim->target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+      ch->target->victim = NULL;
+      DISPOSE( ch->target );
    }
 
 
@@ -5621,9 +5624,12 @@ void update_target_ch_moved( CHAR_DATA *ch )
    set_new_target( ch, get_target_2( ch, victim, -1 ) );
 
    if( ch->first_targetedby )
+   {
+      send_to_char( "You moved while being targetted.\r\n", ch );
       for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_targetting_your_target )
       {
          ch_printf( ch, "Updating range for %s targetting me.\r\n", targeted_by->name );
          set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
       }
+   }
 }

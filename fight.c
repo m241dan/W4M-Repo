@@ -773,6 +773,8 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    if( !range_check( ch, target, dt, FALSE ) )
       return rVICT_OOR;
 
+   ch_printf( get_char_world( ch, "Davenge" ), "%s: dt: %d max range: %d\r\n", ch->name, dt, get_max_range( ch ) );
+
    if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
       return retcode;
 
@@ -4122,20 +4124,20 @@ bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart )
       switch( skill_table[dt]->type )
       {
          case SKILL_SPELL:
-            if( CastStart && range > get_skill_range( ch, dt ) )
+            if( CastStart && range >= get_skill_range( ch, dt ) )
                return FALSE;
-            if( !CastStart && range > ( get_skill_range( ch, dt ) + 3 ) )
+            if( !CastStart && range >= ( get_skill_range( ch, dt ) + 3 ) )
                return FALSE;
             break;
          case SKILL_SKILL:
-            if( CastStart && range > get_skill_range( ch, dt ) )
+            if( CastStart && range >= get_skill_range( ch, dt ) )
                return FALSE;
-            if( !CastStart && range > ( get_skill_range( ch, dt ) + 1 ) )
+            if( !CastStart && range >= ( get_skill_range( ch, dt ) + 1 ) )
                return FALSE;
             break;
       }
    }
-   else if( dt == TYPE_UNDEFINED && range > get_max_range( ch ) )
+   else if( dt == TYPE_UNDEFINED && range >= get_max_range( ch ) )
       return FALSE;
    return TRUE;
 }
