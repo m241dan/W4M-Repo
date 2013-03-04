@@ -10395,3 +10395,23 @@ void write_realm_list( void )
    fclose( fpout );
 }
 
+ROOM_INDEX_DATA *get_room_at_coord( CHAR_DATA *ch, int x, int y, int z )
+{
+   ROOM_INDEX_DATA *room;
+   AREA_DATA *area;
+   REALM_DATA *realm;
+
+   realm = get_realm_from_char( ch );
+
+   for( area = realm->first_area_in_realm; area; area = area->next_realm_area )
+      for( room = area->first_room; room; room = room->next_aroom )
+         if( room->coord[X] == x && room->coord[Y] == y && room->coord[Z] == z )
+            return room;
+
+   return NULL;
+}
+
+REALM_DATA *get_realm_from_char( CHAR_DATA *ch )
+{
+   return ch->in_room->area->realm;
+}
