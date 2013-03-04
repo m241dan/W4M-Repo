@@ -781,9 +781,6 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
       return retcode;
 
-   if( !target->victim->hunting )
-      send_to_char( "Mob isn't hunting you.\r\n", ch );
-
    if( who_fighting( ch ) != target->victim || is_skill( dt ) )
       return rNONE;
 
@@ -938,7 +935,7 @@ short off_shld_lvl( CHAR_DATA * ch, CHAR_DATA * victim )
 ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 {
    OBJ_DATA *wield;
-   int victim_ac, thac0, thac0_00, thac0_32, plusris, dam, diceroll, attacktype, cnt, prof_bonus, prof_gsn = -1;
+   int victim_ac, thac0, thac0_00, thac0_32, plusris, dam, diceroll, prof_bonus, prof_gsn = -1;
    int max_range;
    ch_ret retcode = rNONE;
    static bool dual_flip = FALSE;
@@ -981,66 +978,8 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       max_range = ch->range;
    }
 
-   if( dt == TYPE_UNDEFINED && ch->target->range > max_range )
+   if( dt == TYPE_UNDEFINED && ch->target->range > max_range ) //Handle range for wield being used -Davenge
       return rNONE;
-
-   if( ch->fighting  /* make sure fight is already started */
-       && dt == TYPE_UNDEFINED && IS_NPC( ch ) && !xIS_EMPTY( ch->attacks ) )
-   {
-      cnt = 0;
-      for( ;; )
-      {
-         attacktype = number_range( 0, 6 );
-         if( xIS_SET( ch->attacks, attacktype ) )
-            break;
-         if( cnt++ > 16 )
-         {
-            attacktype = -1;
-            break;
-         }
-      }
-      if( attacktype == ATCK_BACKSTAB )
-         attacktype = -1;
-      if( wield && number_percent(  ) > 25 )
-         attacktype = -1;
-      if( !wield && number_percent(  ) > 50 )
-         attacktype = -1;
-
-      switch ( attacktype )
-      {
-         default:
-            break;
-         case ATCK_BITE:
-            do_bite( ch, "" );
-            retcode = global_retcode;
-            break;
-         case ATCK_CLAWS:
-            do_claw( ch, "" );
-            retcode = global_retcode;
-            break;
-         case ATCK_TAIL:
-            do_tail( ch, "" );
-            retcode = global_retcode;
-            break;
-         case ATCK_STING:
-            do_sting( ch, "" );
-            retcode = global_retcode;
-            break;
-         case ATCK_PUNCH:
-            do_punch( ch, "" );
-            retcode = global_retcode;
-            break;
-         case ATCK_KICK:
-            do_kick( ch, "" );
-            retcode = global_retcode;
-            break;
-         case ATCK_TRIP:
-            attacktype = 0;
-            break;
-      }
-      if( attacktype >= 0 )
-         return retcode;
-   }
 
    if( dt == TYPE_UNDEFINED )
    {
@@ -1678,7 +1617,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
    char log_buf[MAX_STRING_LENGTH];
    char filename[256];
    short dameq;
-   short maxdam;
    bool npcvict;
    bool loot;
    int xp_gain;
@@ -1807,21 +1745,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
          start_hating( victim, ch );
    }
 
-   /*
-    * Stop up any residual loopholes.
-    */
-   if( dt == gsn_backstab )
-      maxdam = ch->level * 80;
-   else
-      maxdam = ch->level * 40;
-
-   if( dam > maxdam )
-   {
-      bug( "Damage: %d more than %d points!", dam, maxdam );
-      bug( "** %s (lvl %d) -> %s **", ch->name, ch->level, victim->name );
-      dam = maxdam;
-   }
-
    if( victim != ch )
    {
       /*
@@ -1834,21 +1757,17 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
 
       if( victim->position > POS_STUNNED )
       {
-//         if( !victim->fighting && victim->in_room == ch->in_room )
          if( !victim->target )
-         {
-            send_to_char( "Creating target_data for victim.\r\n", ch );
             set_new_target( victim, get_target_2( victim, ch, -1 ) );
-         }
 
-         ch_printf( get_char_world( ch, "Davenge" ), "%s: My target's range is %d\r\n", ch->name, ch->target->range );
          if( !ch->fighting && dam < victim->hit )
             set_fighting( ch, victim );
 
          /*
-          * vwas: victim->position = POS_FIGHTING; 
+          * vwas: victim->position = POS_FIGHTING;
+          * modified for NPC only - Davenge
           */
-         if( victim->fighting )
+         if( IS_NPC( victim ) && victim->fighting )
             victim->position = POS_FIGHTING;
 
          /*
@@ -2877,7 +2796,6 @@ void set_fighting( CHAR_DATA * ch, CHAR_DATA * victim )
       fight->timeskilled = times_killed( ch, victim );
    ch->num_fighting = 1;
    ch->fighting = fight;
-   ch->position = POS_FIGHTING; 
 
    if( !ch->target )
       set_new_target( ch, get_target_2( ch, victim, -1 ) );
@@ -3766,7 +3684,6 @@ void do_kill( CHAR_DATA* ch, const char* argument)
  
    ch_printf( ch, "You begin targeting %s and drop to a fighting stance.\r\n", target->victim->name );
    set_new_target( ch, target );
-   ch->position = POS_FIGHTING;
    WAIT_STATE( ch, 1 * PULSE_VIOLENCE );
    check_attacker( ch, target->victim );
    multi_hit( ch, target, TYPE_UNDEFINED );
