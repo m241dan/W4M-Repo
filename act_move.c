@@ -626,8 +626,6 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
    bool nuisance = FALSE;
    bool brief = FALSE;
 
-ch_printf( get_char_world( ch, "Davenge" ), "Act_move being called\r\n" );
-
    if( !IS_NPC( ch ) )
    {
       if( IS_DRUNK( ch, 2 ) && ( ch->position != POS_SHOVE ) && ( ch->position != POS_DRAG ) )
@@ -735,6 +733,16 @@ ch_printf( get_char_world( ch, "Davenge" ), "Act_move being called\r\n" );
    if( xIS_SET( to_room->room_flags, ROOM_NO_MOB ) && IS_NPC( ch ) )
    {
       act( AT_PLAIN, "Mobs can't enter there.", ch, NULL, NULL, TO_CHAR );
+      return rNONE;
+   }
+
+   /*
+    * If combat_lag we can't move -Davenge
+    */
+
+   if( ch->combat_lag > 0 )
+   {
+      send_to_char( "&RYour combat lag hasn't cleared yet, you can't move.&w\r\n", ch );
       return rNONE;
    }
 

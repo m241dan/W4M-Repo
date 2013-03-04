@@ -5633,3 +5633,36 @@ void update_target_ch_moved( CHAR_DATA *ch )
       }
    }
 }
+
+void add_move_lag( CHAR_DATA *ch )
+{
+   QTIMER *queue;
+   double lag;
+
+   lag = base_class_lag[ch->Class];
+
+   if( ch->combat_lag > 0 && is_queued( ch, COMBAT_LAG_TIMER ) ) //If we already have timer, just reset it -Davenge
+   {
+      ch->combat_lag = lag;
+      return;
+   }
+
+   CREATE( queue, QTIMER, 1 );
+   queue->timer_ch = ch;
+   queue->type = COMBAT_LAG_TIMER;
+
+   ch->combat_lag = lag;
+
+   LINK( queue, first_qtimer, last_qtimer, next, prev );
+}
+
+bool is_queued( CHAR_DATA *ch, int type )
+{
+   QTIMER *queue;
+
+   for( queue = first_qtimer; queue; queue = queue->next )
+      if( queue->timer_ch == ch && queue->type == type)
+         return TRUE;
+   return FALSE;
+}
+

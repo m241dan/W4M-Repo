@@ -26,6 +26,7 @@
 int hit_gain( CHAR_DATA * ch );
 int mana_gain( CHAR_DATA * ch );
 int move_gain( CHAR_DATA * ch );
+void timers_update( void );
 void mobile_update( void );
 void time_update( void );  /* FB */
 void char_update( void );
@@ -1956,6 +1957,8 @@ void update_handler( void )
    struct timeval sttime;
    struct timeval etime;
 
+   timers_update(  );
+
    if( timechar )
    {
       set_char_color( AT_PLAIN, timechar );
@@ -2436,4 +2439,36 @@ void hint_update(  )
          }
       }
    }
+}
+
+void timers_update(  )
+{
+   CHAR_DATA *ch;
+   QTIMER *timer, *next_timer;
+
+   if( !first_qtimer )
+      return;
+
+   for( timer = first_qtimer; timer; timer = next_timer )
+   {
+      next_timer = timer->next;
+      ch = timer->timer_ch;
+      set_cur_char( ch );
+      switch( timer->type )
+      {
+         default:
+            break;
+         case COMBAT_LAG_TIMER:
+            ch->combat_lag -= .25;
+            if( ch->combat_lag <= 0 )
+            {
+               send_to_char( "You can move again.\r\n", ch );
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+            }
+            break;
+      }
+   }
+
 }

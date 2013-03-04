@@ -380,7 +380,10 @@ void violence_update( void )
       if( retcode == rVICT_OOR )
       {
          if( IS_NPC( ch ) )
+         {
             stop_fighting( ch, FALSE );
+            start_hunting( ch, ch->target->victim );
+         }
          else
             ch_printf( ch, "%s is too far away to auto-attack them.\r\n", victim->name );
          continue;
@@ -947,6 +950,8 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    if( victim->position == POS_DEAD )
       return rVICT_DIED;
 
+   add_move_lag( ch );
+
    used_weapon = NULL;
    /*
     * Figure out the weapon doing the damage         -Thoric
@@ -1197,8 +1202,12 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       return retcode;
    if( char_died( ch ) )
       return rCHAR_DIED;
+   else if( !ch->fighting )
+      set_fighting( ch, victim );
    if( char_died( victim ) )
       return rVICT_DIED;
+   else if( !victim->fighting )
+      set_fighting( victim, ch );
 
    retcode = rNONE;
    if( dam == 0 )
@@ -1759,9 +1768,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
       {
          if( !victim->target )
             set_new_target( victim, get_target_2( victim, ch, -1 ) );
-
-         if( !ch->fighting && dam < victim->hit )
-            set_fighting( ch, victim );
 
          /*
           * vwas: victim->position = POS_FIGHTING;
@@ -3648,7 +3654,10 @@ void do_kill( CHAR_DATA* ch, const char* argument)
          do_kill( ch, orig_argument );
          return;
       }
-      target = ch->target;
+      CREATE( target, TARGET_DATA, 1 );
+      target->victim = ch->target->victim;
+      target->range = ch->target->range;
+      target->dir = ch->target->dir;
    }
 
    range = get_max_range( ch );
@@ -3683,8 +3692,8 @@ void do_kill( CHAR_DATA* ch, const char* argument)
    }
  
    ch_printf( ch, "You begin targeting %s and drop to a fighting stance.\r\n", target->victim->name );
+   ch->position = POS_FIGHTING;
    set_new_target( ch, target );
-   WAIT_STATE( ch, 1 * PULSE_VIOLENCE );
    check_attacker( ch, target->victim );
    multi_hit( ch, target, TYPE_UNDEFINED );
    return;

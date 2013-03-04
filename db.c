@@ -226,6 +226,9 @@ REALM_DATA *last_realm;
 
 SYSTEM_DATA sysdata;
 
+QTIMER *first_qtimer;
+QTIMER *last_qtimer;
+
 int top_affect;
 int top_area;
 int top_ed;
@@ -484,6 +487,8 @@ void boot_db( bool fCopyOver )
    last_ban_race = NULL;
    first_ban = NULL;
    last_ban = NULL;
+   first_qtimer = NULL;
+   last_qtimer = NULL;
 
    CREATE( auction, AUCTION_DATA, 1 );
    auction->item = NULL;

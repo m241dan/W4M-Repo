@@ -162,6 +162,8 @@ typedef struct mpsleep_data MPSLEEP_DATA;
 typedef struct lmsg_data LMSG_DATA;
 typedef struct target_data TARGET_DATA;
 typedef struct realm_data REALM_DATA;
+typedef struct queue_timers QTIMER;
+typedef struct combat_lag CLAG;
 /*
  * Function types.
  */
@@ -238,7 +240,7 @@ typedef bool SPEC_FUN( CHAR_DATA * ch );
 #define MAX_REXITS		   20 /* Maximum exits allowed in 1 room */
 #define MAX_SKILL		  500
 #define SPELL_SILENT_MARKER   "silent" /* No OK. or Failed. */
-#define MAX_CLASS           	   13
+#define MAX_CLASS           	    9
 #define MAX_NPC_CLASS		   26
 #define MAX_RACE                   20
 #define MAX_NPC_RACE		   91
@@ -2320,6 +2322,7 @@ struct char_data
    CHAR_DATA *last_targetedby;
    CHAR_DATA *next_person_targetting_your_target;
    CHAR_DATA *prev_person_targetting_your_target;
+   double combat_lag;
 };
 
 struct target_data
@@ -2613,6 +2616,30 @@ struct realm_data
    const char *name;
    int zero_zero_zero;
 };
+
+/*
+ * Creating a timer that is queued and runs every pulse of the CPU
+ * Basically, this is giving us more accuracy in our ability to generate
+ * and reduce cooldowns without dragging too much on the processing % 
+ *-Davenge
+ */
+struct queue_timers
+{
+   QTIMER *next;
+   QTIMER *prev;
+   CHAR_DATA *timer_ch;
+   int type;
+};
+
+/*
+ * Need a way to tell what timer the queue timer is cast to
+ * -Davenge
+ */
+
+#define COMBAT_LAG_TIMER    0
+#define COOLDOWN_TIMER      1
+#define AFFECT_TIMER        2
+#define TIMER_TIMER         3
 
 /*
  * Area definition.
@@ -3549,6 +3576,7 @@ extern const char *const ex_pwater[];
 extern const char *const ex_pair[];
 extern const char *const ex_pearth[];
 extern const char *const ex_pfire[];
+extern const double base_class_lag[MAX_CLASS];
 
 extern int const lang_array[];
 extern const char *const lang_names[];
@@ -3654,6 +3682,8 @@ extern AREA_DATA *first_area_name;  /*alphanum. sort */
 extern AREA_DATA *last_area_name;   /* Fireblade */
 extern LANG_DATA *first_lang;
 extern LANG_DATA *last_lang;
+extern QTIMER *first_qtimer;
+extern QTIMER *last_qtimer;
 extern TELEPORT_DATA *first_teleport;
 extern TELEPORT_DATA *last_teleport;
 extern OBJ_DATA *extracted_obj_queue;
@@ -4867,7 +4897,8 @@ REALM_DATA *get_realm( const char * argument );
 AREA_DATA *get_area_file( const char * name );
 int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir );
 void update_target_ch_moved( CHAR_DATA * ch );
-
+void add_move_lag( CHAR_DATA *ch );
+bool is_queued( CHAR_DATA *ch, int type );
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
 void interpret args( ( CHAR_DATA * ch, const char *argument ) );
