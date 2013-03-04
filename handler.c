@@ -5368,12 +5368,12 @@ TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir )
       return make_new_target( victim, 0, -1 );
 
    if( dir == -1 )
-      dir = find_first_step( ch->in_room, victim->in_room, 20 );
+      dir = find_first_step( ch->in_room, victim->in_room, MAX_DISTANCE );
 
    if( dir != BFS_ERROR && dir != BFS_NO_PATH )
    {
       range = find_distance( ch, victim, dir );
-      if( range > 20 )
+      if( range > MAX_DISTANCE )
       {
          send_to_char( "Target distance greater than 20, losing target.\r\n", ch );
          return NULL;
@@ -5411,9 +5411,9 @@ int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir )
    if( init_dir > -1 )
       dir = init_dir;
    else
-      dir = find_first_step( current_room, dest_room, 20 );
+      dir = find_first_step( current_room, dest_room, MAX_DISTANCE );
 
-   for( dist = 1; dist <= 20; dist ++ )
+   for( dist = 1; dist <= MAX_DISTANCE; dist ++ )
    {
       /*
        *If somehow an exit does not exist in this direction return -1 which is error for this function
@@ -5430,9 +5430,9 @@ int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir )
       /*
        * Haven't got their next, so find the direction we need for our next step -Davenge
        */
-      dir = find_first_step( current_room, dest_room, 20 );
+      dir = find_first_step( current_room, dest_room, MAX_DISTANCE );
    }
-   return 21;
+   return MAX_DISTANCE+1;
 }
 
 /* Function that checks Line of Sight -Davenge */
