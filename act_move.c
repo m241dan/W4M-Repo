@@ -626,6 +626,8 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
    bool nuisance = FALSE;
    bool brief = FALSE;
 
+ch_printf( get_char_world( ch, "Davenge" ), "Act_move being called\r\n" );
+
    if( !IS_NPC( ch ) )
    {
       if( IS_DRUNK( ch, 2 ) && ( ch->position != POS_SHOVE ) && ( ch->position != POS_DRAG ) )

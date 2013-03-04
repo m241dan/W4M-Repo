@@ -337,7 +337,8 @@ void hunt_victim( CHAR_DATA * ch )
    CHAR_DATA *tmp;
    EXIT_DATA *pexit;
 
-   if( !ch || !ch->hunting || ch->position < 5 )
+
+   if( !ch || !ch->hunting || ch->position < POS_RESTING )
       return;
 
    /*
@@ -369,13 +370,13 @@ void hunt_victim( CHAR_DATA * ch )
       found_prey( ch, ch->hunting->who );
       return;
    }
-   if( ch->target->dir < 0 && ch->target->dir != -2 ) //Add minor bug functionality for "BFS_ALREADY_THERE" -Davenge
+   if( ch->target->dir < 0 && ch->target->dir != BFS_ALREADY_THERE ) //Add minor bug functionality for "BFS_ALREADY_THERE" -Davenge
    {
       do_say( ch, "Damn!  Lost my prey!" );
       stop_hunting( ch );
       return;
    }
-   else if( ch->target->dir != -2 )
+   else if( ch->target->dir != BFS_ALREADY_THERE )
    {
       if( ( pexit = get_exit( ch->in_room, ch->target->dir ) ) == NULL )
       {

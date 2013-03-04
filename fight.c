@@ -379,7 +379,10 @@ void violence_update( void )
 
       if( retcode == rVICT_OOR )
       {
-         ch_printf( ch, "%s is too far away to auto-attack them.\r\n", victim->name ); 
+         if( IS_NPC( ch ) )
+            stop_fighting( ch, FALSE );
+         else
+            ch_printf( ch, "%s is too far away to auto-attack them.\r\n", victim->name );
          continue;
       }
 
@@ -1839,11 +1842,8 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
          }
 
          ch_printf( get_char_world( ch, "Davenge" ), "%s: My target's range is %d\r\n", ch->name, ch->target->range );
-
-         if( !victim->fighting && victim->target->range < get_max_range( victim ) )
-            set_fighting( victim, ch );
-         else
-            send_to_char( "Didn't set fighting.\r\n", ch );
+         if( !ch->fighting && dam < victim->hit )
+            set_fighting( ch, victim );
 
          /*
           * vwas: victim->position = POS_FIGHTING; 
