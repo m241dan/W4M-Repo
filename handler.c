@@ -5438,7 +5438,7 @@ int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir )
 
 /* Function that checks Line of Sight -Davenge */
 
-bool check_los( CHAR_DATA *ch, CHAR_DATA *victim, int range )
+bool check_los( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    int ch_coord[3];
    int victim_coord[3];
@@ -5455,7 +5455,7 @@ bool check_los( CHAR_DATA *ch, CHAR_DATA *victim, int range )
    for( counter = 0; counter < 3; counter++ )
       ch_coord[counter] = ch->in_room->coord[counter];
    for( counter = 0; counter < 3; counter++ )
-      victim_coord[counter] = ch->in_room->coord[counter];
+      victim_coord[counter] = victim->in_room->coord[counter];
 
    dif_x = coord_dif( ch_coord[X], victim_coord[X] );
    dif_y = coord_dif( ch_coord[Y], victim_coord[Y] );
@@ -5464,8 +5464,12 @@ bool check_los( CHAR_DATA *ch, CHAR_DATA *victim, int range )
    distance = find_distance( ch, victim, -1 );
    dif_distance = distance_from_dif( dif_z, dif_y, dif_x );
 
-   if( distance != dif_distance )
+   if( distance > dif_distance )
+   {
+      ch_printf( ch, "ch_y: %d\r\nvic_y: %d\r\ndif_y: %d\r\n", ch_coord[Y], victim_coord[Y], dif_y );
+      ch_printf( ch, "The problem is here 1: distance- %d dif_distance- %d\r\n", distance, dif_distance );
       return FALSE;
+   }
 
    big_dif = dif_x;
    if( dif_y > big_dif )
@@ -5478,11 +5482,38 @@ bool check_los( CHAR_DATA *ch, CHAR_DATA *victim, int range )
    inc_z = coord_inc( ch_coord[Z], victim_coord[Z], dif_z, big_dif );
 
    ROOM_INDEX_DATA *line[distance];
+   EXIT_DATA *exit;
+
    line[0] = ch->in_room;
    line[distance-1] = victim->in_room;
 
    for( counter = 1; counter < ( distance - 1 ); counter++ )
       line[counter] = next_room_on_line( ch, counter, inc_x, inc_y, inc_z );
+
+   /*
+    * Check for a NULL room in our line of rooms -Davenge
+    */
+   for( counter = 0; counter < distance; counter++ )
+      if( line[counter] == NULL )
+      {
+         bug( "%s: CH: %s ... Line of Sight: Line NULL room at %d array position", __FUNCTION__, ch->name, counter );
+         return FALSE;
+      }
+
+   for( counter = 0; counter < ( distance - 1 ); counter++ )
+   {
+      exit = get_exit( line[counter], (find_first_step( line[counter], line[counter+1], 10 )) );
+      if( !exit )
+      {
+         send_to_char( "The problem is here 2\r\n", ch );
+         return FALSE;
+      }
+      if( IS_SET( exit->exit_info, EX_CLOSED ) )
+      {
+         send_to_char( "The problem is here 3\r\n", ch );
+         return FALSE;
+      }
+   }
    return TRUE;
 }
 

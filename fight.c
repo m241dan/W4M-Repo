@@ -379,13 +379,25 @@ void violence_update( void )
 
       if( retcode == rVICT_OOR )
       {
-         if( IS_NPC( ch ) )
+         if( IS_NPC( ch ) ) // Need to do something better here. Can't stop fighting and lose fight data just because out of range
          {
             stop_fighting( ch, FALSE );
             start_hunting( ch, ch->target->victim );
          }
          else
             ch_printf( ch, "%s is too far away to auto-attack them.\r\n", victim->name );
+         continue;
+      }
+
+      if( retcode == rVICT_LOS )
+      {
+         if( IS_NPC( ch ) )
+         {
+            stop_fighting( ch, FALSE );
+            start_hunting( ch, ch->target->victim );
+         }
+         else
+            ch_printf( ch, "%s is out of your line of sight.\r\n", victim->name );
          continue;
       }
 
@@ -778,6 +790,11 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
 
    if( !range_check( ch, target, dt, FALSE ) )
       return rVICT_OOR;
+
+   /* Check for Line of Sight -Davenge */
+
+   if( !check_los( ch, target->victim ) )
+      return rVICT_LOS;
 
    ch_printf( get_char_world( ch, "Davenge" ), "%s: dt: %d max range: %d\r\n", ch->name, dt, get_max_range( ch ) );
 
@@ -2103,6 +2120,8 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
 
       clear_target( ch );
       clear_target( victim );
+
+      stop_fighting( ch, TRUE );
 
       group_gain( ch, victim );
 

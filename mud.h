@@ -351,7 +351,7 @@ typedef enum
    rNONE, rCHAR_DIED, rVICT_DIED, rBOTH_DIED, rCHAR_QUIT, rVICT_QUIT,
    rBOTH_QUIT, rSPELL_FAILED, rOBJ_SCRAPPED, rOBJ_EATEN, rOBJ_EXPIRED,
    rOBJ_TIMER, rOBJ_SACCED, rOBJ_QUAFFED, rOBJ_USED, rOBJ_EXTRACTED,
-   rOBJ_DRUNK, rCHAR_IMMUNE, rVICT_IMMUNE, rVICT_OOR,
+   rOBJ_DRUNK, rCHAR_IMMUNE, rVICT_IMMUNE, rVICT_OOR, rVICT_LOS,
    rCHAR_AND_OBJ_EXTRACTED = 128,
    rERROR = 255
 } ret_types;
@@ -4908,7 +4908,7 @@ int distance_from_dif( int dif_x, int dif_y, int dif_z );
 int coord_dif( int ch_coord, int vic_coord );
 int coord_inc	( int ch_coord, int vic_coord, int dif, int big_dif );
 ROOM_INDEX_DATA *next_room_on_line( CHAR_DATA *ch, int counter, int inc_x, int inc_y, int inc_z );
-
+bool check_los( CHAR_DATA *ch, CHAR_DATA *victim );
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
 void interpret args( ( CHAR_DATA * ch, const char *argument ) );

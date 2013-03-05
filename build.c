@@ -4769,7 +4769,7 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       send_to_char( "\r\n", ch );
       send_to_char( "Field being one of:\r\n", ch );
       send_to_char( "  name desc ed rmed affect rmaffect permaffect rmpermaffect\r\n", ch );
-      send_to_char( "  exit bexit exdesc exflags exname exkey exangle extype\r\n", ch );
+      send_to_char( "  exit bexit exdesc exflags exname exkey exangle\r\n", ch );
       send_to_char( "  flags sector teledelay televnum tunnel\r\n", ch );
       send_to_char( "  rlist exdistance pulltype pull push unset\r\n", ch );
       return;
