@@ -796,8 +796,6 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    if( !check_los( ch, target->victim ) )
       return rVICT_LOS;
 
-   ch_printf( get_char_world( ch, "Davenge" ), "%s: dt: %d max range: %d\r\n", ch->name, dt, get_max_range( ch ) );
-
    if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
       return retcode;
 
@@ -3741,8 +3739,6 @@ void do_kill( CHAR_DATA* ch, const char* argument)
       send_to_char( "You hit yourself.  Ouch!\r\n", ch );
       return;
    }
-
-   ch_printf( ch, "Target name is: %s\r\n", target->victim->name );
 
    if( is_safe( ch, target->victim, TRUE ) )
       return;

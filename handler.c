@@ -5465,11 +5465,7 @@ bool check_los( CHAR_DATA *ch, CHAR_DATA *victim )
    dif_distance = distance_from_dif( dif_z, dif_y, dif_x );
 
    if( distance > dif_distance )
-   {
-      ch_printf( ch, "ch_y: %d\r\nvic_y: %d\r\ndif_y: %d\r\n", ch_coord[Y], victim_coord[Y], dif_y );
-      ch_printf( ch, "The problem is here 1: distance- %d dif_distance- %d\r\n", distance, dif_distance );
       return FALSE;
-   }
 
    big_dif = dif_x;
    if( dif_y > big_dif )
@@ -5495,10 +5491,7 @@ bool check_los( CHAR_DATA *ch, CHAR_DATA *victim )
     */
    for( counter = 0; counter < distance; counter++ )
       if( line[counter] == NULL )
-      {
-         bug( "%s: CH: %s ... Line of Sight: Line NULL room at %d array position", __FUNCTION__, ch->name, counter );
          return FALSE;
-      }
 
    for( counter = 0; counter < ( distance - 1 ); counter++ )
    {
@@ -5604,7 +5597,6 @@ int reverse_dir( int dir )
 
 void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
 {
-   ch_printf( get_char_world( ch, "Davenge"), "Set_New_Target: %s, Target->Victim: %s.\r\n", ch->name, target->victim->name );
    if( ch->target )
       clear_target( ch );
 
@@ -5626,7 +5618,6 @@ void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
 void clear_target( CHAR_DATA *ch )
 {
    CHAR_DATA *tvictim;
-   ch_printf( get_char_world( ch, "Davenge" ), "Clear_Target: %s\r\n", ch->name );
 
    if( ch->target )
    {
@@ -5730,14 +5721,8 @@ void update_target_ch_moved( CHAR_DATA *ch )
    }
 
    if( ch->first_targetedby )
-   {
-      send_to_char( "You moved while being targetted.\r\n", ch );
       for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_targetting_your_target )
-      {
-         ch_printf( ch, "Updating range for %s targetting me.\r\n", targeted_by->name );
          set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
-      }
-   }
 }
 
 void add_move_lag( CHAR_DATA *ch )
