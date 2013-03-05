@@ -3622,7 +3622,12 @@ void do_target( CHAR_DATA *ch, const char *argument )
 
    argument = one_argument( argument, arg );
 
-   if( arg[0] == '\0' || !str_cmp( strlower( arg ), "none" ) )
+   if( arg[0] == '\0' )
+   {
+      send_to_char( "You need to specify a target and possibly a direction.\r\n", ch );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "none" ) )
    {
       send_to_char( "Clearing target.\r\n", ch );
       clear_target( ch );
@@ -3631,12 +3636,12 @@ void do_target( CHAR_DATA *ch, const char *argument )
 
    if( argument[0] == '\0' && ( victim = get_char_room( ch, arg ) ) == NULL )
    {
-      send_to_char( "For now, you need to specifiy a direction unless the target is in the room.\r\n", ch );
+      send_to_char( "That person is not in the room, try specifying the direction they are in.\r\n", ch );
       return;
    }
 
    if( victim )
-      target = get_target_2( ch, victim, -1 );
+      target = make_new_target( victim, 0, -1 );
    else
       target = get_target( ch, arg, get_dir( argument ) );
 
