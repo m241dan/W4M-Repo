@@ -2441,7 +2441,7 @@ void extract_obj( OBJ_DATA * obj )
  */
 void extract_char( CHAR_DATA * ch, bool fPull )
 {
-   CHAR_DATA *wch;
+   CHAR_DATA *wch, *next_wch;
    OBJ_DATA *obj;
    char buf[MAX_STRING_LENGTH];
    ROOM_INDEX_DATA *location;
@@ -2499,6 +2499,15 @@ void extract_char( CHAR_DATA * ch, bool fPull )
       die_follower( ch );
 
    stop_fighting( ch, TRUE );
+
+   clear_target( ch );
+
+   if( ch->first_targetedby )
+      for( wch = ch->first_targetedby; wch; wch = next_wch )
+      {
+         next_wch = wch->next_person_targetting_your_target;
+         clear_target( wch );
+      }
 
    if( ch->mount )
    {
