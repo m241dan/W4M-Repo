@@ -4903,6 +4903,11 @@ int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir );
 void update_target_ch_moved( CHAR_DATA * ch );
 void add_move_lag( CHAR_DATA *ch );
 bool is_queued( CHAR_DATA *ch, int type );
+int distance_from_dif( int dif_x, int dif_y, int dif_z );
+int coord_dif( int ch_coord, int vic_coord );
+int coord_inc	( int ch_coord, int vic_coord, int dif, int big_dif );
+ROOM_INDEX_DATA *next_room_on_line( CHAR_DATA *ch, int counter, int inc_x, int inc_y, int inc_z );
+
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
 void interpret args( ( CHAR_DATA * ch, const char *argument ) );

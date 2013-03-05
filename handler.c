@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "mud.h"
 
 extern int top_exit;
@@ -5439,27 +5440,103 @@ int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir )
 
 bool check_los( CHAR_DATA *ch, CHAR_DATA *victim, int range )
 {
-   TARGET_DATA *los_data;
-   int dir, op_dir;
+   int ch_coord[3];
+   int victim_coord[3];
+   int counter, dif_x, dif_y, dif_z;
+   int big_dif, dif_distance, distance;
+   int inc_x, inc_y, inc_z;
 
-   /* Same room, obviously has line of sight - Davenge */
-
-   if( ch->in_room == victim->in_room )
+   if( ch->in_room == victim->in_room) //Just incase, haha
       return TRUE;
+   /*
+    * Transfer coords into these arrays for simpler access -Davenge
+    */
 
-   dir = ch->target->dir;
-   op_dir = find_first_step( victim->in_room, ch->in_room, 10 );
+   for( counter = 0; counter < 3; counter++ )
+      ch_coord[counter] = ch->in_room->coord[counter];
+   for( counter = 0; counter < 3; counter++ )
+      victim_coord[counter] = ch->in_room->coord[counter];
 
-   /* Check if the characters are facing each other in direct opposite directions 
-         -Davenge */
+   dif_x = coord_dif( ch_coord[X], victim_coord[X] );
+   dif_y = coord_dif( ch_coord[Y], victim_coord[Y] );
+   dif_z = coord_dif( ch_coord[Z], victim_coord[Z] );
 
-   if( dir == reverse_dir( op_dir ) && ( los_data = get_target_2( ch, victim, dir ) ) != NULL )
-      return TRUE;
+   distance = find_distance( ch, victim, -1 );
+   dif_distance = distance_from_dif( dif_z, dif_y, dif_x );
 
-   return FALSE;
+   if( distance != dif_distance )
+      return FALSE;
+
+   big_dif = dif_x;
+   if( dif_y > big_dif )
+      big_dif = dif_y;
+   if( dif_z > big_dif )
+      big_dif = dif_z;
+
+   inc_x = coord_inc( ch_coord[X], victim_coord[X], dif_x, big_dif );
+   inc_y = coord_inc( ch_coord[Y], victim_coord[Y], dif_y, big_dif );
+   inc_z = coord_inc( ch_coord[Z], victim_coord[Z], dif_z, big_dif );
+
+   ROOM_INDEX_DATA *line[distance];
+   line[0] = ch->in_room;
+   line[distance-1] = victim->in_room;
+
+   for( counter = 1; counter < ( distance - 1 ); counter++ )
+      line[counter] = next_room_on_line( ch, counter, inc_x, inc_y, inc_z );
+   return TRUE;
 }
 
-/* Reverse a direction integer given to it's oppsoite, ie south = north, east = west
+ROOM_INDEX_DATA *next_room_on_line( CHAR_DATA *ch, int counter, int inc_x, int inc_y, int inc_z )
+{
+   ROOM_INDEX_DATA *room;
+   int x, y, z;
+
+   x = ch->in_room->coord[X] + round(( counter * inc_x ));
+   y = ch->in_room->coord[Y] + round(( counter * inc_y ));
+   z = ch->in_room->coord[Z] + round(( counter * inc_z ));
+
+   room = get_room_at_coord( ch, x, y, z );
+
+   return room;
+}
+/*
+ * Returns the distance from the coordinates in an amount of foot traveled distance
+ * -Davenge
+ */
+int distance_from_dif( int dif_x, int dif_y, int dif_z )
+{
+   int distance = 0;
+
+   distance += dif_x;
+   if( dif_y != dif_x && dif_y != dif_z )
+      distance += dif_y;
+   if( dif_z != dif_x && dif_z != dif_y )
+      distance += dif_z;
+
+   return distance;
+}
+
+int coord_inc( int ch_coord, int vic_coord, int dif, int big_dif )
+{
+   int inc;
+
+   inc = dif / big_dif;
+
+   if( ch_coord > vic_coord )
+      inc *= -1;
+
+   return inc;
+}
+int coord_dif( int ch_coord, int vic_coord )
+{
+   int dif;
+   dif = ch_coord - vic_coord;
+   if( dif < 0 )
+      dif *= -1;
+
+   return dif;
+}
+/* Reverse a direction integer given to it's opposite, ie south = north, east = west
       -Davenge */
 
 int reverse_dir( int dir )
