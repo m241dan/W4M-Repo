@@ -3616,6 +3616,55 @@ void dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
 }
 #endif
 
+void do_target( CHAR_DATA *ch, const char *argument )
+{
+   CHAR_DATA *victim;
+   TARGET_DATA *target;
+   char arg[MAX_INPUT_LENGTH];
+
+   argument = one_argument( argument, arg );
+
+   if( arg[0] == '\0' || !str_cmp( strlower( arg ), "none" ) )
+   {
+      send_to_char( "Clearing target.\r\n", ch );
+      clear_target( ch );
+      return;
+   }
+
+   if( argument[0] == '\0' && ( victim = get_char_room( ch, arg ) ) == NULL )
+   {
+      send_to_char( "For now, you need to specifiy a direction unless the target is in the room.\r\n", ch );
+      return;
+   }
+
+   if( victim )
+      target = get_target_2( ch, victim, -1 );
+   else
+      target = get_target( ch, arg, get_dir( argument ) );
+
+   if( !target )
+   {
+      send_to_char( "That person is not here nor there for targetting.\r\n", ch );
+      return;
+   }
+   ch_printf( ch, "Targetting: %s...\r\n", target->victim->name );
+   set_new_target( ch, target );
+   return;
+}
+
+void do_stop( CHAR_DATA *ch, const char *argument )
+{
+   if( ch->position != POS_FIGHTING )
+   {
+      send_to_char( "Stop what? You aren't fighting anyone.\r\n", ch );
+      return;
+   }
+   send_to_char( "You relax from your fighting stance and stop auto-attacking.\r\n", ch ); 
+   ch->position = POS_STANDING;
+   return;
+
+}
+
 void do_kill( CHAR_DATA* ch, const char* argument)
 {
    TARGET_DATA *target;

@@ -5723,13 +5723,11 @@ void update_target_ch_moved( CHAR_DATA *ch )
    CHAR_DATA *targeted_by;
    CHAR_DATA *victim;
 
-   if( !ch->target )
+   if( ch->target )
    {
-      bug( "update_target_ch_moved called without %s having a target.", ch->name );
-      return;
+      victim = ch->target->victim; // to be safe -Davenge
+      set_new_target( ch, get_target_2( ch, victim, -1 ) );
    }
-   victim = ch->target->victim; // to be safe -Davenge
-   set_new_target( ch, get_target_2( ch, victim, -1 ) );
 
    if( ch->first_targetedby )
    {
