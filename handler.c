@@ -5515,9 +5515,9 @@ ROOM_INDEX_DATA *next_room_on_line( CHAR_DATA *ch, int counter, int inc_x, int i
    ROOM_INDEX_DATA *room;
    int x, y, z;
 
-   x = ch->in_room->coord[X] + round(( counter * inc_x ));
-   y = ch->in_room->coord[Y] + round(( counter * inc_y ));
-   z = ch->in_room->coord[Z] + round(( counter * inc_z ));
+   x = ch->in_room->coord[X] + (int)round(( counter * inc_x ));
+   y = ch->in_room->coord[Y] + (int)round(( counter * inc_y ));
+   z = ch->in_room->coord[Z] + (int)round(( counter * inc_z ));
 
    room = get_room_at_coord( ch, x, y, z );
 
