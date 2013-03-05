@@ -53,7 +53,8 @@ const char *const ex_flags[] = {
    "isdoor", "closed", "locked", "secret", "swim", "pickproof", "fly", "climb",
    "dig", "eatkey", "nopassdoor", "hidden", "passage", "portal", "r1", "r2",
    "can_climb", "can_enter", "can_leave", "auto", "noflee", "searchable",
-   "bashed", "bashproof", "nomob", "window", "can_look", "isbolt", "bolted"
+   "bashed", "bashproof", "nomob", "window", "can_look", "isbolt", "bolted",
+    "narrow"
 };
 
 const char *const sec_flags[] = {
@@ -4768,7 +4769,7 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       send_to_char( "\r\n", ch );
       send_to_char( "Field being one of:\r\n", ch );
       send_to_char( "  name desc ed rmed affect rmaffect permaffect rmpermaffect\r\n", ch );
-      send_to_char( "  exit bexit exdesc exflags exname exkey exangle\r\n", ch );
+      send_to_char( "  exit bexit exdesc exflags exname exkey exangle extype\r\n", ch );
       send_to_char( "  flags sector teledelay televnum tunnel\r\n", ch );
       send_to_char( "  rlist exdistance pulltype pull push unset\r\n", ch );
       return;
@@ -5022,6 +5023,7 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       send_to_char( "Done.\r\n", ch );
       return;
    }
+
    if( !str_cmp( arg, "exangle" ) )
    {
       int adir;

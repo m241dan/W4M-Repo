@@ -1930,7 +1930,8 @@ typedef enum
 #define EX_xLOOK		  BV26
 #define EX_ISBOLT		  BV27
 #define EX_BOLTED		  BV28
-#define MAX_EXFLAG		  28
+#define EX_NARROW		  BV29
+#define MAX_EXFLAG		  29
 
 /*
  * Sector types.
