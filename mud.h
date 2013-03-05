@@ -2325,6 +2325,7 @@ struct char_data
    CHAR_DATA *next_person_targetting_your_target;
    CHAR_DATA *prev_person_targetting_your_target;
    double combat_lag;
+   bool stopkill;
 };
 
 struct target_data

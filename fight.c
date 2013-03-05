@@ -346,6 +346,13 @@ void violence_update( void )
          }
       }
 
+      if( ch->stopkill )
+      {
+         ch->stopkill = FALSE;
+         send_to_char( "You may now use the kill command again.\r\n", ch );
+         continue;
+      }
+
       if( char_died( ch ) )
          continue;
 
@@ -3663,6 +3670,7 @@ void do_stop( CHAR_DATA *ch, const char *argument )
       return;
    }
    send_to_char( "You relax from your fighting stance and stop auto-attacking.\r\n", ch ); 
+   ch->stopkill = TRUE;
    ch->position = POS_STANDING;
    return;
 
@@ -3678,6 +3686,14 @@ void do_kill( CHAR_DATA* ch, const char* argument)
 
    orig_argument = str_dup( argument );
    argument = one_argument( argument, arg );
+
+   /* If you have recently stopped, gotta wait for it to clear before you can kill again. -Davenge */
+
+   if( ch->stopkill )
+   {
+      send_to_char( "Not so fast... you must wait to kill again after typing stop so soon.\r\n", ch );
+      return;
+   }
 
    /* If player doesn't already have a target -Davenge */
 
