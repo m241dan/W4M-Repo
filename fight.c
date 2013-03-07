@@ -245,11 +245,9 @@ void violence_update( void )
    CHAR_DATA *rch;
    TRV_WORLD *lcw;
    TRV_DATA *lcr;
-   AFFECT_DATA *paf, *paf_next;
    TIMER *timer, *timer_next;
    ch_ret retcode;
    int attacktype, cnt;
-   SKILLTYPE *skill;
    static int pulse = 0;
 
    lst_ch = NULL;
@@ -310,41 +308,6 @@ void violence_update( void )
 
       if( char_died( ch ) )
          continue;
-
-      /*
-       * We need spells that have shorter durations than an hour.
-       * So a melee round sounds good to me... -Thoric
-       */
-      for( paf = ch->first_affect; paf; paf = paf_next )
-      {
-         paf_next = paf->next;
-         if( paf->duration > 0 )
-            paf->duration--;
-         else if( paf->duration < 0 )
-            ;
-         else
-         {
-            if( !paf_next || paf_next->type != paf->type || paf_next->duration > 0 )
-            {
-               skill = get_skilltype( paf->type );
-               if( paf->type > 0 && skill && skill->msg_off )
-               {
-                  set_char_color( AT_WEAROFF, ch );
-                  send_to_char( skill->msg_off, ch );
-                  send_to_char( "\r\n", ch );
-               }
-            }
-            if( paf->type == gsn_possess )
-            {
-               ch->desc->character = ch->desc->original;
-               ch->desc->original = NULL;
-               ch->desc->character->desc = ch->desc;
-               ch->desc->character->switched = NULL;
-               ch->desc = NULL;
-            }
-            affect_remove( ch, paf );
-         }
-      }
 
       if( ch->stopkill )
       {
@@ -972,7 +935,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    if( victim->position == POS_DEAD )
       return rVICT_DIED;
 
-   add_move_lag( ch );
+   add_queue( ch, COMBAT_LAG_TIMER );
 
    used_weapon = NULL;
    /*

@@ -2192,7 +2192,7 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
    {
       if( ( skill = get_skilltype( paf->type ) ) != NULL )
          pager_printf_color( ch,
-                             "&c%s: &w'%s' mods %s by %d for %d rnds with bits %s.",
+                             "&c%s: &w'%s' mods %s by %d for %f seconds with bits %s.",
                              skill_tname[skill->type],
                              skill->name,
                              affect_loc_name( paf->location ),

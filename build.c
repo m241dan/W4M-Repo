@@ -6360,7 +6360,7 @@ void fwrite_fuss_affect( FILE * fp, AFFECT_DATA * paf )
 {
    if( paf->type < 0 || paf->type >= num_skills )
    {
-      fprintf( fp, "Affect       %d %d %d %d %s\n",
+      fprintf( fp, "Affect       %d %f %d %d %s\n",
                paf->type,
                paf->duration,
                ( ( paf->location == APPLY_WEAPONSPELL
@@ -6373,7 +6373,7 @@ void fwrite_fuss_affect( FILE * fp, AFFECT_DATA * paf )
    }
    else
    {
-      fprintf( fp, "AffectData   '%s' %d %d %d %s\n",
+      fprintf( fp, "AffectData   '%s' %f %d %d %s\n",
                skill_table[paf->type]->name,
                paf->duration,
                ( ( paf->location == APPLY_WEAPONSPELL

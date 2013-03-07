@@ -568,12 +568,12 @@ void do_score( CHAR_DATA* ch, const char* argument )
          if( ch->level >= 20 )
          {
             if( paf->modifier == 0 )
-               pager_printf( ch, "[%-24.24s;%5d rds]    ", sktmp->name, paf->duration );
+               pager_printf( ch, "[%-24.24s;%-5f seconds]    ", sktmp->name, paf->duration );
             else if( paf->modifier > 999 )
-               pager_printf( ch, "[%-15.15s; %7.7s;%5d rds]    ",
+               pager_printf( ch, "[%-15.15s; %7.7s;%-5f seconds]    ",
                              sktmp->name, tiny_affect_loc_name( paf->location ), paf->duration );
             else
-               pager_printf( ch, "[%-11.11s;%+-3.3d %7.7s;%5d rds]    ",
+               pager_printf( ch, "[%-11.11s;%+-3.3d %7.7s;%5f seconds]    ",
                              sktmp->name, paf->modifier, tiny_affect_loc_name( paf->location ), paf->duration );
             if( i == 0 )
                i = 1;
@@ -896,7 +896,7 @@ void do_affected( CHAR_DATA* ch, const char* argument)
                   set_char_color( AT_WHITE, ch );
                if( paf->duration < 6 )
                   set_char_color( AT_WHITE + AT_BLINK, ch );
-               ch_printf( ch, "(%5d)   ", paf->duration );
+               ch_printf( ch, "(%-5f)   ", paf->duration );
             }
             ch_printf( ch, "%-18s\r\n", skill->name );
          }

@@ -1296,7 +1296,7 @@ struct affect_data
    AFFECT_DATA *next;
    AFFECT_DATA *prev;
    short type;
-   int duration;
+   double duration;
    short location;
    int modifier;
    EXT_BV bitvector;
@@ -4568,6 +4568,7 @@ OID *get_obj_index args( ( int vnum ) );
 RID *get_room_index args( ( int vnum ) );
 char fread_letter args( ( FILE * fp ) );
 int fread_number args( ( FILE * fp ) );
+float fread_float args( ( FILE * fp ) );
 EXT_BV fread_bitvector args( ( FILE * fp ) );
 void fwrite_bitvector args( ( EXT_BV * bits, FILE * fp ) );
 char *print_bitvector args( ( EXT_BV * bits ) );
@@ -4905,13 +4906,14 @@ REALM_DATA *get_realm( const char * argument );
 AREA_DATA *get_area_file( const char * name );
 int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir );
 void update_target_ch_moved( CHAR_DATA * ch );
-void add_move_lag( CHAR_DATA *ch );
+void add_queue( CHAR_DATA *ch, int type );
 bool is_queued( CHAR_DATA *ch, int type );
 int distance_from_dif( int dif_x, int dif_y, int dif_z );
 int coord_dif( int ch_coord, int vic_coord );
 int coord_inc	( int ch_coord, int vic_coord, int dif, int big_dif );
 ROOM_INDEX_DATA *next_room_on_line( CHAR_DATA *ch, int counter, int inc_x, int inc_y, int inc_z );
 bool check_los( CHAR_DATA *ch, CHAR_DATA *victim );
+
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
 void interpret args( ( CHAR_DATA * ch, const char *argument ) );

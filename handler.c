@@ -1449,6 +1449,9 @@ void affect_to_char( CHAR_DATA * ch, AFFECT_DATA * paf )
     */
    if( ch->in_room )
       room_affect( ch->in_room, paf_new, TRUE );
+
+   if( !is_queued( ch, AFFECT_TIMER ) )
+      add_queue( ch, AFFECT_TIMER );
    return;
 }
 
@@ -5736,26 +5739,41 @@ void update_target_ch_moved( CHAR_DATA *ch )
          set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
 }
 
-void add_move_lag( CHAR_DATA *ch )
+void add_queue( CHAR_DATA *ch, int type )
 {
    QTIMER *queue;
-   double lag;
 
-   lag = base_class_lag[ch->Class];
-
-   if( ch->combat_lag > 0 && is_queued( ch, COMBAT_LAG_TIMER ) ) //If we already have timer, just reset it -Davenge
+   switch( type )
    {
-      ch->combat_lag = lag;
-      return;
+      case COMBAT_LAG_TIMER:
+         double lag;
+
+         lag = base_class_lag[ch->Class];
+
+         if( ch->combat_lag > 0 && is_queued( ch, COMBAT_LAG_TIMER ) ) //If we already have timer, just reset it -Davenge
+         {
+            ch->combat_lag = lag;
+            return;
+         }
+
+         CREATE( queue, QTIMER, 1 );
+         queue->timer_ch = ch;
+         queue->type = type;
+
+         ch->combat_lag = lag;
+
+         LINK( queue, first_qtimer, last_qtimer, next, prev );
+         break;
+
+      case AFFECT_TIMER:
+         if( is_queued( ch, AFFECT_TIMER ) )
+            break;
+         CREATE( queue, QTIMER, 1 );
+         queue->timer_ch = ch;
+         queue->type = type;
+         LINK( queue, first_qtimer, last_qtimer, next, prev );
+         break;
    }
-
-   CREATE( queue, QTIMER, 1 );
-   queue->timer_ch = ch;
-   queue->type = COMBAT_LAG_TIMER;
-
-   ch->combat_lag = lag;
-
-   LINK( queue, first_qtimer, last_qtimer, next, prev );
 }
 
 bool is_queued( CHAR_DATA *ch, int type )

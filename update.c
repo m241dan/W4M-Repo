@@ -2468,6 +2468,50 @@ void timers_update(  )
                DISPOSE( timer );
             }
             break;
+         case AFFECT_TIMER:
+            AFFECT_DATA *paf, *paf_next;
+            SKILLTYPE *skill;
+
+            if( ch->first_affect )
+            {
+               for( paf = ch->first_affect; paf; paf = paf_next )
+               {
+                  paf_next = paf->next;
+                  if( paf->duration > 0 )
+                     paf->duration -= .25;
+                  else if( paf->duration < 0 )
+                     ;
+                  else
+                  {
+                     if( !paf_next || paf_next->type != paf->type || paf_next->duration > 0 )
+                     {
+                        skill = get_skilltype( paf->type );
+                        if( paf->type > 0 && skill && skill->msg_off )
+                        {
+                           set_char_color( AT_WEAROFF, ch );
+                           send_to_char( skill->msg_off, ch );
+                           send_to_char( "\r\n", ch );
+                        }
+                     }
+                     if( paf->type == gsn_possess )
+                     {
+                        ch->desc->character = ch->desc->original;
+                        ch->desc->original = NULL;
+                        ch->desc->character->desc = ch->desc;
+                        ch->desc->character->switched = NULL;
+                        ch->desc = NULL;
+                     }
+                     affect_remove( ch, paf );
+                  }
+               }
+            }
+            else
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+            }
+            break;
       }
    }
 

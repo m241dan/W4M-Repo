@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <math.h>
 #if !defined(WIN32)
 #include <dlfcn.h>
 #else
@@ -3273,6 +3274,93 @@ char fread_letter( FILE * fp )
 }
 
 
+/*
+ * Read a float number from a file. Turn the result into a float value.
+ */ 
+float fread_float( FILE * fp )
+{
+   float number;
+   bool sign, decimal;
+   char c;
+   double place = 0;   
+    
+   do    
+   {
+      if( feof( fp ) )
+      {
+         bug( "%s: EOF encountered on read.", __FUNCTION__ );
+         if( fBootDb )
+         {
+            shutdown_mud( "Corrupt file somewhere." );
+            exit( 1 );
+         }   
+         return 0;
+      }
+      c = getc( fp );
+   }
+   while( isspace( c ) );
+            
+   number = 0;
+
+   sign = FALSE;
+   decimal = FALSE;
+
+   if( c == '+' )
+      c = getc( fp );
+   else if( c == '-' )
+   {
+      sign = TRUE;  
+      c = getc( fp );
+   } 
+     
+   if( !isdigit( c ) )
+   {   
+      bug( "%s: bad format. (%c)", __FUNCTION__, c );
+      if( fBootDb )   
+         exit( 1 );
+      return 0;
+   }
+          
+   while( 1 )
+   {   
+      if( c == '.' || isdigit( c ) )
+      {
+         if( c == '.' )  
+         {
+            decimal = TRUE;
+            c = getc( fp );
+         }
+   
+         if( feof( fp ) )
+         {
+            bug( "%s: EOF encountered on read.", __FUNCTION__ );
+            if( fBootDb )
+               exit( 1 );
+            return number;
+         }
+         if( !decimal )
+            number = number * 10 + c - '0';
+         else
+         {
+            place++;
+            number += pow( 10, ( -1 * place ) ) * ( c - '0' );
+         }
+         c = getc( fp );
+      }
+      else   
+         break;
+   }   
+
+   if( sign )
+      number = 0 - number;
+            
+   if( c == '|' )
+      number += fread_float( fp );
+   else if( c != ' ' )
+      ungetc( c, fp );
+         
+   return number;
+}
 
 /*
  * Read a number from a file.
@@ -5864,7 +5952,7 @@ AFFECT_DATA *fread_fuss_affect( FILE * fp, const char *word )
       else
          paf->type = sn;
    }
-   paf->duration = fread_number( fp );
+   paf->duration = fread_float( fp );
    pafmod = fread_number( fp );
    paf->location = fread_number( fp );
    paf->bitvector = fread_bitvector( fp );

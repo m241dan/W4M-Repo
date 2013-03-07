@@ -544,10 +544,10 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
          continue;
 
       if( paf->type >= 0 && paf->type < TYPE_PERSONAL )
-         fprintf( fp, "AffectData   '%s' %3d %3d %3d %s\n",
+         fprintf( fp, "AffectData   '%s' %5f %3d %3d %s\n",
                   skill->name, paf->duration, paf->modifier, paf->location, print_bitvector( &paf->bitvector ) );
       else
-         fprintf( fp, "Affect       %3d %3d %3d %3d %s\n",
+         fprintf( fp, "Affect       %3d %5f %3d %3d %s\n",
                   paf->type, paf->duration, paf->modifier, paf->location, print_bitvector( &paf->bitvector ) );
    }
 
@@ -1118,7 +1118,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   paf->type = sn;
                }
 
-               paf->duration = fread_number( fp );
+               paf->duration = fread_float( fp );
                paf->modifier = fread_number( fp );
                paf->location = fread_number( fp );
                if( paf->location == APPLY_WEAPONSPELL
@@ -1128,6 +1128,8 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   paf->modifier = slot_lookup( paf->modifier );
                paf->bitvector = fread_bitvector( fp );
                LINK( paf, ch->first_affect, ch->last_affect, next, prev );
+               if( !is_queued( ch, AFFECT_TIMER ) )
+                  add_queue( ch, AFFECT_TIMER );
                fMatch = TRUE;
                break;
             }
@@ -1971,7 +1973,7 @@ void fread_obj( CHAR_DATA * ch, FILE * fp, short os_type )
                   else
                      paf->type = sn;
                }
-               paf->duration = fread_number( fp );
+               paf->duration = fread_float( fp );
                pafmod = fread_number( fp );
                paf->location = fread_number( fp );
                paf->bitvector = fread_bitvector( fp );

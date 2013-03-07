@@ -93,6 +93,7 @@ void save_mobile( FILE * fp, CHAR_DATA * mob )
    fprintf( fp, "HpManaMove   %d %d %d %d %d %d\n",
             mob->hit, mob->max_hit, mob->mana, mob->max_mana, mob->move, mob->max_move );
    fprintf( fp, "Position %d\n", mob->position );
+   fprintf( fp, "Range    %d\n", mob->range );
    fprintf( fp, "Flags %s\n", print_bitvector( &mob->act ) );
    if( !xIS_EMPTY( mob->affected_by ) )
       fprintf( fp, "AffectedBy   %s\n", print_bitvector( &mob->affected_by ) );
@@ -103,10 +104,10 @@ void save_mobile( FILE * fp, CHAR_DATA * mob )
          continue;
 
       if( paf->type >= 0 && paf->type < TYPE_PERSONAL )
-         fprintf( fp, "AffectData   '%s' %3d %3d %3d %s\n",
+         fprintf( fp, "AffectData   '%s' %5f %3d %3d %s\n",
                   skill->name, paf->duration, paf->modifier, paf->location, print_bitvector( &paf->bitvector ) );
       else
-         fprintf( fp, "Affect       %3d %3d %3d %3d %s\n",
+         fprintf( fp, "Affect       %3d %5f %3d %3d %s\n",
                   paf->type, paf->duration, paf->modifier, paf->location, print_bitvector( &paf->bitvector ) );
    }
 
@@ -280,7 +281,7 @@ CHAR_DATA *load_mobile( FILE * fp )
                   paf->type = sn;
                }
 
-               paf->duration = fread_number( fp );
+               paf->duration = fread_float( fp );
                paf->modifier = fread_number( fp );
                paf->location = fread_number( fp );
                if( paf->location == APPLY_WEAPONSPELL
@@ -389,6 +390,7 @@ CHAR_DATA *load_mobile( FILE * fp )
             break;
 
          case 'R':
+            KEY( "Range", inroom, fread_number( fp ) );
             KEY( "Room", inroom, fread_number( fp ) );
             KEY( "Resetvnum", mob->resetvnum, fread_number( fp ) );
             KEY( "Resetnum", mob->resetnum, fread_number( fp ) );
