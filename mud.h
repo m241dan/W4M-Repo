@@ -2042,7 +2042,7 @@ struct timer_data
    DO_FUN *do_fun;
    int value;
    short type;
-   int count;
+   double count;
 };
 
 /*

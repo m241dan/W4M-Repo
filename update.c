@@ -2512,6 +2512,51 @@ void timers_update(  )
                DISPOSE( timer );
             }
             break;
+         case TIMER_TIMER:
+            TIMER *ptimer, *ptimer_next;
+
+            if( ch->first_timer )
+            {
+               for( ptimer = ch->first_timer; ptimer; ptimer = ptimer_next )
+               {
+                  ptimer_next = ptimer->next;
+                  ptimer->count -= .25;
+                  if( ptimer->count <= 0 )
+                  {
+                     if( ptimer->type == TIMER_ASUPRESSED )
+                     {
+                        if( ptimer->value == -1 )
+                        {
+                           ptimer->count = 1000;
+                           continue;
+                        }
+                     }
+
+                     if( ptimer->type == TIMER_NUISANCE )
+                        DISPOSE( ch->pcdata->nuisance );
+
+                     if( ptimer->type == TIMER_DO_FUN )
+                     {
+                        int tempsub;
+
+                        tempsub = ch->substate;
+                        ch->substate = ptimer->value;
+                        ( ptimer->do_fun ) ( ch, "" );
+                        if( char_died( ch ) )
+                           break;
+                        ch->substate = tempsub;
+                     }
+                     extract_timer( ch, ptimer );
+                  }
+               }
+            }
+            else
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+            }
+            break;
       }
    }
 

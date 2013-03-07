@@ -4631,6 +4631,8 @@ void add_timer( CHAR_DATA * ch, short type, int count, DO_FUN * fun, int value )
       timer->value = value;
       LINK( timer, ch->first_timer, ch->last_timer, next, prev );
    }
+   if( !is_queued( ch, TIMER_TIMER ) )
+      add_queue( ch, TIMER_TIMER );
 }
 
 TIMER *get_timerptr( CHAR_DATA * ch, short type )
