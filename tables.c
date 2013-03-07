@@ -1119,7 +1119,7 @@ SKILLTYPE *fread_skill( FILE * fp )
                break;
             }
             KEY( "Components", skill->components, fread_string_nohash( fp ) );
-            KEY( "Cooldown", skill->cooldown, fread_number( fp ) );
+            KEY( "Cooldown", skill->cooldown, fread_float( fp ) );
             break;
 
          case 'D':
