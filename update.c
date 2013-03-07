@@ -2557,6 +2557,30 @@ void timers_update(  )
                DISPOSE( timer );
             }
             break;
+         case COOLDOWN_TIMER:
+            CD_DATA *cdat, *cdat_next;
+
+            if( ch->first_cooldown )
+            {
+               for( cdat = ch->first_cooldown; cdat; cdat = cdat_next )
+               {
+                  cdat_next = cdat->next;
+
+                  cdat->time_remaining -= .25;
+                  if( cdat->time_remaining <= 0 )
+                  {
+                     send_to_char( cdat->message, ch );
+                     extract_cooldown( ch, cdat );
+                  }
+               }
+            }
+            else
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+            }
+            break;
       }
    }
 
