@@ -754,6 +754,8 @@ void fwrite_skill( FILE * fpout, SKILLTYPE * skill )
       fprintf( fpout, "Rounds       %d\n", skill->beats );
    if( skill->range )
       fprintf( fpout, "Range        %d\n", skill->range );
+   if( skill->cooldown )
+      fprintf( fpout, "Cooldown     %f\n", skill->cooldown );
    if( skill->guild != -1 )
       fprintf( fpout, "Guild        %d\n", skill->guild );
    if( skill->skill_fun )
@@ -772,6 +774,9 @@ void fwrite_skill( FILE * fpout, SKILLTYPE * skill )
       fprintf( fpout, "Hitroom      %s~\n", skill->hit_room );
    if( skill->hit_dest && skill->hit_dest[0] != '\0' )
       fprintf( fpout, "Hitdest      %s~\n", skill->hit_dest );
+
+   if( skill->cdmsg && skill->cdmsg[0] != '\0' )
+      fprintf( fpout, "Cdmsg        %s~\n", skill->cdmsg );
 
    if( skill->miss_char && skill->miss_char[0] != '\0' )
       fprintf( fpout, "Misschar     %s~\n", skill->miss_char );
@@ -1076,6 +1081,7 @@ SKILLTYPE *fread_skill( FILE * fp )
             break;
 
          case 'C':
+            KEY( "Cdmsg", skill->cdmsg, fread_string_nohash( fp ) );
             if( !str_cmp( word, "Class" ) )
             {
                int Class = fread_number( fp );
@@ -1113,6 +1119,7 @@ SKILLTYPE *fread_skill( FILE * fp )
                break;
             }
             KEY( "Components", skill->components, fread_string_nohash( fp ) );
+            KEY( "Cooldown", skill->cooldown, fread_number( fp ) );
             break;
 
          case 'D':

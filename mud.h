@@ -163,7 +163,7 @@ typedef struct lmsg_data LMSG_DATA;
 typedef struct target_data TARGET_DATA;
 typedef struct realm_data REALM_DATA;
 typedef struct queue_timers QTIMER;
-typedef struct combat_lag CLAG;
+typedef struct cooldown_data CD_DATA;
 /*
  * Function types.
  */
@@ -2326,6 +2326,8 @@ struct char_data
    CHAR_DATA *prev_person_targetting_your_target;
    double combat_lag;
    bool stopkill;
+   CD_DATA *first_cooldown;
+   CD_DATA *last_cooldown;
 };
 
 struct target_data
@@ -2618,6 +2620,19 @@ struct realm_data
    const char *rfilename;
    const char *name;
    int zero_zero_zero;
+};
+
+/*
+ * For skill/ability cooldowns -Davenge 
+ */
+
+struct cooldown_data
+{
+   CD_DATA *next;
+   CD_DATA *prev;
+   const char *message;
+   int sn;
+   int time_remaining;
 };
 
 /*
@@ -2948,6 +2963,8 @@ struct skill_type
    const char *teachers;   /* Skill requires a special teacher */
    char participants;   /* # of required participants */
    struct timerset userec; /* Usage record         */
+   const char *cdmsg; /* Message for when skill is on cooldown */
+   double cooldown; /* Amount of time before skill can be used again */
 };
 
 /* how many items to track.... prevent repeat auctions */
@@ -4913,6 +4930,11 @@ int coord_dif( int ch_coord, int vic_coord );
 int coord_inc	( int ch_coord, int vic_coord, int dif, int big_dif );
 ROOM_INDEX_DATA *next_room_on_line( CHAR_DATA *ch, int counter, int inc_x, int inc_y, int inc_z );
 bool check_los( CHAR_DATA *ch, CHAR_DATA *victim );
+void extract_cooldown args( ( CHAR_DATA * ch, CD_DATA * cdat ) );
+int get_skill_cooldown args( ( CHAR_DATA * ch, int gsn ) );
+void set_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
+bool is_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
+
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

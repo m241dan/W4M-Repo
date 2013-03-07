@@ -5788,3 +5788,51 @@ bool is_queued( CHAR_DATA *ch, int type )
    return FALSE;
 }
 
+void extract_cooldown( CHAR_DATA * ch, CD_DATA * cdat )
+{
+   if( !cdat )
+   {
+      bug( "extrat_cooldown: NULL cdat" );
+      return;
+   }
+   UNLINK( cdat, ch->first_cooldown, ch->last_cooldown, next, prev );
+   DISPOSE( cdat->message );
+   DISPOSE( cdat );
+   return;
+}
+
+bool is_on_cooldown( CHAR_DATA *ch, int gsn )
+{
+   CD_DATA *cdat;
+
+   if( !ch->first_cooldown )
+      return FALSE;
+
+   for( cdat = ch->first_cooldown; cdat; cdat = cdat->next )
+   {
+      if( gsn == cdat->sn )
+      {
+         ch_printf( ch, "%s is on cooldown for %d more rounds.\r\n", skill_table[gsn]->name, cdat->time_remaining );
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+int get_skill_cooldown( CHAR_DATA *ch, int gsn )
+{
+   return skill_table[gsn]->cooldown;
+}
+
+void set_on_cooldown( CHAR_DATA *ch, int gsn )
+{
+   CD_DATA *cdat;
+   int cooldown = get_skill_cooldown( ch, gsn );
+
+   CREATE( cdat, CD_DATA, 1 );
+   cdat->message = str_dup( skill_table[gsn]->cdmsg );
+   cdat->sn = gsn;
+   cdat->time_remaining = cooldown;
+   LINK( cdat, ch->first_cooldown, ch->last_cooldown, next, prev );
+   return;
+}

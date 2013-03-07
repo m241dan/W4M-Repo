@@ -896,6 +896,7 @@ void do_slookup( CHAR_DATA* ch, const char* argument)
       ch_printf( ch, "Dammsg: %s\r\nWearoff: %s\n", skill->noun_damage, skill->msg_off ? skill->msg_off : "(none set)" );
       if( skill->dice && skill->dice[0] != '\0' )
          ch_printf( ch, "Dice: %s\r\n", skill->dice );
+      ch_printf( ch, "Cooldown: %f\r\nCooldown Message: %s\r\n", skill->cooldown, skill->cdmsg );
       if( skill->teachers && skill->teachers[0] != '\0' )
          ch_printf( ch, "Teachers: %s\r\n", skill->teachers );
       if( skill->components && skill->components[0] != '\0' )
@@ -1037,7 +1038,7 @@ void do_sset( CHAR_DATA* ch, const char* argument)
       {
          send_to_char( "or:     sset <sn>     <field> <value>\r\n", ch );
          send_to_char( "\r\nField being one of:\r\n", ch );
-         send_to_char( "  name code target minpos slot mana beats dammsg wearoff guild minlevel\r\n", ch );
+         send_to_char( "  name code target minpos slot mana beats dammsg wearoff guild minlevel cooldown, cdmsg\r\n", ch );
          send_to_char( "  type damtype acttype classtype powertype seffect flag dice value difficulty\r\n", ch );
          send_to_char( "  affect rmaffect level adept hit miss die imm (char/vict/room)\r\n", ch );
          send_to_char( "  components teachers racelevel raceadept\r\n", ch );
@@ -1211,6 +1212,25 @@ void do_sset( CHAR_DATA* ch, const char* argument)
          }
          return;
       }
+
+      if( !str_cmp( arg2, "cooldown" ) )
+      {
+         skill->cooldown = atoi( argument );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
+
+      if( !str_cmp( arg2, "cdmsg" ) )
+      {
+         DISPOSE( skill->cdmsg );
+         if( !str_cmp( argument, "clear" ) )
+            skill->cdmsg = str_dup( "" );
+         else
+            skill->cdmsg = str_dup( argument );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
+
       if( !str_cmp( arg2, "powertype" ) )
       {
          int x = get_spower( argument );
