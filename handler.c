@@ -5269,6 +5269,9 @@ int get_max_range( CHAR_DATA * ch )
 {
    OBJ_DATA *obj;
    OBJ_DATA *obj2;
+   int range = 1;
+
+   range += ch->range;
 
    obj = get_eq_char( ch, WEAR_WIELD );
    obj2 = get_eq_char( ch, WEAR_DUAL_WIELD );
@@ -5277,10 +5280,10 @@ int get_max_range( CHAR_DATA * ch )
       if( obj2->range > obj->range )
          obj = obj2;
 
-   if( !obj )
-      return ch->range;
-   else
-      return ( ch->range + obj->range );
+   if( obj )
+      range += obj->range;
+
+   return range;
 }
 
 /* Get target data when only a name is given. -Davenge */
