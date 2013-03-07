@@ -151,14 +151,14 @@ void do_mpmset( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   if( !str_cmp( arg2, "lck" ) )
+   if( !str_cmp( arg2, "pas" ) )
    {
       if( value < minattr || value > maxattr )
       {
          progbug( "MpMset: Invalid lck", ch );
          return;
       }
-      victim->perm_lck = value;
+      victim->perm_pas = value;
       return;
    }
 
@@ -313,15 +313,9 @@ void do_mpmset( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   if( !str_cmp( arg2, "hitroll" ) )
+   if( !str_cmp( arg2, "attack" ) )
    {
-      victim->hitroll = URANGE( 0, value, 85 );
-      return;
-   }
-
-   if( !str_cmp( arg2, "damroll" ) )
-   {
-      victim->damroll = URANGE( 0, value, 65 );
+      victim->attack = URANGE( 0, value, 65 );
       return;
    }
 

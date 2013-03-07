@@ -2425,8 +2425,8 @@ void nanny_read_motd( DESCRIPTOR_DATA * d, const char *argument )
          case APPLY_CHA:
             ch->perm_cha = 16;
             break;
-         case APPLY_LCK:
-            ch->perm_lck = 16;
+         case APPLY_PAS:
+            ch->perm_pas = 16;
             break;
       }
 
@@ -2437,7 +2437,7 @@ void nanny_read_motd( DESCRIPTOR_DATA * d, const char *argument )
       ch->perm_con += race_table[ch->race]->con_plus;
       ch->perm_cha += race_table[ch->race]->cha_plus;
       ch->affected_by = race_table[ch->race]->affected;
-      ch->perm_lck += race_table[ch->race]->lck_plus;
+      ch->perm_pas += race_table[ch->race]->pas_plus;
 
       ch->armor += race_table[ch->race]->ac_plus;
       ch->alignment += race_table[ch->race]->alignment;

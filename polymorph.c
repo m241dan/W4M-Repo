@@ -208,8 +208,6 @@ void fwrite_morph( FILE * fp, MORPH_DATA * morph )
       fprintf( fp, "Help            	%s~\n", morph->help );
    if( morph->hit && morph->hit[0] != '\0' )
       fprintf( fp, "Hit             	%s~\n", morph->hit );
-   if( morph->hitroll && morph->hitroll[0] != '\0' )
-      fprintf( fp, "Hitroll         	%s~\n", morph->hitroll );
    if( morph->key_words && morph->key_words[0] != '\0' )
       fprintf( fp, "Keywords        	%s~\n", morph->key_words );
    if( morph->long_desc && morph->long_desc[0] != '\0' )
@@ -1376,16 +1374,14 @@ void do_morph( CHAR_DATA * ch, MORPH_DATA * morph )
    ch->mod_wis += morph->wis;
    ch->mod_dex += morph->dex;
    ch->mod_cha += morph->cha;
-   ch->mod_lck += morph->lck;
+   ch->mod_pas += morph->lck;
    ch->saving_breath += morph->saving_breath;
    ch->saving_para_petri += morph->saving_para_petri;
    ch->saving_poison_death += morph->saving_poison_death;
    ch->saving_spell_staff += morph->saving_spell_staff;
    ch->saving_wand += morph->saving_wand;
-   ch_morph->hitroll = morph->hitroll ? dice_parse( ch, morph->level, morph->hitroll ) : 0;
-   ch->hitroll += ch_morph->hitroll;
    ch_morph->damroll = morph->damroll ? dice_parse( ch, morph->level, morph->damroll ) : 0;
-   ch->damroll += ch_morph->damroll;
+   ch->attack += ch_morph->damroll;
    ch_morph->hit = morph->hit ? dice_parse( ch, morph->level, morph->hit ) : 0;
    if( ( ch->hit + ch_morph->hit ) > 32700 )
       ch_morph->hit = ( 32700 - ch->hit );
@@ -1537,14 +1533,13 @@ void do_unmorph( CHAR_DATA * ch )
    ch->mod_wis -= morph->wis;
    ch->mod_dex -= morph->dex;
    ch->mod_cha -= morph->cha;
-   ch->mod_lck -= morph->lck;
+   ch->mod_pas -= morph->lck;
    ch->saving_breath -= morph->saving_breath;
    ch->saving_para_petri -= morph->saving_para_petri;
    ch->saving_poison_death -= morph->saving_poison_death;
    ch->saving_spell_staff -= morph->saving_spell_staff;
    ch->saving_wand -= morph->saving_wand;
-   ch->hitroll -= morph->hitroll;
-   ch->damroll -= morph->damroll;
+   ch->attack -= morph->damroll;
    ch->hit -= morph->hit;
    ch->move -= morph->move;
    ch->mana -= morph->mana;

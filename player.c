@@ -128,10 +128,9 @@ void do_worth( CHAR_DATA* ch, const char* argument)
                  ch->pcdata->quest_curr, ch->carry_weight, buf, num_punct( ch->gold ) );
    send_to_pager( " ----------------------------------------------------------------------------\r\n", ch );
    if( ch->level < 15 && !IS_PKILL( ch ) )
-      pager_printf( ch, "|            |Hitroll: -------- |Damroll: ----------- |                     |\r\n" );
+      pager_printf( ch, "|            |Attack: ----------- |                               |\r\n" );
    else
-      pager_printf( ch, "|            |Hitroll: %-8d |Damroll: %-11d |                     |\r\n", GET_HITROLL( ch ),
-                    GET_DAMROLL( ch ) );
+      pager_printf( ch, "|            |Attack: %-11d |                                     |\r\n", GET_ATTACK( ch ) );
    send_to_pager( " ----------------------------------------------------------------------------\r\n", ch );
    return;
 }
@@ -187,12 +186,12 @@ void do_score( CHAR_DATA* ch, const char* argument )
 
    if( ch->level >= 15 || IS_PKILL( ch ) )
    {
-      pager_printf( ch, "STR  : %2.2d(%2.2d)    HitRoll: %-4d              Saved:  %s\r",
-                    get_curr_str( ch ), ch->perm_str, GET_HITROLL( ch ),
+      pager_printf( ch, "STR  : %2.2d(%2.2d)                               Saved:  %s\r",
+                    get_curr_str( ch ), ch->perm_str,
                     ch->save_time ? ctime( &( ch->save_time ) ) : "no save this session\n" );
 
-      pager_printf( ch, "INT  : %2.2d(%2.2d)    DamRoll: %-4d              Time:   %s\r",
-                    get_curr_int( ch ), ch->perm_int, GET_DAMROLL( ch ), ctime( &current_time ) );
+      pager_printf( ch, "INT  : %2.2d(%2.2d)    Attack: %-4d               Time:   %s\r",
+                    get_curr_int( ch ), ch->perm_int, GET_ATTACK( ch ), ctime( &current_time ) );
    }
    else
    {
@@ -325,8 +324,6 @@ void do_score( CHAR_DATA* ch, const char* argument )
          break;
    }
    pager_printf( ch, "Style: %-10.10s\r\n", buf );
-
-   pager_printf( ch, "LCK  : %2.2d(%2.2d) \r\n", get_curr_lck( ch ), ch->perm_lck );
 
    pager_printf( ch, "Glory: %4.4d(%4.4d) \r\n", ch->pcdata->quest_curr, ch->pcdata->quest_accum );
 
@@ -607,8 +604,8 @@ const char *tiny_affect_loc_name( int location )
          return " CON  ";
       case APPLY_CHA:
          return " CHA  ";
-      case APPLY_LCK:
-         return " LCK  ";
+      case APPLY_PAS:
+         return " PAS  ";
       case APPLY_SEX:
          return " SEX  ";
       case APPLY_CLASS:
@@ -629,10 +626,8 @@ const char *tiny_affect_loc_name( int location )
          return " EXP  ";
       case APPLY_AC:
          return " AC   ";
-      case APPLY_HITROLL:
-         return " HITRL";
-      case APPLY_DAMROLL:
-         return " DAMRL";
+      case APPLY_ATTACK:
+         return " ATK";
       case APPLY_SAVING_POISON:
          return "SV POI";
       case APPLY_SAVING_ROD:
@@ -1169,18 +1164,18 @@ void do_statreport( CHAR_DATA* ch, const char* argument)
              ch->hit, ch->max_hit, ch->mana, ch->max_mana, ch->move, ch->max_move, ch->experience[ch->Class] );
    act( AT_REPORT, buf, ch, NULL, NULL, TO_ROOM );
 
-   ch_printf( ch, "Your base stats:    %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d lck.\r\n",
-              ch->perm_str, ch->perm_wis, ch->perm_int, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_lck );
-   snprintf( buf, MAX_STRING_LENGTH, "$n's base stats:    %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d lck.",
-             ch->perm_str, ch->perm_wis, ch->perm_int, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_lck );
+   ch_printf( ch, "Your base stats:    %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
+              ch->perm_str, ch->perm_wis, ch->perm_int, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_pas );
+   snprintf( buf, MAX_STRING_LENGTH, "$n's base stats:    %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.",
+             ch->perm_str, ch->perm_wis, ch->perm_int, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_pas );
    act( AT_REPORT, buf, ch, NULL, NULL, TO_ROOM );
 
-   ch_printf( ch, "Your current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d lck.\r\n",
+   ch_printf( ch, "Your current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
               get_curr_str( ch ), get_curr_wis( ch ), get_curr_int( ch ),
-              get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_lck( ch ) );
-   snprintf( buf, MAX_STRING_LENGTH, "$n's current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d lck.",
+              get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_pas( ch ) );
+   snprintf( buf, MAX_STRING_LENGTH, "$n's current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.",
              get_curr_str( ch ), get_curr_wis( ch ), get_curr_int( ch ),
-             get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_lck( ch ) );
+             get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_pas( ch ) );
    act( AT_REPORT, buf, ch, NULL, NULL, TO_ROOM );
    return;
 }
@@ -1196,12 +1191,12 @@ void do_stat( CHAR_DATA* ch, const char* argument)
    ch_printf( ch, "You report: %d/%d hp %d/%d mana %d/%d mv %ld xp.\r\n",
               ch->hit, ch->max_hit, ch->mana, ch->max_mana, ch->move, ch->max_move, ch->experience[ch->Class] );
 
-   ch_printf( ch, "Your base stats:    %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d lck.\r\n",
-              ch->perm_str, ch->perm_wis, ch->perm_int, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_lck );
+   ch_printf( ch, "Your base stats:    %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
+              ch->perm_str, ch->perm_wis, ch->perm_int, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_pas );
 
-   ch_printf( ch, "Your current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d lck.\r\n",
+   ch_printf( ch, "Your current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
               get_curr_str( ch ), get_curr_wis( ch ), get_curr_int( ch ),
-              get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_lck( ch ) );
+              get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_pas( ch ) );
    return;
 }
 

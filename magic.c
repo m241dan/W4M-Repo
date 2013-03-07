@@ -755,7 +755,7 @@ int rd_parse( CHAR_DATA * ch, int level, char *texp )
             return get_curr_cha( ch );
          case 'U':
          case 'u':
-            return get_curr_lck( ch );
+            return get_curr_pas( ch );
          case 'Y':
          case 'y':
             return calculate_age( ch );
@@ -1983,7 +1983,7 @@ ch_ret spell_blindness( int sn, int level, CHAR_DATA * ch, void *vo )
    }
 
    af.type = sn;
-   af.location = APPLY_HITROLL;
+   af.location = APPLY_NONE;
    af.modifier = -4;
    af.duration = ( int )( ( 1 + ( level / 3 ) ) * DUR_CONV );
    af.bitvector = meb( AFF_BLIND );
@@ -2484,7 +2484,7 @@ ch_ret spell_curse( int sn, int level, CHAR_DATA * ch, void *vo )
    }
    af.type = sn;
    af.duration = ( int )( ( 4 * level ) * DUR_CONV );
-   af.location = APPLY_HITROLL;
+   af.location = APPLY_NONE;
    af.modifier = -1;
    af.bitvector = meb( AFF_CURSE );
    affect_to_char( victim, &af );
@@ -2849,7 +2849,7 @@ ch_ret spell_enchant_weapon( int sn, int level, CHAR_DATA * ch, void *vo )
    CREATE( paf, AFFECT_DATA, 1 );
    paf->type = -1;
    paf->duration = -1;
-   paf->location = APPLY_HITROLL;
+   paf->location = APPLY_NONE;
    paf->modifier = level / 15;
    xCLEAR_BITS( paf->bitvector );
    LINK( paf, obj->first_affect, obj->last_affect, next, prev );
@@ -2857,7 +2857,7 @@ ch_ret spell_enchant_weapon( int sn, int level, CHAR_DATA * ch, void *vo )
    CREATE( paf, AFFECT_DATA, 1 );
    paf->type = -1;
    paf->duration = -1;
-   paf->location = APPLY_DAMROLL;
+   paf->location = APPLY_ATTACK;
    paf->modifier = level / 15;
    xCLEAR_BITS( paf->bitvector );
    LINK( paf, obj->first_affect, obj->last_affect, next, prev );
@@ -2908,7 +2908,7 @@ ch_ret spell_disenchant_weapon( int sn, int level, CHAR_DATA * ch, void *vo )
    {
       paf_next = paf->next;
 
-      if( paf->location == APPLY_HITROLL || paf->location == APPLY_DAMROLL )
+      if( paf->location == APPLY_NONE || paf->location == APPLY_ATTACK )
       {
          UNLINK( paf, obj->first_affect, obj->last_affect, next, prev );
          DISPOSE( paf );
@@ -4893,8 +4893,7 @@ ch_ret spell_animate_dead( int sn, int level, CHAR_DATA * ch, void *vo )
                                    ( mob->max_hit * corpse->value[3] ) / 100, ch->level * dice( 20, 10 ) ), 1 );
 
       mob->hit = mob->max_hit;
-      mob->damroll = ch->level / 8;
-      mob->hitroll = ch->level / 6;
+      mob->attack = ch->level / 8;
       mob->alignment = ch->alignment;
 
       act( AT_MAGIC, "$n makes $T rise from the grave!", ch, NULL, pMobIndex->short_descr, TO_ROOM );

@@ -1959,7 +1959,7 @@ void do_gouge( CHAR_DATA* ch, const char* argument)
          if( !IS_AFFECTED( victim, AFF_BLIND ) )
          {
             af.type = gsn_blindness;
-            af.location = APPLY_HITROLL;
+            af.location = APPLY_NONE;
             af.modifier = -6;
             if( !IS_NPC( victim ) && !IS_NPC( ch ) )
                af.duration = ( ch->level + 10 ) / get_curr_con( victim );
@@ -2108,7 +2108,7 @@ void do_detrap( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   percent = number_percent(  ) - ( ch->level / 15 ) - ( get_curr_lck( ch ) - 16 );
+   percent = number_percent(  ) - ( ch->level / 15 );
 
    separate_obj( obj );
    if( !can_use_skill( ch, percent, gsn_detrap ) )
@@ -2486,8 +2486,7 @@ void do_steal( CHAR_DATA* ch, const char* argument)
    }
 
    WAIT_STATE( ch, skill_table[gsn_steal]->beats );
-   percent = number_percent(  ) + ( IS_AWAKE( victim ) ? 10 : -50 )
-      - ( get_curr_lck( ch ) - 15 ) + ( get_curr_lck( victim ) - 13 );
+   percent = number_percent(  ) + ( IS_AWAKE( victim ) ? 10 : -50 );
 
    /*
     * Changed the level check, made it 10 levels instead of five and made the 
@@ -2679,7 +2678,7 @@ void do_backstab( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   percent = number_percent(  ) - ( get_curr_lck( ch ) - 14 ) + ( get_curr_lck( victim ) - 13 );
+   percent = number_percent(  );
 
    check_attacker( ch, victim );
    WAIT_STATE( ch, skill_table[gsn_backstab]->beats );
@@ -2775,7 +2774,7 @@ void do_rescue( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   percent = number_percent(  ) - ( get_curr_lck( ch ) - 14 ) - ( get_curr_lck( victim ) - 16 );
+   percent = number_percent(  );
 
    WAIT_STATE( ch, skill_table[gsn_rescue]->beats );
    if( !can_use_skill( ch, percent, gsn_rescue ) )
@@ -3356,7 +3355,7 @@ void do_disarm( CHAR_DATA* ch, const char* argument)
    }
 
    WAIT_STATE( ch, skill_table[gsn_disarm]->beats );
-   percent = number_percent(  ) + victim->level - ch->level - ( get_curr_lck( ch ) - 15 ) + ( get_curr_lck( victim ) - 15 );
+   percent = number_percent(  ) + victim->level - ch->level;
    if( !can_see_obj( ch, obj ) )
       percent += 10;
    if( can_use_skill( ch, ( percent * 3 / 2 ), gsn_disarm ) )
@@ -3902,7 +3901,7 @@ void do_aid( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   percent = number_percent(  ) - ( get_curr_lck( ch ) - 13 );
+   percent = number_percent(  );
    WAIT_STATE( ch, skill_table[gsn_aid]->beats );
    if( !can_use_skill( ch, percent, gsn_aid ) )
    {
@@ -4239,7 +4238,7 @@ void do_poison_weapon( CHAR_DATA* ch, const char* argument)
    }
    WAIT_STATE( ch, skill_table[gsn_poison_weapon]->beats );
 
-   percent = ( number_percent(  ) - get_curr_lck( ch ) - 14 );
+   percent = number_percent(  );
 
    /*
     * Check the skill percentage 
@@ -4546,11 +4545,6 @@ bool check_grip( CHAR_DATA * ch, CHAR_DATA * victim )
    else
       schance = ( int )( LEARNED( victim, gsn_grip ) / 2 );
 
-   /*
-    * Consider luck as a factor 
-    */
-   schance += ( 2 * ( get_curr_lck( victim ) - 13 ) );
-
    if( number_percent(  ) >= schance + victim->level - ch->level )
    {
       learn_from_failure( victim, gsn_grip );
@@ -4628,7 +4622,7 @@ void do_circle( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   percent = number_percent(  ) - ( get_curr_lck( ch ) - 16 ) + ( get_curr_lck( victim ) - 13 );
+   percent = number_percent(  );
 
    check_attacker( ch, victim );
    WAIT_STATE( ch, skill_table[gsn_circle]->beats );

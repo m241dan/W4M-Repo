@@ -1079,7 +1079,7 @@ struct race_type
    short int_plus;   /* Int      "        */
    short con_plus;   /* Con      "        */
    short cha_plus;   /* Cha      "        */
-   short lck_plus;   /* Lck       "       */
+   short pas_plus;   /* Lck       "       */
    short hit;
    short mana;
    int resist;
@@ -1788,10 +1788,10 @@ typedef enum
    APPLY_NONE, APPLY_STR, APPLY_DEX, APPLY_INT, APPLY_WIS, APPLY_CON,
    APPLY_SEX, APPLY_CLASS, APPLY_LEVEL, APPLY_AGE, APPLY_HEIGHT, APPLY_WEIGHT,
    APPLY_MANA, APPLY_HIT, APPLY_MOVE, APPLY_GOLD, APPLY_EXP, APPLY_AC,
-   APPLY_HITROLL, APPLY_DAMROLL, APPLY_SAVING_POISON, APPLY_SAVING_ROD,
+   APPLY_ATTACK, APPLY_SAVING_POISON, APPLY_SAVING_ROD,
    APPLY_SAVING_PARA, APPLY_SAVING_BREATH, APPLY_SAVING_SPELL, APPLY_CHA,
    APPLY_AFFECT, APPLY_RESISTANT, APPLY_IMMUNE, APPLY_SUSCEPTIBLE,
-   APPLY_WEAPONSPELL, APPLY_LCK, APPLY_BACKSTAB, APPLY_PICK, APPLY_TRACK,
+   APPLY_WEAPONSPELL, APPLY_PAS, APPLY_BACKSTAB, APPLY_PICK, APPLY_TRACK,
    APPLY_STEAL, APPLY_SNEAK, APPLY_HIDE, APPLY_PALM, APPLY_DETRAP, APPLY_DODGE,
    APPLY_PEEK, APPLY_SCAN, APPLY_GOUGE, APPLY_SEARCH, APPLY_MOUNT, APPLY_DISARM,
    APPLY_KICK, APPLY_PARRY, APPLY_BASH, APPLY_STUN, APPLY_PUNCH, APPLY_CLIMB,
@@ -2141,15 +2141,14 @@ struct mob_index_data
    short weight;
    short race;
    short Class;
-   short hitroll;
-   short damroll;
+   short attack;
    short perm_str;
    short perm_int;
    short perm_wis;
    short perm_dex;
    short perm_con;
    short perm_cha;
-   short perm_lck;
+   short perm_pas;
    short saving_poison_death;
    short saving_wand;
    short saving_para_petri;
@@ -2283,8 +2282,7 @@ struct char_data
    short barenumdie;
    short baresizedie;
    short mobthac0;
-   short hitroll;
-   short damroll;
+   short attack;
    short hitplus;
    short damplus;
    short position;
@@ -2301,14 +2299,14 @@ struct char_data
    short perm_dex;
    short perm_con;
    short perm_cha;
-   short perm_lck;
+   short perm_pas;
    short mod_str;
    short mod_int;
    short mod_wis;
    short mod_dex;
    short mod_con;
    short mod_cha;
-   short mod_lck;
+   short mod_pas;
    short mental_state;  /* simplified */
    short emotional_state;  /* simplified */
    int retran;
@@ -3354,7 +3352,7 @@ do								\
 				    +(2-(abs((ch)->mental_state)/10)))
 
 /* Thanks to Chriss Baeke for noticing damplus was unused */
-#define GET_DAMROLL(ch)		((ch)->damroll                              \
+#define GET_ATTACK(ch)		((ch)->attack                              \
 				    +(ch)->damplus			    \
 				    +str_app[get_curr_str(ch)].todam	    \
 				    +(((ch)->mental_state > 5		    \
@@ -4806,7 +4804,7 @@ short get_curr_wis( CHAR_DATA * ch );
 short get_curr_dex( CHAR_DATA * ch );
 short get_curr_con( CHAR_DATA * ch );
 short get_curr_cha( CHAR_DATA * ch );
-short get_curr_lck( CHAR_DATA * ch );
+short get_curr_pas( CHAR_DATA * ch );
 bool can_take_proto args( ( CHAR_DATA * ch ) );
 int can_carry_n args( ( CHAR_DATA * ch ) );
 int can_carry_w args( ( CHAR_DATA * ch ) );

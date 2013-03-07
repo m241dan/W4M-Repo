@@ -1345,9 +1345,9 @@ int mprog_do_ifcheck( const char *ifcheck, CHAR_DATA * mob, CHAR_DATA * actor, O
       {
          return mprog_veval( get_curr_cha( chkchar ), opr, atoi( rval ), mob );
       }
-      if( !str_cmp( chck, "lck" ) )
+      if( !str_cmp( chck, "pas" ) )
       {
-         return mprog_veval( get_curr_lck( chkchar ), opr, atoi( rval ), mob );
+         return mprog_veval( get_curr_pas( chkchar ), opr, atoi( rval ), mob );
       }
    }
    if( chkobj )

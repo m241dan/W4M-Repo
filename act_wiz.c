@@ -2027,9 +2027,9 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
                        IS_NPC( victim ) ? victim->pIndexData->count : 1,
                        IS_NPC( victim ) ? victim->pIndexData->killed : victim->pcdata->mdeaths + victim->pcdata->pdeaths );
    pager_printf_color( ch,
-                       "&cStr: &C%2d&c )( Int: &C%2d&c )( Wis: &C%2d&c )( Dex: &C%2d&c )( Con: &C%2d&c )( Cha: &C%2d&c )( Lck: &C%2d&c\r\n",
+                       "&cStr: &C%2d&c )( Int: &C%2d&c )( Wis: &C%2d&c )( Dex: &C%2d&c )( Con: &C%2d&c )( Cha: &C%2d&c )( Pas: &C%2d&c\r\n",
                        get_curr_str( victim ), get_curr_int( victim ), get_curr_wis( victim ), get_curr_dex( victim ),
-                       get_curr_con( victim ), get_curr_cha( victim ), get_curr_lck( victim ) );
+                       get_curr_con( victim ), get_curr_cha( victim ), get_curr_pas( victim ) );
    pager_printf_color( ch, "&cLevel   : &P%-2d              ", victim->level );
    pager_printf_color( ch, "&cclass  : &w%-2.2d/%-10s   &cRace      : &w%-2.2d/%-10s\r\n",
                        victim->Class,
@@ -2048,10 +2048,10 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
    snprintf( mvbuf, MAX_STRING_LENGTH, "%d/%d", victim->move, victim->max_move );
    pager_printf_color( ch, "&cHps     : &w%-12s    &cMana   : &w%-12s    &cMove      : &w%-12s\r\n",
                           hpbuf, mnbuf, mvbuf );
-   pager_printf_color( ch, "&cHitroll : &C%-5d           &cAlign  : &w%-5d           &cArmorclass: &w%d\r\n",
-                       GET_HITROLL( victim ), victim->alignment, GET_AC( victim ) );
-   pager_printf_color( ch, "&cDamroll : &C%-5d           &cWimpy  : &w%-5d           &cPosition  : &w%d\r\n",
-                       GET_DAMROLL( victim ), victim->wimpy, victim->position );
+   pager_printf_color( ch, "&cAlign  : &w%-5d           &cArmorclass: &w%d\r\n",
+                       victim->alignment, GET_AC( victim ) );
+   pager_printf_color( ch, "&cAttack : &C%-5d           &cWimpy  : &w%-5d           &cPosition  : &w%d\r\n",
+                       GET_ATTACK( victim ), victim->wimpy, victim->position );
    pager_printf_color( ch, "&cFighting: &w%-13s   &cMaster : &w%-13s   &cLeader    : &w%s\r\n",
                        victim->fighting ? victim->fighting->who->name : "(none)",
                        victim->master ? victim->master->name : "(none)", victim->leader ? victim->leader->name : "(none)" );
@@ -8055,7 +8055,7 @@ void do_setclass( CHAR_DATA* ch, const char* argument)
    {
       int x = get_atype( argument );
 
-      if( x < APPLY_NONE || ( x > APPLY_CON && x != APPLY_LCK && x != APPLY_CHA ) )
+      if( x < APPLY_NONE || ( x > APPLY_CON && x != APPLY_PAS && x != APPLY_CHA ) )
          send_to_char( "Invalid second attribute!\r\n", ch );
       else
       {
@@ -8070,7 +8070,7 @@ void do_setclass( CHAR_DATA* ch, const char* argument)
    {
       int x = get_atype( argument );
 
-      if( x < APPLY_NONE || ( x > APPLY_CON && x != APPLY_LCK && x != APPLY_CHA ) )
+      if( x < APPLY_NONE || ( x > APPLY_CON && x != APPLY_PAS && x != APPLY_CHA ) )
          send_to_char( "Invalid deficient attribute!\r\n", ch );
       else
       {
@@ -8085,7 +8085,7 @@ void do_setclass( CHAR_DATA* ch, const char* argument)
    {
       int x = get_atype( argument );
 
-      if( x < APPLY_NONE || ( x > APPLY_CON && x != APPLY_LCK && x != APPLY_CHA ) )
+      if( x < APPLY_NONE || ( x > APPLY_CON && x != APPLY_PAS && x != APPLY_CHA ) )
          send_to_char( "Invalid prime attribute!\r\n", ch );
       else
       {
@@ -8232,7 +8232,7 @@ bool create_new_race( int rcindex, char *argument )
    race_table[rcindex]->int_plus = 0;
    race_table[rcindex]->con_plus = 0;
    race_table[rcindex]->cha_plus = 0;
-   race_table[rcindex]->lck_plus = 0;
+   race_table[rcindex]->pas_plus = 0;
    race_table[rcindex]->hit = 0;
    race_table[rcindex]->mana = 0;
    xCLEAR_BITS( race_table[rcindex]->affected );
@@ -8276,7 +8276,7 @@ void do_setrace( CHAR_DATA* ch, const char* argument)
       send_to_char( "Syntax: setrace <race> create	     \r\n", ch );
       send_to_char( "\r\nField being one of:\r\n", ch );
       send_to_char( "  name classes strplus dexplus wisplus\r\n", ch );
-      send_to_char( "  intplus conplus chaplus lckplus hit\r\n", ch );
+      send_to_char( "  intplus conplus chaplus pasplus hit\r\n", ch );
       send_to_char( "  mana affected resist suscept language\r\n", ch );
       send_to_char( "  attack defense alignment acplus \r\n", ch );
       send_to_char( "  minalign maxalign height weight      \r\n", ch );
@@ -8441,9 +8441,9 @@ void do_setrace( CHAR_DATA* ch, const char* argument)
       send_to_char( "Done.\r\n", ch );
       return;
    }
-   if( !str_cmp( arg2, "lckplus" ) )
+   if( !str_cmp( arg2, "pasplus" ) )
    {
-      race->lck_plus = ( short )atoi( argument );
+      race->pas_plus = ( short )atoi( argument );
       write_race_file( ra );
       send_to_char( "Done.\r\n", ch );
       return;
@@ -8835,7 +8835,7 @@ void do_showrace( CHAR_DATA* ch, const char* argument)
 
    ch_printf( ch, "Str Plus: %-3d\tDex Plus: %-3d\tWis Plus: %-3d\tInt Plus: %-3d\t\r\n",
               race->str_plus, race->dex_plus, race->wis_plus, race->int_plus );
-   ch_printf( ch, "Con Plus: %-3d\tCha Plus: %-3d\tLck Plus: %-3d\r\n", race->con_plus, race->cha_plus, race->lck_plus );
+   ch_printf( ch, "Con Plus: %-3d\tCha Plus: %-3d\tOas Plus: %-3d\r\n", race->con_plus, race->cha_plus, race->pas_plus );
    ch_printf( ch, "Hit Pts:  %-3d\tMana: %-3d\tAlign: %-4d\tAC: %-d\r\n",
               race->hit, race->mana, race->alignment, race->ac_plus );
    ch_printf( ch, "Min Align: %d\tMax Align: %-d\t\tXP Mult: %-d%%\r\n",

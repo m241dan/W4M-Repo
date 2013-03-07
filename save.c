@@ -407,8 +407,7 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "Favor	       %d\n", ch->pcdata->favor );
    fprintf( fp, "Glory        %d\n", ch->pcdata->quest_curr );
    fprintf( fp, "MGlory       %d\n", ch->pcdata->quest_accum );
-   fprintf( fp, "Hitroll      %d\n", ch->hitroll );
-   fprintf( fp, "Damroll      %d\n", ch->damroll );
+   fprintf( fp, "Attack      %d\n", ch->attack );
    fprintf( fp, "Range        %d\n", ch->range );
    fprintf( fp, "Armor        %d\n", ch->armor );
    if( ch->wimpy )
@@ -503,10 +502,10 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "IllegalPK    %d\n", ch->pcdata->illegal_pk );
    fprintf( fp, "Timezone     %d\n", ch->pcdata->timezone );
    fprintf( fp, "AttrPerm     %d %d %d %d %d %d %d\n",
-            ch->perm_str, ch->perm_int, ch->perm_wis, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_lck );
+            ch->perm_str, ch->perm_int, ch->perm_wis, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_pas );
 
    fprintf( fp, "AttrMod      %d %d %d %d %d %d %d\n",
-            ch->mod_str, ch->mod_int, ch->mod_wis, ch->mod_dex, ch->mod_con, ch->mod_cha, ch->mod_lck );
+            ch->mod_str, ch->mod_int, ch->mod_wis, ch->mod_dex, ch->mod_con, ch->mod_cha, ch->mod_pas );
 
    fprintf( fp, "Condition    %d %d %d %d\n",
             ch->pcdata->condition[0], ch->pcdata->condition[1], ch->pcdata->condition[2], ch->pcdata->condition[3] );
@@ -789,7 +788,7 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
    ch->perm_dex = 13;
    ch->perm_con = 13;
    ch->perm_cha = 13;
-   ch->perm_lck = 13;
+   ch->perm_pas = 13;
    ch->no_resistant = 0;
    ch->no_susceptible = 0;
    ch->no_immune = 0;
@@ -1163,9 +1162,9 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                ch->mod_dex = x4;
                ch->mod_con = x5;
                ch->mod_cha = x6;
-               ch->mod_lck = x7;
+               ch->mod_pas = x7;
                if( !x7 )
-                  ch->mod_lck = 0;
+                  ch->mod_pas = 0;
                fMatch = TRUE;
                break;
             }
@@ -1181,9 +1180,9 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                ch->perm_dex = x4;
                ch->perm_con = x5;
                ch->perm_cha = x6;
-               ch->perm_lck = x7;
+               ch->perm_pas = x7;
                if( !x7 || x7 == 0 )
-                  ch->perm_lck = 13;
+                  ch->perm_pas = 13;
                fMatch = TRUE;
                break;
             }
@@ -1262,7 +1261,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'D':
-            KEY( "Damroll", ch->damroll, fread_number( fp ) );
+            KEY( "Attack", ch->attack, fread_number( fp ) );
             KEY( "Deaf", ch->deaf, fread_number( fp ) );
             if( !strcmp( word, "Deity" ) )
             {
@@ -1336,7 +1335,6 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                break;
             }
 
-            KEY( "Hitroll", ch->hitroll, fread_number( fp ) );
             KEY( "Homepage", ch->pcdata->homepage, fread_string_nohash( fp ) );
 
             if( !strcmp( word, "HpManaMove" ) )

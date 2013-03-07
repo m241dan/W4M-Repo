@@ -1034,7 +1034,7 @@ void do_devote( CHAR_DATA* ch, const char* argument)
       REMOVE_BIT( ch->susceptible, ch->pcdata->deity->suscept );
       affect_strip( ch, gsn_blindness );
       af.type = gsn_blindness;
-      af.location = APPLY_HITROLL;
+      af.location = APPLY_NONE;
       af.modifier = -4;
       af.duration = ( int )( 50 * DUR_CONV );
       af.bitvector = meb( AFF_BLIND );
@@ -1345,7 +1345,7 @@ void do_supplicate( CHAR_DATA* ch, const char* argument)
             paf->location = APPLY_CHA;
             break;
          case 6:
-            paf->location = APPLY_LCK;
+            paf->location = APPLY_PAS;
             break;
       }
       paf->modifier = 1;

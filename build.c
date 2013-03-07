@@ -1233,9 +1233,9 @@ void do_mset( CHAR_DATA* ch, const char* argument)
          send_to_char( "Syntax: mset <victim> <field>  <value>\r\n", ch );
       send_to_char( "\r\n", ch );
       send_to_char( "Field being one of:\r\n", ch );
-      send_to_char( "  str int wis dex con cha lck sex class\r\n", ch );
+      send_to_char( "  str int wis dex con cha pas sex class\r\n", ch );
       send_to_char( "  gold hp mana move practice align race\r\n", ch );
-      send_to_char( "  hitroll damroll armor affected level\r\n", ch );
+      send_to_char( "  attack armor affected level\r\n", ch );
       send_to_char( "  thirst drunk full blood flags range\r\n", ch );
       send_to_char( "  pos defpos part (see BODYPARTS)\r\n", ch );
       send_to_char( "  sav1 sav2 sav4 sav4 sav5 (see SAVINGTHROWS)\r\n", ch );
@@ -1410,7 +1410,7 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   if( !str_cmp( arg2, "lck" ) )
+   if( !str_cmp( arg2, "pas" ) )
    {
       if( !can_mmodify( ch, victim ) )
          return;
@@ -1419,9 +1419,9 @@ void do_mset( CHAR_DATA* ch, const char* argument)
          ch_printf( ch, "Luck range is %d to %d.\r\n", minattr, maxattr );
          return;
       }
-      victim->perm_lck = value;
+      victim->perm_pas = value;
       if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
-         victim->pIndexData->perm_lck = value;
+         victim->pIndexData->perm_pas = value;
       return;
    }
 
@@ -1637,23 +1637,13 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   if( !str_cmp( arg2, "hitroll" ) )
+   if( !str_cmp( arg2, "attack" ) )
    {
       if( !can_mmodify( ch, victim ) )
          return;
-      victim->hitroll = URANGE( 0, value, 85 );
+      victim->attack =  value;
       if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
-         victim->pIndexData->hitroll = victim->hitroll;
-      return;
-   }
-
-   if( !str_cmp( arg2, "damroll" ) )
-   {
-      if( !can_mmodify( ch, victim ) )
-         return;
-      victim->damroll = URANGE( 0, value, 65 );
-      if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
-         victim->pIndexData->damroll = victim->damroll;
+         victim->pIndexData->attack = victim->attack;
       return;
    }
 
@@ -6665,12 +6655,12 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
             pMobIndex->ac, pMobIndex->gold, pMobIndex->experience );
    fprintf( fpout, "Stats2     %d %d %d\n", pMobIndex->hitnodice, pMobIndex->hitsizedice, pMobIndex->hitplus );
    fprintf( fpout, "Stats3     %d %d %d\n", pMobIndex->damnodice, pMobIndex->damsizedice, pMobIndex->damplus );
-   fprintf( fpout, "Stats4     %d %d %d %d %d\n",
-            pMobIndex->height, pMobIndex->weight, pMobIndex->numattacks, pMobIndex->hitroll, pMobIndex->damroll );
+   fprintf( fpout, "Stats4     %d %d %d %d\n",
+            pMobIndex->height, pMobIndex->weight, pMobIndex->numattacks, pMobIndex->attack );
    fprintf( fpout, "Attribs    %d %d %d %d %d %d %d\n",
             pMobIndex->perm_str,
             pMobIndex->perm_int,
-            pMobIndex->perm_wis, pMobIndex->perm_dex, pMobIndex->perm_con, pMobIndex->perm_cha, pMobIndex->perm_lck );
+            pMobIndex->perm_wis, pMobIndex->perm_dex, pMobIndex->perm_con, pMobIndex->perm_cha, pMobIndex->perm_pas );
    fprintf( fpout, "Saves      %d %d %d %d %d\n",
             pMobIndex->saving_poison_death,
             pMobIndex->saving_wand, pMobIndex->saving_para_petri, pMobIndex->saving_breath, pMobIndex->saving_spell_staff );
@@ -6887,8 +6877,8 @@ void old_fold_area( AREA_DATA * tarea, char *filename, bool install )
       if( pMobIndex->perm_str != 13 || pMobIndex->perm_int != 13
           || pMobIndex->perm_wis != 13 || pMobIndex->perm_dex != 13
           || pMobIndex->perm_con != 13 || pMobIndex->perm_cha != 13
-          || pMobIndex->perm_lck != 13
-          || pMobIndex->hitroll != 0 || pMobIndex->damroll != 0
+          || pMobIndex->perm_pas != 13
+          || pMobIndex->attack != 0
           || pMobIndex->race != 0 || pMobIndex->Class != 3
           || !xIS_EMPTY( pMobIndex->attacks )
           || !xIS_EMPTY( pMobIndex->defenses )
@@ -6919,7 +6909,7 @@ void old_fold_area( AREA_DATA * tarea, char *filename, bool install )
          fprintf( fpout, "%d %d %d %d %d %d %d\n",
                   pMobIndex->perm_str,
                   pMobIndex->perm_int,
-                  pMobIndex->perm_wis, pMobIndex->perm_dex, pMobIndex->perm_con, pMobIndex->perm_cha, pMobIndex->perm_lck );
+                  pMobIndex->perm_wis, pMobIndex->perm_dex, pMobIndex->perm_con, pMobIndex->perm_cha, pMobIndex->perm_pas );
          fprintf( fpout, "%d %d %d %d %d\n",
                   pMobIndex->saving_poison_death,
                   pMobIndex->saving_wand,
@@ -6928,9 +6918,8 @@ void old_fold_area( AREA_DATA * tarea, char *filename, bool install )
                   pMobIndex->race,
                   pMobIndex->Class,
                   pMobIndex->height, pMobIndex->weight, pMobIndex->speaks, pMobIndex->speaking, pMobIndex->numattacks );
-         fprintf( fpout, "%d %d %d %d %d %d %s ",
-                  pMobIndex->hitroll,
-                  pMobIndex->damroll,
+         fprintf( fpout, "%d %d %d %d %d %s ",
+                  pMobIndex->attack,
                   pMobIndex->xflags,
                   pMobIndex->resistant, pMobIndex->immune, pMobIndex->susceptible, print_bitvector( &pMobIndex->attacks ) );
          fprintf( fpout, "%s\n", print_bitvector( &pMobIndex->defenses ) );
