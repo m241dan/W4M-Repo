@@ -190,7 +190,7 @@ void do_score( CHAR_DATA* ch, const char* argument )
                     get_curr_str( ch ), ch->perm_str,
                     ch->save_time ? ctime( &( ch->save_time ) ) : "no save this session\n" );
 
-      pager_printf( ch, "INT  : %2.2d(%2.2d)    Attack: %-4d               Time:   %s\r",
+      pager_printf( ch, "INT  : %2.2d(%2.2d)      Attack: %-4d             Time:   %s\r",
                     get_curr_int( ch ), ch->perm_int, GET_ATTACK( ch ), ctime( &current_time ) );
    }
    else
@@ -303,27 +303,8 @@ void do_score( CHAR_DATA* ch, const char* argument )
    /*
     * Fighting style support -haus
     */
-   pager_printf( ch, "CHA  : %2.2d(%2.2d)      Wimpy: %-5d      ", get_curr_cha( ch ), ch->perm_cha, ch->wimpy );
-
-   switch ( ch->style )
-   {
-      case STYLE_EVASIVE:
-         snprintf( buf, MAX_STRING_LENGTH, "%s", "evasive" );
-         break;
-      case STYLE_DEFENSIVE:
-         snprintf( buf, MAX_STRING_LENGTH, "%s", "defensive" );
-         break;
-      case STYLE_AGGRESSIVE:
-         snprintf( buf, MAX_STRING_LENGTH, "%s", "aggressive" );
-         break;
-      case STYLE_BERSERK:
-         snprintf( buf, MAX_STRING_LENGTH, "%s", "berserk" );
-         break;
-      default:
-         snprintf( buf, MAX_STRING_LENGTH, "%s", "standard" );
-         break;
-   }
-   pager_printf( ch, "Style: %-10.10s\r\n", buf );
+   pager_printf( ch, "CHA  : %2.2d(%2.2d)                      \r\n", get_curr_cha( ch ), ch->perm_cha );
+   pager_printf( ch, "PAS  : %2.2d(%2.2d)                      \r\n", get_curr_pas( ch ), ch->perm_pas );
 
    pager_printf( ch, "Glory: %4.4d(%4.4d) \r\n", ch->pcdata->quest_curr, ch->pcdata->quest_accum );
 
