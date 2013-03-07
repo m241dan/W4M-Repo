@@ -497,7 +497,7 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "PKills       %d\n", ch->pcdata->pkills );
    fprintf( fp, "PDeaths      %d\n", ch->pcdata->pdeaths );
    if( get_timer( ch, TIMER_PKILLED ) && ( get_timer( ch, TIMER_PKILLED ) > 0 ) )
-      fprintf( fp, "PTimer       %d\n", get_timer( ch, TIMER_PKILLED ) );
+      fprintf( fp, "PTimer       %d\n", (int)get_timer( ch, TIMER_PKILLED ) );
    fprintf( fp, "MKills       %d\n", ch->pcdata->mkills );
    fprintf( fp, "MDeaths      %d\n", ch->pcdata->mdeaths );
    fprintf( fp, "IllegalPK    %d\n", ch->pcdata->illegal_pk );

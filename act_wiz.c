@@ -2108,11 +2108,11 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
    pager_printf_color( ch, "&cYear: &w%-5d  &cSecs: &w%d  &cTimer: &w%d  &cGold: &Y%d\r\n",
                        calculate_age( victim ), ( int )victim->played, victim->timer, victim->gold );
    if( get_timer( victim, TIMER_PKILLED ) )
-      pager_printf_color( ch, "&cTimerPkilled:  &R%d\r\n", get_timer( victim, TIMER_PKILLED ) );
+      pager_printf_color( ch, "&cTimerPkilled:  &R%d\r\n", (int)get_timer( victim, TIMER_PKILLED ) );
    if( get_timer( victim, TIMER_RECENTFIGHT ) )
-      pager_printf_color( ch, "&cTimerRecentfight:  &R%d\r\n", get_timer( victim, TIMER_RECENTFIGHT ) );
+      pager_printf_color( ch, "&cTimerRecentfight:  &R%d\r\n", (int)get_timer( victim, TIMER_RECENTFIGHT ) );
    if( get_timer( victim, TIMER_ASUPRESSED ) )
-      pager_printf_color( ch, "&cTimerAsupressed:  &R%d\r\n", get_timer( victim, TIMER_ASUPRESSED ) );
+      pager_printf_color( ch, "&cTimerAsupressed:  &R%d\r\n", (int)get_timer( victim, TIMER_ASUPRESSED ) );
    if( IS_NPC( victim ) )
       pager_printf_color( ch, "&cAct Flags  : &w%s\r\n", ext_flag_string( &victim->act, act_flags ) );
    else

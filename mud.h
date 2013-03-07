@@ -2632,7 +2632,7 @@ struct cooldown_data
    CD_DATA *prev;
    const char *message;
    int sn;
-   int time_remaining;
+   double time_remaining;
 };
 
 /*
@@ -4884,7 +4884,7 @@ void queue_extracted_char args( ( CHAR_DATA * ch, bool extract ) );
 void clean_char_queue args( ( void ) );
 void add_timer args( ( CHAR_DATA * ch, short type, int count, DO_FUN * fun, int value ) );
 TIMER *get_timerptr args( ( CHAR_DATA * ch, short type ) );
-short get_timer args( ( CHAR_DATA * ch, short type ) );
+double get_timer args( ( CHAR_DATA * ch, short type ) );
 void extract_timer args( ( CHAR_DATA * ch, TIMER * timer ) );
 void remove_timer args( ( CHAR_DATA * ch, short type ) );
 bool in_soft_range args( ( CHAR_DATA * ch, AREA_DATA * tarea ) );
@@ -4931,7 +4931,7 @@ int coord_inc	( int ch_coord, int vic_coord, int dif, int big_dif );
 ROOM_INDEX_DATA *next_room_on_line( CHAR_DATA *ch, int counter, int inc_x, int inc_y, int inc_z );
 bool check_los( CHAR_DATA *ch, CHAR_DATA *victim );
 void extract_cooldown args( ( CHAR_DATA * ch, CD_DATA * cdat ) );
-int get_skill_cooldown args( ( CHAR_DATA * ch, int gsn ) );
+double get_skill_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 void set_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 bool is_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 

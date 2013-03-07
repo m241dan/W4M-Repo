@@ -1527,7 +1527,7 @@ void affect_join( CHAR_DATA * ch, AFFECT_DATA * paf )
    for( paf_old = ch->first_affect; paf_old; paf_old = paf_old->next )
       if( paf_old->type == paf->type )
       {
-         paf->duration = UMIN( 1000000, paf->duration + paf_old->duration );
+         paf->duration = UMIN( 1000000, (int)paf->duration + (int)paf_old->duration );
          if( paf->modifier )
             paf->modifier = UMIN( 5000, paf->modifier + paf_old->modifier );
          else
@@ -4645,7 +4645,7 @@ TIMER *get_timerptr( CHAR_DATA * ch, short type )
    return NULL;
 }
 
-short get_timer( CHAR_DATA * ch, short type )
+double get_timer( CHAR_DATA * ch, short type )
 {
    TIMER *timer;
 
@@ -5812,14 +5812,14 @@ bool is_on_cooldown( CHAR_DATA *ch, int gsn )
    {
       if( gsn == cdat->sn )
       {
-         ch_printf( ch, "%s is on cooldown for %d more rounds.\r\n", skill_table[gsn]->name, cdat->time_remaining );
+         ch_printf( ch, "%s is on cooldown for %d more seconds.\r\n", skill_table[gsn]->name, (int)cdat->time_remaining );
          return TRUE;
       }
    }
    return FALSE;
 }
 
-int get_skill_cooldown( CHAR_DATA *ch, int gsn )
+double get_skill_cooldown( CHAR_DATA *ch, int gsn )
 {
    return skill_table[gsn]->cooldown;
 }
@@ -5827,7 +5827,7 @@ int get_skill_cooldown( CHAR_DATA *ch, int gsn )
 void set_on_cooldown( CHAR_DATA *ch, int gsn )
 {
    CD_DATA *cdat;
-   int cooldown = get_skill_cooldown( ch, gsn );
+   double cooldown = get_skill_cooldown( ch, gsn );
 
    CREATE( cdat, CD_DATA, 1 );
    cdat->message = str_dup( skill_table[gsn]->cdmsg );

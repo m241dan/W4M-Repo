@@ -1304,7 +1304,7 @@ int mprog_do_ifcheck( const char *ifcheck, CHAR_DATA * mob, CHAR_DATA * actor, O
 
       if( !str_cmp( chck, "asupressed" ) )
       {
-         return mprog_veval( get_timer( chkchar, TIMER_ASUPRESSED ), opr, atoi( rval ), mob );
+         return mprog_veval( (int)get_timer( chkchar, TIMER_ASUPRESSED ), opr, atoi( rval ), mob );
       }
 
       if( !str_cmp( chck, "favor" ) )
