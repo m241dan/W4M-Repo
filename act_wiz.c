@@ -1867,9 +1867,33 @@ void do_ostat( CHAR_DATA* ch, const char* argument)
       send_to_char( "'.\r\n", ch );
    }
    for( paf = obj->first_affect; paf; paf = paf->next )
-      ch_printf_color( ch, "&cAffects &w%s &cby &w%d. (extra)\r\n", affect_loc_name( paf->location ), paf->modifier );
+   {
+      if( paf->location == APPLY_PENETRATION || paf->location == APPLY_RESISTANCE )
+      {
+         int damtype, amount;
+
+         damtype = abs( paf->modifier / 10000 );
+         amount = paf->modifier % 10000;
+
+         ch_printf_color( ch, "&cAffects &w%s &c%s &cby &w%d. (extra)\r\n", damage_table[damtype], a_types[paf->location],  amount );
+      }
+      else
+         ch_printf_color( ch, "&cAffects &w%s &cby &w%d. (extra)\r\n", affect_loc_name( paf->location ), paf->modifier );
+   }
    for( paf = obj->pIndexData->first_affect; paf; paf = paf->next )
-      ch_printf_color( ch, "&cAffects &w%s &cby &w%d.\r\n", affect_loc_name( paf->location ), paf->modifier );
+   {
+      if( paf->location == APPLY_PENETRATION || paf->location == APPLY_RESISTANCE )
+      {
+         int damtype, amount;
+
+         damtype = abs( paf->modifier / 10000 );
+         amount = paf->modifier % 10000;
+
+         ch_printf_color( ch, "&cAffects &w%s &c%s &cby &w%d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
+      }
+      else
+         ch_printf_color( ch, "&cAffects &w%s &cby &w%d.\r\n", affect_loc_name( paf->location ), paf->modifier );
+   }
    return;
 }
 

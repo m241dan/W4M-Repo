@@ -1381,6 +1381,27 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_ROOMLIGHT:
       case APPLY_TELEVNUM:
          break;
+      case APPLY_PENETRATION:
+         int damtype, amount;
+         /*
+          * Undo our little hack to get two sets of varying info from one variable
+          * Don't doubt, just trust -Davenge
+          */
+         damtype = abs( mod / 10000 );
+         amount = mod % 10000;
+
+         ch->penetration[damtype] += amount;
+         break;
+      case APPLY_RESISTANCE:
+         /*
+          * Undo our little hack to get two sets of varying info from one variable
+          * Don't doubt, just trust -Davenge
+          */
+         damtype = abs( mod / 10000 );
+         amount = mod % 10000;
+
+         ch->resistance[damtype] += amount;
+         break;
 
          /*
           * Object apply types
@@ -4413,6 +4434,15 @@ void showaffect( CHAR_DATA * ch, AFFECT_DATA * paf )
                }
             mudstrlcat( buf, "\r\n", MAX_STRING_LENGTH );
             break;
+         case APPLY_PENETRATION:
+         case APPLY_RESISTANCE:
+            int damtype, amount;
+
+            damtype = abs( paf->modifier / 10000 );
+            amount = paf->modifier % 10000;
+            snprintf( buf, MAX_STRING_LENGTH,  "&cAffects &w%s &c%s &cby &w%d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
+            break;
+
       }
       send_to_char( buf, ch );
    }

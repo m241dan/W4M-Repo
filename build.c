@@ -124,15 +124,15 @@ const char *const o_types[] = {
 const char *const a_types[] = {
    "none", "strength", "dexterity", "intelligence", "wisdom", "constitution",
    "sex", "class", "level", "age", "height", "weight", "mana", "hit", "move",
-   "gold", "experience", "armor", "hitroll", "damroll", "save_poison", "save_rod",
+   "gold", "experience", "armor", "attack", "save_poison", "save_rod",
    "save_para", "save_breath", "save_spell", "charisma", "affected", "resistant",
-   "immune", "susceptible", "weaponspell", "luck", "backstab", "pick", "track",
+   "immune", "susceptible", "weaponspell", "passion", "backstab", "pick", "track",
    "steal", "sneak", "hide", "palm", "detrap", "dodge", "peek", "scan", "gouge",
    "search", "mount", "disarm", "kick", "parry", "bash", "stun", "punch", "climb",
    "grip", "scribe", "brew", "wearspell", "removespell", "emotion", "mentalstate",
    "stripsn", "remove", "dig", "full", "thirst", "drunk", "blood", "cook",
    "recurringspell", "contagious", "xaffected", "odor", "roomflag", "sectortype",
-   "roomlight", "televnum", "teledelay"
+   "roomlight", "televnum", "teledelay", "penetration", "resistance"
 };
 
 const char *const a_flags[] = {
@@ -3823,6 +3823,35 @@ void do_oset( CHAR_DATA* ch, const char* argument)
          if( !bitv )
             return;
          value = bitv;
+      }
+      else if( loc == APPLY_PENETRATION || loc == APPLY_RESISTANCE )
+      {
+         int value2;
+
+         argument = one_argument( argument, arg3 );
+
+         if( ( value = get_damtype( arg3 ) ) == -1 )
+         {
+            ch_printf( ch, "&PProper Usage: oset <object> affect %s  <damtype> <amount>&w\r\n", a_types[loc] );
+            return;
+         }
+         if( !is_number( argument ) )
+         {
+            ch_printf( ch, "&PProper Usage: oset <object> affecet %s %s <amount>&w\r\n", a_types[loc], damage_table[value] );
+            return;
+         }
+         value2 = atoi( argument );
+         if( value2 > 100 || value2 < -100 )
+         {
+            send_to_char( "Amount entered can only be between -100 and 100\r\n", ch );
+            return;
+         }
+         /*
+          * This is a fancy hack to get two bits of data on one variable that change(ie cant use bitvectors)
+          * Don't question it -Davenge
+          */
+         value *= 10000;
+         value += value2;
       }
       else
       {

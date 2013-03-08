@@ -1295,7 +1295,7 @@ struct affect_data
 {
    AFFECT_DATA *next;
    AFFECT_DATA *prev;
-   short type;
+   short type;   //skill that gives affect
    double duration;
    short location;
    int modifier;
@@ -1800,7 +1800,7 @@ typedef enum
    APPLY_FULL, APPLY_THIRST, APPLY_DRUNK, APPLY_BLOOD, APPLY_COOK,
    APPLY_RECURRINGSPELL, APPLY_CONTAGIOUS, APPLY_EXT_AFFECT, APPLY_ODOR,
    APPLY_ROOMFLAG, APPLY_SECTORTYPE, APPLY_ROOMLIGHT, APPLY_TELEVNUM,
-   APPLY_TELEDELAY, MAX_APPLY_TYPE
+   APPLY_TELEDELAY, APPLY_PENETRATION, APPLY_RESISTANCE, MAX_APPLY_TYPE
 } apply_types;
 
 #define REVERSE_APPLY		   1000
