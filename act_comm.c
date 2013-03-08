@@ -430,7 +430,7 @@ void talk_channel( CHAR_DATA * ch, const char *argument, int channel, const char
          break;
       case CHANNEL_IMMTALK:
       case CHANNEL_AVTALK:
-         snprintf( buf, MAX_STRING_LENGTH, "$n%c $t", channel == CHANNEL_IMMTALK ? '>' : ':' );
+         snprintf( buf, MAX_STRING_LENGTH, "&z$n&W %c&w $t", channel == CHANNEL_IMMTALK ? '>' : ':' );
          position = ch->position;
          ch->position = POS_STANDING;
          act( AT_IMMORT, buf, ch, argument, NULL, TO_CHAR );
