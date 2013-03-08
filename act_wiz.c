@@ -2052,6 +2052,14 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
                        victim->alignment, GET_AC( victim ) );
    pager_printf_color( ch, "&cAttack : &C%-5d           &cWimpy  : &w%-5d           &cPosition  : &w%d\r\n",
                        GET_ATTACK( victim ), victim->wimpy, victim->position );
+   pager_printf_color( ch, "&cPenetration: " );
+   for( x = 0; x < MAX_DAMTYPE; x++ )
+      pager_printf_color( ch, "&C%d ", ch->penetration[x] );
+   pager_printf_color( ch, "&w\r\n" );
+   pager_printf_color( ch, "&cResistance: " );
+   for( x = 0; x < MAX_DAMTYPE; x++ )
+      pager_printf_color( ch, "&C%d ", ch->resistance[x] );
+   pager_printf_color( ch, "&w\r\n" );
    pager_printf_color( ch, "&cFighting: &w%-13s   &cMaster : &w%-13s   &cLeader    : &w%s\r\n",
                        victim->fighting ? victim->fighting->who->name : "(none)",
                        victim->master ? victim->master->name : "(none)", victim->leader ? victim->leader->name : "(none)" );

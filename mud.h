@@ -2091,7 +2091,7 @@ struct timer_data
 #define AFLAG_PROTOTYPE             BV04
 
 /*
- * Damage types from the dam_table[]
+ * Damage types from the damage_table[]
  */
 typedef enum
 {
@@ -3572,7 +3572,7 @@ extern struct race_type *race_table[MAX_RACE];
 extern const struct liq_type liq_table[LIQ_MAX];
 extern const char *const attack_table[18];
 extern const char *const weapon_table[MAX_WEAPON];
-extern const char *const dam_table[MAX_DAMTYPE];
+extern const char *const damage_table[MAX_DAMTYPE];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];

@@ -305,6 +305,12 @@ const char *const weapon_table[MAX_WEAPON] = {
    "Club", "Book"
 };
 
+const char *const damage_table[MAX_DAMTYPE] = {
+   "All", "Magic", "Physical", "Pierce", "Slash", "Blunt",
+   "Wind", "Earth", "Fire", "Ice", "Water", "Lightning",
+   "Light", "Dark"
+};
+
 const char *s_blade_messages[24] = {
    "miss", "barely scratch", "scratch", "nick", "cut", "hit", "tear",
    "rip", "gash", "lacerate", "hack", "maul", "rend", "decimate",

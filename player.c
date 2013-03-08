@@ -142,7 +142,7 @@ void do_score( CHAR_DATA* ch, const char* argument )
 {
    char buf[MAX_STRING_LENGTH];
    AFFECT_DATA *paf;
-   int iLang;
+   int iLang, count;
    /*const char *suf;
    short day;
 
@@ -305,7 +305,12 @@ void do_score( CHAR_DATA* ch, const char* argument )
     */
    pager_printf( ch, "CHA  : %2.2d(%2.2d)                      \r\n", get_curr_cha( ch ), ch->perm_cha );
    pager_printf( ch, "PAS  : %2.2d(%2.2d)                      \r\n", get_curr_pas( ch ), ch->perm_pas );
-
+   send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
+   pager_printf( ch, "Penetrations     |  Resistances        \r\n" );
+   send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
+   for( count = 0; count < MAX_DAMTYPE; count++ )
+      pager_printf( ch, "%-10s: %-3d  |  %-10s: %-3d \r\n", damage_table[count], ch->penetration[count], damage_table[count], ch->resistance[count] ); 
+   send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
    pager_printf( ch, "Glory: %4.4d(%4.4d) \r\n", ch->pcdata->quest_curr, ch->pcdata->quest_accum );
 
    pager_printf( ch, "PRACT: %3.3d         Hitpoints: %-5d of %5d   Pager: (%c) %3d    AutoExit(%c)\r\n",
