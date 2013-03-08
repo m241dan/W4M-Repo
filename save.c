@@ -506,7 +506,14 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
 
    fprintf( fp, "AttrMod      %d %d %d %d %d %d %d\n",
             ch->mod_str, ch->mod_int, ch->mod_wis, ch->mod_dex, ch->mod_con, ch->mod_cha, ch->mod_pas );
-
+   fprintf( fp, "Resistance  " );
+   for( count = 0; count < MAX_DAMTYPE; count++ )
+      fprintf( fp, " %d", ch->resistance[count] );
+   fprintf( fp, "\n" );
+   fprintf( fp, "Penetration " );
+   for( count = 0; count < MAX_DAMTYPE; count++ )
+      fprintf( fp, " %d", ch->penetration[count] );
+   fprintf( fp, "\n" );
    fprintf( fp, "Condition    %d %d %d %d\n",
             ch->pcdata->condition[0], ch->pcdata->condition[1], ch->pcdata->condition[2], ch->pcdata->condition[3] );
    if( ch->desc && ch->desc->host )
@@ -1016,7 +1023,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
    char buf[MAX_STRING_LENGTH];
    char *line;
    const char *word;
-   int x1, x2, x3, x4, x5, x6, x7;
+   int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14;
    short killcnt;
    bool fMatch;
    int max_colors = 0;  /* Color code */
@@ -1531,6 +1538,28 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             KEY( "Pagerlen", ch->pcdata->pagerlen, fread_number( fp ) );
             KEY( "Password", ch->pcdata->pwd, fread_string_nohash( fp ) );
             KEY( "PDeaths", ch->pcdata->pdeaths, fread_number( fp ) );
+            if( !strcmp( word, "Penetration" ) )
+            {
+               line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               ch->penetration[0] = x1;
+               ch->penetration[1] = x2;
+               ch->penetration[2] = x3;
+               ch->penetration[3] = x4;
+               ch->penetration[4] = x5;
+               ch->penetration[5] = x6;
+               ch->penetration[6] = x7;
+               ch->penetration[7] = x8;
+               ch->penetration[8] = x9;
+               ch->penetration[9] = x10;
+               ch->penetration[10] = x11;
+               ch->penetration[11] = x12;
+               ch->penetration[12] = x13;
+               ch->penetration[13] = x14;
+               fMatch = TRUE;
+               break;
+            }
             KEY( "PKills", ch->pcdata->pkills, fread_number( fp ) );
             KEY( "Played", ch->played, fread_number( fp ) );
             /*
@@ -1598,6 +1627,29 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             KEY( "Range", ch->range, fread_number( fp ) );
             KEY( "Rank", ch->pcdata->rank, fread_string_nohash( fp ) );
             KEY( "Resistant", ch->resistant, fread_number( fp ) );
+            if( !strcmp( word, "Resistance" ) )
+            {
+               line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               ch->resistance[0] = x1;
+               ch->resistance[1] = x2;
+               ch->resistance[2] = x3;
+               ch->resistance[3] = x4;
+               ch->resistance[4] = x5;
+               ch->resistance[5] = x6;
+               ch->resistance[6] = x7;
+               ch->resistance[7] = x8;
+               ch->resistance[8] = x9;
+               ch->resistance[9] = x10;
+               ch->resistance[10] = x11;
+               ch->resistance[11] = x12;
+               ch->resistance[12] = x13;
+               ch->resistance[13] = x14;
+               fMatch = TRUE;
+               break;
+            }
+
             KEY( "Restore_time", ch->pcdata->restore_time, fread_number( fp ) );
 
             if( !strcmp( word, "Room" ) )

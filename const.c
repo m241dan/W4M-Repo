@@ -299,6 +299,12 @@ const char *const attack_table[18] = {
    "stone", "pea"
 };
 
+const char *const weapon_table[MAX_WEAPON] = {
+   "Unarmed", "Great Axe", "Axe", "Pole Axe", "Pole Arm", "Scythe",
+   "Staff", "Dagger", "Claw", "Knuckles", "Orb", "Shield", "Sword",
+   "Club", "Book"
+};
+
 const char *s_blade_messages[24] = {
    "miss", "barely scratch", "scratch", "nick", "cut", "hit", "tear",
    "rip", "gash", "lacerate", "hack", "maul", "rend", "decimate",

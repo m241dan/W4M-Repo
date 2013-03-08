@@ -6661,6 +6661,18 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
             pMobIndex->perm_str,
             pMobIndex->perm_int,
             pMobIndex->perm_wis, pMobIndex->perm_dex, pMobIndex->perm_con, pMobIndex->perm_cha, pMobIndex->perm_pas );
+   {
+      int count;
+      fprintf( fpout, "Resistance  " );
+      for( count = 0; count < MAX_DAMTYPE; count++ )
+         fprintf( fpout, " %d", pMobIndex->resistance[count] );
+      fprintf( fpout, "\n" );
+      fprintf( fpout, "Penetration " );
+      for( count = 0; count < MAX_DAMTYPE; count++ )
+         fprintf( fpout, " %d", pMobIndex->penetration[count] );
+      fprintf( fpout, "\n" );
+   }
+
    fprintf( fpout, "Saves      %d %d %d %d %d\n",
             pMobIndex->saving_poison_death,
             pMobIndex->saving_wand, pMobIndex->saving_para_petri, pMobIndex->saving_breath, pMobIndex->saving_spell_staff );

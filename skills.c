@@ -5506,7 +5506,6 @@ ch_ret ranged_attack( CHAR_DATA * ch, const char *argument, OBJ_DATA * weapon, O
  */
 void do_fire( CHAR_DATA* ch, const char* argument)
 {
-   OBJ_DATA *arrow;
    OBJ_DATA *bow;
    short max_dist;
 
@@ -5540,7 +5539,7 @@ void do_fire( CHAR_DATA* ch, const char* argument)
     * modify maximum distance based on bow-type and ch's class/str/etc 
     */
    max_dist = URANGE( 1, bow->value[4], 10 );
-
+/*
    if( ( arrow = find_projectile( ch, bow->value[3] ) ) == NULL )
    {
       const char *msg = "You have nothing to fire...\r\n";
@@ -5566,7 +5565,7 @@ void do_fire( CHAR_DATA* ch, const char* argument)
       send_to_char( msg, ch );
       return;
    }
-
+*/
    /*
     * Add wait state to fire for pkill, etc... 
     */
@@ -5575,7 +5574,7 @@ void do_fire( CHAR_DATA* ch, const char* argument)
    /*
     * handle the ranged attack 
     */
-   ranged_attack( ch, argument, bow, arrow, TYPE_HIT + arrow->value[3], max_dist );
+//   ranged_attack( ch, argument, bow, arrow, TYPE_HIT + arrow->value[3], max_dist );
 
    return;
 }

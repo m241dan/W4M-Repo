@@ -805,67 +805,7 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
  */
 int weapon_prof_bonus_check( CHAR_DATA * ch, OBJ_DATA * wield, int *gsn_ptr )
 {
-   int bonus;
-
-   bonus = 0;
-   *gsn_ptr = -1;
-   if( !IS_NPC( ch ) && ch->level > 5 && wield )
-   {
-      switch ( wield->value[3] )
-      {
-         default:
-            *gsn_ptr = -1;
-            break;
-         case DAM_HIT:
-         case DAM_SUCTION:
-         case DAM_BITE:
-         case DAM_BLAST:
-            *gsn_ptr = gsn_pugilism;
-            break;
-         case DAM_SLASH:
-         case DAM_SLICE:
-            *gsn_ptr = gsn_long_blades;
-            break;
-         case DAM_PIERCE:
-         case DAM_STAB:
-            *gsn_ptr = gsn_short_blades;
-            break;
-         case DAM_WHIP:
-            *gsn_ptr = gsn_flexible_arms;
-            break;
-         case DAM_CLAW:
-            *gsn_ptr = gsn_talonous_arms;
-            break;
-         case DAM_POUND:
-         case DAM_CRUSH:
-            *gsn_ptr = gsn_bludgeons;
-            break;
-         case DAM_BOLT:
-         case DAM_ARROW:
-         case DAM_DART:
-         case DAM_STONE:
-         case DAM_PEA:
-            *gsn_ptr = gsn_missile_weapons;
-            break;
-
-      }
-      if( *gsn_ptr != -1 )
-         bonus = ( int )( ( LEARNED( ch, *gsn_ptr ) - 50 ) / 10 );
-
-      /*
-       * Reduce weapon bonuses for misaligned clannies.
-       * if ( IS_CLANNED(ch) )
-       * {
-       * bonus = bonus * 1000 / 
-       * ( 1 + abs( ch->alignment - ch->pcdata->clan->alignment ) );
-       * }
-       */
-
-      if( IS_DEVOTED( ch ) )
-         bonus -= ch->pcdata->favor / -400;
-
-   }
-   return bonus;
+   return 0;
 }
 
 /*
@@ -1609,38 +1549,9 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
    npcvict = IS_NPC( victim );
 
    /*
-    * Check damage types for RIS            -Thoric
+    * Need to rewrite damage resistances here           -Thoric
     */
-   if( dam && dt != TYPE_UNDEFINED )
    {
-      if( IS_FIRE( dt ) )
-         dam = ris_damage( victim, dam, RIS_FIRE );
-      else if( IS_COLD( dt ) )
-         dam = ris_damage( victim, dam, RIS_COLD );
-      else if( IS_ACID( dt ) )
-         dam = ris_damage( victim, dam, RIS_ACID );
-      else if( IS_ELECTRICITY( dt ) )
-         dam = ris_damage( victim, dam, RIS_ELECTRICITY );
-      else if( IS_ENERGY( dt ) )
-         dam = ris_damage( victim, dam, RIS_ENERGY );
-      else if( IS_DRAIN( dt ) )
-         dam = ris_damage( victim, dam, RIS_DRAIN );
-      else if( dt == gsn_poison || IS_POISON( dt ) )
-         dam = ris_damage( victim, dam, RIS_POISON );
-      else
-         if( dt == ( TYPE_HIT + DAM_POUND ) || dt == ( TYPE_HIT + DAM_CRUSH )
-             || dt == ( TYPE_HIT + DAM_STONE ) || dt == ( TYPE_HIT + DAM_PEA ) )
-         dam = ris_damage( victim, dam, RIS_BLUNT );
-      else
-         if( dt == ( TYPE_HIT + DAM_STAB ) || dt == ( TYPE_HIT + DAM_PIERCE )
-             || dt == ( TYPE_HIT + DAM_BITE ) || dt == ( TYPE_HIT + DAM_BOLT )
-             || dt == ( TYPE_HIT + DAM_DART ) || dt == ( TYPE_HIT + DAM_ARROW ) )
-         dam = ris_damage( victim, dam, RIS_PIERCE );
-      else
-         if( dt == ( TYPE_HIT + DAM_SLICE ) || dt == ( TYPE_HIT + DAM_SLASH )
-             || dt == ( TYPE_HIT + DAM_WHIP ) || dt == ( TYPE_HIT + DAM_CLAW ) )
-         dam = ris_damage( victim, dam, RIS_SLASH );
-
       if( dam == -1 )
       {
          if( dt >= 0 && dt < num_skills )

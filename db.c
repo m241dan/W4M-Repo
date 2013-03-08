@@ -7273,6 +7273,29 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'P':
+            if( !strcmp( word, "Penetration" ) )
+            {
+               int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14;
+               char *line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               pMobIndex->penetration[0] = x1;
+               pMobIndex->penetration[1] = x2;
+               pMobIndex->penetration[2] = x3;
+               pMobIndex->penetration[3] = x4;
+               pMobIndex->penetration[4] = x5;
+               pMobIndex->penetration[5] = x6;
+               pMobIndex->penetration[6] = x7;
+               pMobIndex->penetration[7] = x8;
+               pMobIndex->penetration[8] = x9;
+               pMobIndex->penetration[9] = x10;
+               pMobIndex->penetration[10] = x11;
+               pMobIndex->penetration[11] = x12;
+               pMobIndex->penetration[12] = x13;
+               pMobIndex->penetration[13] = x14;
+               fMatch = TRUE;
+               break;
+            }
             if( !str_cmp( word, "Position" ) )
             {
                short position = get_npc_position( fread_flagstring( fp ) );
@@ -7336,6 +7359,29 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
                   else
                      SET_BIT( pMobIndex->resistant, 1 << value );
                }
+               break;
+            }
+            if( !strcmp( word, "Resistance" ) )
+            {
+               int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14;
+               char *line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               pMobIndex->resistance[0] = x1;
+               pMobIndex->resistance[1] = x2;
+               pMobIndex->resistance[2] = x3;
+               pMobIndex->resistance[3] = x4;
+               pMobIndex->resistance[4] = x5;
+               pMobIndex->resistance[5] = x6;
+               pMobIndex->resistance[6] = x7;
+               pMobIndex->resistance[7] = x8;
+               pMobIndex->resistance[8] = x9;
+               pMobIndex->resistance[9] = x10;
+               pMobIndex->resistance[10] = x11;
+               pMobIndex->resistance[11] = x12;
+               pMobIndex->resistance[12] = x13;
+               pMobIndex->resistance[13] = x14;
+               fMatch = TRUE;
                break;
             }
             break;

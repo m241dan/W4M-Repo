@@ -2091,6 +2091,25 @@ struct timer_data
 #define AFLAG_PROTOTYPE             BV04
 
 /*
+ * Damage types from the dam_table[]
+ */
+typedef enum
+{
+   DAM_ALL, DAM_MAGIC, DAM_PHYSICAL, DAM_PIERCE,
+   DAM_SLASH, DAM_BLUNT, DAM_WIND, DAM_EARTH,
+   DAM_FIRE, DAM_ICE, DAM_WATER, DAM_LIGHTNING,
+   DAM_LIGHT, DAM_DARK, MAX_DAMTYPE
+} damage_types;
+
+typedef enum
+{
+   WPN_UNARMED, WPN_GAXE, WPN_AXE, WPN_PAXE, WPN_PARM, WPN_SCYTHE,
+   WPN_STAFF, WPN_DAGGER, WPN_CLAW, WPN_KNUCKLES, WPN_ORB, WPN_SHIELD,
+   WPN_SWORD, WPN_CLUB, WPN_BOOK, MAX_WEAPON
+} weapon_types;
+
+
+/*
  * Prototype for a mob.
  * This is the in-memory version of #MOBILES.
  */
@@ -2155,6 +2174,8 @@ struct mob_index_data
    short saving_breath;
    short saving_spell_staff;
    int range;
+   short penetration[MAX_DAMTYPE];
+   short resistance[MAX_DAMTYPE];
 };
 
 struct hunt_hate_fear
@@ -2326,6 +2347,8 @@ struct char_data
    bool stopkill;
    CD_DATA *first_cooldown;
    CD_DATA *last_cooldown;
+   short resistance[MAX_DAMTYPE];
+   short penetration[MAX_DAMTYPE];
 };
 
 struct target_data
@@ -2437,16 +2460,6 @@ struct liq_type
    const char *liq_color;
    short liq_affect[3];
 };
-
-/*
- * Damage types from the attack_table[]
- */
-typedef enum
-{
-   DAM_HIT, DAM_SLICE, DAM_STAB, DAM_SLASH, DAM_WHIP, DAM_CLAW,
-   DAM_BLAST, DAM_POUND, DAM_CRUSH, DAM_GREP, DAM_BITE, DAM_PIERCE,
-   DAM_SUCTION, DAM_BOLT, DAM_ARROW, DAM_DART, DAM_STONE, DAM_PEA
-} damage_types;
 
 /*
  * Extra description data for a room or object.
@@ -3558,6 +3571,8 @@ extern const struct race_type _race_table[MAX_RACE];
 extern struct race_type *race_table[MAX_RACE];
 extern const struct liq_type liq_table[LIQ_MAX];
 extern const char *const attack_table[18];
+extern const char *const weapon_table[MAX_WEAPON];
+extern const char *const dam_table[MAX_DAMTYPE];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];
