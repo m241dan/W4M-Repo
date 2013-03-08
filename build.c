@@ -701,6 +701,26 @@ int get_partflag( const char *flag )
    return -1;
 }
 
+int get_damtype( const char *type )
+{
+   int x;
+
+   for( x = 0; x < MAX_DAMTYPE; x++ )
+      if( !str_cmp( type, damage_table[x] ) )
+         return x;
+   return -1;
+}
+
+int get_weapontype( const char *type )
+{
+   int x;
+
+   for( x = 0; x < MAX_DAMTYPE; x++ )
+      if( !str_cmp( type, weapon_table[x] ) )
+         return x;
+   return -1;
+}
+
 int get_attackflag( const char *flag )
 {
    unsigned int x;
@@ -1654,9 +1674,56 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       victim->range = URANGE( 0, value, 5 );
       if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
          victim->pIndexData->range = victim->range;
+      send_to_char( "Ok.\r\n", ch );
       return;
    }
 
+   if( !str_cmp( arg2, "penetration" ) )
+   {
+      int value2;
+
+      argument = one_argument( argument, arg3 );
+
+      if( ( value = get_damtype( arg3 ) ) == -1 )
+      {
+         send_to_char( "&PProper Usage: mset <target> penetration <dam_type> <amount>\r\nNot a valid damage type.&w\r\n", ch );
+         return;
+      }
+      if( !is_number( argument ) )
+      {
+         ch_printf( ch, "&PProper Usage: mset <target> penetration %s <amount>\r\nNot a valid amount.&w\r\n", damage_table[value] );
+         return;
+      }
+      value2 = atoi( argument );
+      victim->penetration[value] = value2;
+      if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
+         victim->pIndexData->penetration[value] = value2;
+      send_to_char( "Ok.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( arg2, "resistance" ) )
+   {
+      int value2;
+
+      argument = one_argument( argument, arg3 );
+
+      if( ( value = get_damtype( arg3 ) ) == -1 ) 
+      {
+         send_to_char( "&PProper Usage: mset <target> resistance <dam_type> <amount>\r\nNot a valid damage type.&w\r\n", ch );
+         return;
+      }
+      if( !is_number( argument ) )
+      {
+         ch_printf( ch, "&PProper Usage: mset <target> resistance %s <amount>\r\nNot a valid amount.&w\r\n", damage_table[value] );
+         return;
+      }
+      value2 = atoi( argument );
+      victim->resistance[value] = value2;
+      if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
+         victim->pIndexData->resistance[value] = value2;
+      return;
+   }
    if( !str_cmp( arg2, "hp" ) )
    {
       if( !can_mmodify( ch, victim ) )
