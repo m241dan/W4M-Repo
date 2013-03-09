@@ -300,15 +300,15 @@ const char *const attack_table[18] = {
 };
 
 const char *const weapon_table[MAX_WEAPON] = {
-   "Unarmed", "Great Axe", "Axe", "Pole Axe", "Pole Arm", "Scythe",
-   "Staff", "Dagger", "Claw", "Knuckles", "Orb", "Shield", "Sword",
-   "Club", "Book"
+   "unarmed", "great-axe", "axe", "pole-axe", "pole-arm", "scythe",
+   "staff", "dagger", "claw", "knuckles", "orb", "shield", "sword",
+   "club", "book"
 };
 
-const char *const damage_table[MAX_DAMTYPE] = {
-   "All", "Magic", "Physical", "Pierce", "Slash", "Blunt",
-   "Wind", "Earth", "Fire", "Ice", "Water", "Lightning",
-   "Light", "Dark"
+const char *const damage_table[DAM_INHERITED+1] = {
+   "all", "magic", "physical", "pierce", "slash", "blunt",
+   "wind", "earth", "fire", "ice", "water", "lightning",
+   "light", "dark", "(null)", "inherited"
 };
 
 const char *s_blade_messages[24] = {

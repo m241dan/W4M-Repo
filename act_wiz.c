@@ -1840,8 +1840,8 @@ void do_ostat( CHAR_DATA* ch, const char* argument)
                     obj->pIndexData->value[4], obj->pIndexData->value[5] );
    ch_printf_color( ch, "&cObject Values: &w%d %d %d %d %d %d.\r\n",
                     obj->value[0], obj->value[1], obj->value[2], obj->value[3], obj->value[4], obj->value[5] );
-   ch_printf_color( ch, "&cIndex Range: &w%d \r\n", obj->pIndexData->range);
-   ch_printf_color( ch, "&cObject Range: &w%d \r\n", obj->range); 
+   ch_printf_color( ch, "&cIndex Range: &w%-2d  Index DamType:%s\r\n", obj->pIndexData->range, damage_type_name( &obj->damtype ) );
+   ch_printf_color( ch, "&cObject Range: &w%-2d Object DamType:%s\r\n", obj->range, damage_type_name( &obj->pIndexData->damtype ) );
    if( obj->pIndexData->first_extradesc )
    {
       EXTRA_DESCR_DATA *ed;

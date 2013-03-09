@@ -3814,6 +3814,48 @@ const char *pull_type_name( int pulltype )
 }
 
 /*
+ * Return ascii name of damage types.
+ * -Davenge
+ */
+
+const char *damage_type_name( EXT_BV * damtype )
+{
+   static char buf[512];
+
+   if( xIS_SET( *damtype, DAM_ALL ) )
+      mudstrlcat( buf, " All", 512 );
+   if( xIS_SET( *damtype, DAM_MAGIC ) )
+      mudstrlcat( buf, " All_Magic", 512 );
+   if( xIS_SET( *damtype, DAM_PHYSICAL ) )
+      mudstrlcat( buf, " All_Physical", 512 );
+   if( xIS_SET( *damtype, DAM_PIERCE ) )
+      mudstrlcat( buf, " Piercing", 512 );
+   if( xIS_SET( *damtype, DAM_SLASH ) )
+      mudstrlcat( buf, " Slashing", 512 );
+   if( xIS_SET( *damtype, DAM_BLUNT ) )
+      mudstrlcat( buf, " Blunt", 512 );
+   if( xIS_SET( *damtype, DAM_WIND ) )
+      mudstrlcat( buf, " Wind", 512 );
+   if( xIS_SET( *damtype, DAM_EARTH ) )
+      mudstrlcat( buf, " Earth", 512 );
+   if( xIS_SET( *damtype, DAM_FIRE ) )
+      mudstrlcat( buf, " Fire", 512 );
+   if( xIS_SET( *damtype, DAM_ICE ) )
+      mudstrlcat( buf, " Ice", 512 );
+   if( xIS_SET( *damtype, DAM_WATER ) )
+      mudstrlcat( buf, " Water", 512 );
+   if( xIS_SET( *damtype, DAM_LIGHTNING ) )
+      mudstrlcat( buf, " Lightning", 512 );
+   if( xIS_SET( *damtype, DAM_LIGHT ) )
+      mudstrlcat( buf, " Light", 512 );
+   if( xIS_SET( *damtype, DAM_DARK ) )
+      mudstrlcat( buf, " Darkness", 512 );
+   if( xIS_SET( *damtype, DAM_INHERITED ) )
+      mudstrlcat( buf, " Inherited", 512 );
+   return ( buf[0] != '\0' ) ? buf + 1 : ( char * )"none";
+}
+
+/*
  * Set off a trap (obj) upon character (ch) -Thoric
  */
 ch_ret spring_trap( CHAR_DATA * ch, OBJ_DATA * obj )

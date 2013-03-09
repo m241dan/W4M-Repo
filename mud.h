@@ -2098,7 +2098,7 @@ typedef enum
    DAM_ALL, DAM_MAGIC, DAM_PHYSICAL, DAM_PIERCE,
    DAM_SLASH, DAM_BLUNT, DAM_WIND, DAM_EARTH,
    DAM_FIRE, DAM_ICE, DAM_WATER, DAM_LIGHTNING,
-   DAM_LIGHT, DAM_DARK, MAX_DAMTYPE
+   DAM_LIGHT, DAM_DARK, MAX_DAMTYPE, DAM_INHERITED
 } damage_types;
 
 typedef enum
@@ -2503,6 +2503,7 @@ struct obj_index_data
    short level;
    short item_type;
    int range;
+   EXT_BV damtype;
 };
 
 /*
@@ -2546,6 +2547,7 @@ struct obj_data
    short count;   /* support for object grouping */
    int serial; /* serial number         */
    int room_vnum; /* hotboot tracker */
+   EXT_BV damtype;
 };
 
 /*
@@ -2976,6 +2978,7 @@ struct skill_type
    struct timerset userec; /* Usage record         */
    const char *cdmsg; /* Message for when skill is on cooldown */
    double cooldown; /* Amount of time before skill can be used again */
+   EXT_BV damtype;
 };
 
 /* how many items to track.... prevent repeat auctions */
@@ -3572,7 +3575,7 @@ extern struct race_type *race_table[MAX_RACE];
 extern const struct liq_type liq_table[LIQ_MAX];
 extern const char *const attack_table[18];
 extern const char *const weapon_table[MAX_WEAPON];
-extern const char *const damage_table[MAX_DAMTYPE];
+extern const char *const damage_table[DAM_INHERITED+1];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];
@@ -4880,6 +4883,7 @@ const char *affect_bit_name args( ( EXT_BV * vector ) );
 const char *extra_bit_name args( ( EXT_BV * extra_flags ) );
 const char *magic_bit_name args( ( int magic_flags ) );
 const char *pull_type_name args( ( int pulltype ) );
+const char *damage_type_name args( ( EXT_BV * damtype ) ); // Added by Davenge
 ch_ret check_for_trap args( ( CHAR_DATA * ch, OBJ_DATA * obj, int flag ) );
 ch_ret check_room_for_traps args( ( CHAR_DATA * ch, int flag ) );
 bool is_trapped args( ( OBJ_DATA * obj ) );

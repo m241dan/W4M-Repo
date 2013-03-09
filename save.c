@@ -739,7 +739,8 @@ void fwrite_obj( CHAR_DATA * ch, OBJ_DATA * obj, FILE * fp, int iNest, short os_
          break;
       case ITEM_WEAPON:
          fprintf( fp,    "Range         %d\n", obj->range );
-         break;    
+         fprintf( fp,    "DamType       %s\n", print_bitvector( &obj->damtype ) );
+         break;
    }
 
    for( paf = obj->first_affect; paf; paf = paf->next )

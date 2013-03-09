@@ -3350,7 +3350,7 @@ void do_oset( CHAR_DATA* ch, const char* argument)
       send_to_char( "  affect rmaffect layers\r\n", ch );
       send_to_char( "For weapons:             For armor:\r\n", ch );
       send_to_char( "  weapontype condition     ac condition\r\n", ch );
-      send_to_char( "  range\r\n", ch);
+      send_to_char( "  range damtype\r\n", ch);
       send_to_char( "For scrolls, potions and pills:\r\n", ch );
       send_to_char( "  slevel spell1 spell2 spell3\r\n", ch );
       send_to_char( "For wands and staves:\r\n", ch );
@@ -3621,9 +3621,29 @@ void do_oset( CHAR_DATA* ch, const char* argument)
       obj->range = value;
       if( IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) )
          obj->pIndexData->range = value;
-      return;      
+      return;
    }
 
+   if( !str_cmp( arg2, "damtype" ) )
+   {
+      if( !can_omodify( ch, obj ) )
+         return;
+      if( obj->item_type != ITEM_WEAPON )
+      {
+         send_to_char( "Non-weapons cannot have damage types.\r\n", ch );
+         return;
+      }
+      if( ( value = get_damtype( arg3 ) ) == -1 )
+      {
+         send_to_char( "&RInvalid damage type.&w\r\n&PValid Choices: &wall, &Cmagic, &cphysical, &Rfire, &gwind, &oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
+         return;
+      }
+      xTOGGLE_BIT( obj->damtype, value );
+      if( IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) )
+         xTOGGLE_BIT( obj->pIndexData->damtype, value );
+      send_to_char( "Ok.\r\n", ch );
+      return;
+   }
    if( !str_cmp( arg2, "type" ) )
    {
       if( !can_omodify( ch, obj ) )
