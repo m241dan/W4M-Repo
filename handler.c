@@ -3822,6 +3822,8 @@ const char *damage_type_name( EXT_BV * damtype )
 {
    static char buf[512];
 
+   buf[0] = '\0';
+
    if( xIS_SET( *damtype, DAM_ALL ) )
       mudstrlcat( buf, " All", 512 );
    if( xIS_SET( *damtype, DAM_MAGIC ) )

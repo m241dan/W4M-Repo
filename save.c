@@ -1158,7 +1158,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   break;
                }
             }
-
+            KEY( "Attack", ch->attack, fread_number( fp ) );
             if( !strcmp( word, "AttrMod" ) )
             {
                line = fread_line( fp );
@@ -1269,7 +1269,6 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'D':
-            KEY( "Attack", ch->attack, fread_number( fp ) );
             KEY( "Deaf", ch->deaf, fread_number( fp ) );
             if( !strcmp( word, "Deity" ) )
             {
@@ -2047,6 +2046,7 @@ void fread_obj( CHAR_DATA * ch, FILE * fp, short os_type )
             break;
 
          case 'D':
+            KEY( "DamType", obj->damtype, fread_bitvector( fp ) );
             KEY( "Description", obj->description, fread_string( fp ) );
             break;
 
