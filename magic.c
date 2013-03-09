@@ -3125,8 +3125,12 @@ ch_ret spell_identify( int sn, int level, CHAR_DATA * ch, void *vo )
    if( ( obj = get_obj_carry( ch, target_name ) ) != NULL )
    {
       set_char_color( AT_LBLUE, ch );
-      ch_printf( ch, "\r\nObject '%s' is %s",
-                 obj->short_descr, aoran( item_type_name( obj ) ) );
+      if( obj->item_type == ITEM_WEAPON )
+         ch_printf( ch, "\r\nObject: '%s' is %s of type %s",
+                    obj->short_descr, aoran( item_type_name( obj ) ), weapon_table[obj->value[3]] );
+      else
+         ch_printf( ch, "\r\nObject '%s' is %s",
+                    obj->short_descr, aoran( item_type_name( obj ) ) );
       if( obj->item_type != ITEM_LIGHT && obj->wear_flags - 1 > 0 )
          ch_printf( ch, ", with wear location:  %s\r\n", flag_string( obj->wear_flags, w_flags ) );
       else

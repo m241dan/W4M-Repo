@@ -1819,6 +1819,8 @@ void do_ostat( CHAR_DATA* ch, const char* argument)
    ch_printf_color( ch, "&cWear flags : &w%s\r\n", flag_string( obj->wear_flags, w_flags ) );
    ch_printf_color( ch, "&cExtra flags: &w%s\r\n", ext_flag_string( &obj->extra_flags, o_flags ) );
    ch_printf_color( ch, "&cMagic flags: &w%s\r\n", magic_bit_name( obj->magic_flags ) );
+   if( obj->item_type == ITEM_WEAPON )
+      ch_printf_color( ch, "&cWeapon Type: &w%s\r\n", weapon_table[obj->value[3]] );
    ch_printf_color( ch, "&cNumber: &w%d/%d   ", 1, get_obj_number( obj ) );
    ch_printf_color( ch, "&cWeight: &w%d/%d   ", obj->weight, get_obj_weight( obj ) );
    ch_printf_color( ch, "&cLayers: &w%d   ", obj->pIndexData->layers );
