@@ -164,6 +164,7 @@ typedef struct target_data TARGET_DATA;
 typedef struct realm_data REALM_DATA;
 typedef struct queue_timers QTIMER;
 typedef struct cooldown_data CD_DATA;
+typedef struct hit_data HIT_DATA;
 /*
  * Function types.
  */
@@ -1959,6 +1960,22 @@ typedef enum
    MAX_WEAR
 } wear_locations;
 
+#define MISS_BODY    (WEAR_BODY  * -1)
+#define MISS_HEAD    (WEAR_HEAD  * -1)
+#define MISS_LEGS    (WEAR_HEAD  * -1)
+#define MISS_FEET    (WEAR_FEET  * -1)
+#define MISS_HANDS   (WEAR_HANDS * -1)
+#define MISS_ARMS    (WEAR_ARMS  * -1)
+#define MISS_WAIST   (WEAR_WAIST * -1)
+#define MISS_GENERAL (MAX_WEAR   * -1)
+#define HIT_BODY     WEAR_BODY
+#define HIT_HEAD     WEAR_HEAD
+#define HIT_LEGS     WEAR_LEGS
+#define HIT_FEET     WEAR_FEET
+#define HIT_HANDS    WEAR_HANBDS
+#define HIT_ARMS     WEAR_ARMS
+#define HIT_WAIST    WEAR_WAIST
+
 /* Board Types */
 typedef enum
 { BOARD_NOTE, BOARD_MAIL } board_types;
@@ -2647,6 +2664,19 @@ struct cooldown_data
    int sn;
    double time_remaining;
 };
+
+/*
+ * Structure to hold data on victim -Davenge
+ */
+
+struct hit_data
+{
+   int locations[];
+   int max_locations;
+   int miss_locs;
+   int hit_locs;
+
+}
 
 /*
  * Creating a timer that is queued and runs every pulse of the CPU
@@ -4696,6 +4726,7 @@ OBJ_DATA *raw_kill( CHAR_DATA * ch, CHAR_DATA * victim );
 bool in_arena args( ( CHAR_DATA * ch ) );
 bool can_astral args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart );
+int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype );
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );
@@ -4952,6 +4983,10 @@ void extract_cooldown args( ( CHAR_DATA * ch, CD_DATA * cdat ) );
 double get_skill_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 void set_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 bool is_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
+HIT_DATA *generate_hit_data( CHAR_DATA * victim );
+HIT_DATA *init_hitdata( void );
+int weight_ratio_dex( int dex, int weight );
+int weight_ratio_str( int str, int weight );
 
 
 /* interp.c */

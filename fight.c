@@ -843,9 +843,13 @@ short off_shld_lvl( CHAR_DATA * ch, CHAR_DATA * victim )
  */
 ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 {
-   OBJ_DATA *wield;
-   int victim_ac, thac0_00, thac0_32, plusris, dam, diceroll, prof_bonus, prof_gsn = -1;
-   int max_range;
+   OBJ_DATA *wield, *vic_eq;
+   HIT_DATA *hit_data;
+   EXT_BV *damtype;
+
+   int dam, atkac_mod, plusris, prof_bonus, prof_gsn = -1;
+   int max_range, wep_weight, armor_weight, hit_wear, amount, subcount;
+   int subtable[];
    ch_ret retcode = rNONE;
    static bool dual_flip = FALSE;
 
@@ -897,73 +901,45 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       dt = TYPE_HIT;
       if( wield && wield->item_type == ITEM_WEAPON )
          dt += wield->value[3];
+      damtype = wield->damtype;
    }
 
-   /*
-    * Calculate to-hit-armor-class-0 versus armor.
-    */
-   if( IS_NPC( ch ) )
+   hit_data = generate_hitdata( victim );
+
+   hit_wear = hit_data->locations[number_range( 0, ( hit_data->max_locations - 1 ) )]
+
+   vic_eq = get_eq_char( victim, abs(hit_wear) );
+
+   if( hit_wear == MISS_GENERAL )
    {
-      thac0_00 = ch->mobthac0;
-      thac0_32 = 0;
-   }
-   else
-   {
-      thac0_00 = class_table[ch->Class]->thac0_00;
-      thac0_32 = class_table[ch->Class]->thac0_32;
-   }
-   victim_ac = UMAX( -19, ( int )( GET_AC( victim ) / 10 ) );
-
-   /*
-    * if you can't see what's coming... 
-    */
-   if( wield && !can_see_obj( victim, wield ) )
-      victim_ac += 1;
-   if( !can_see( ch, victim ) )
-      victim_ac -= 4;
-
-   /*
-    * "learning" between combatants.  Takes the intelligence difference,
-    * and multiplies by the times killed to make up a learning bonus
-    * given to whoever is more intelligent     -Thoric
-    * (basically the more intelligent one "learns" the other's fighting style)
-    */
-   if( ch->fighting && ch->fighting->who == victim )
-   {
-      short times = ch->fighting->timeskilled;
-
-      if( times )
-      {
-         short intdiff = get_curr_int( ch ) - get_curr_int( victim );
-
-         if( intdiff != 0 )
-            victim_ac += ( intdiff * times ) / 10;
-      }
-   }
-
-   /*
-    * Weapon proficiency bonus 
-    */
-   victim_ac += prof_bonus;
-
-   /*
-    * The moment of excitement!
-    */
-   while( ( diceroll = number_bits( 5 ) ) >= 20 )
-      ;
-
-   if( diceroll == 0 || ( diceroll != 19 && diceroll < victim_ac ) )
-   {
-      /*
-       * Miss. 
-       */
-      if( prof_gsn != -1 )
-         learn_from_failure( ch, prof_gsn );
+      //Miss -Davenge
       damage( ch, victim, 0, dt );
-      tail_chain(  );
+      tail_chain( );
       return rNONE;
    }
+   if( hit_wear < 0 && wield->weight < 0 )
+   {
+      int counter, did_it_hit;
 
+      subcount = weight_ratio_dex( get_curr_dex( ch ), wield->weight );
+
+      for( counter = 0; counter < subcount; counter++ )
+         subtable[counter] = 1;
+
+      subcount += weight_ratio_dex( get_curr_dex( victim ), vic_eq->weight );
+
+      for( ; counter < subcount; counter++ )
+         subtable[counter] = -1;
+
+      did_it_hit = number_range( 0, ( subcount -1 ) );
+      if( did_it_hit == -1 )
+      {
+         //Miss -Davenge
+         damage( ch, victim, 0, dt );
+         tail_chain( );
+         return rNone:
+      }
+   }
    /*
     * Hit.
     * Calc damage.
@@ -971,102 +947,63 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 
    if( !wield )   /* bare hand dice formula fixed by Thoric */
       /*
-       * Fixed again by korbillian@mud.tka.com 4000 (Cold Fusion Mud) 
+       * Fixed again by korbillian@mud.tka.com 4000 (Cold Fusion Mud)
        */
       dam = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
    else
       dam = number_range( wield->value[1], wield->value[2] );
 
    /*
-    * Bonuses.
+    * STR v. CON calculation, flat addition/subtraction to weapon roll -Davenge
     */
-   dam += GET_ATTACK( ch );
+   dam += get_curr_str( ch ) - get_curr_con( victim );
 
-   if( prof_bonus )
-      dam += prof_bonus / 4;
+   /*
+    * Wear_loc native bonuses -Davenge
+    */
 
-   if( !IS_NPC( ch ) && ch->pcdata->learned[gsn_enhanced_damage] > 0 )
-   {
-      dam += ( int )( dam * LEARNED( ch, gsn_enhanced_damage ) / 120 );
-      learn_from_success( ch, gsn_enhanced_damage );
-   }
+   if( hit_wear == HIT_HEAD )
+      dam = (int)( dam * 1.2 );
+   if( hit_wear == HIT_ARMS || hit_wear == HIT_HANDS || hit_wear == HIT_LEGS || hit_wear == HIT_FEET )
+      dam = (int)( dam * .9 );
+
+   /*
+    * Calculate Damage after attack vs. ac -Davenge
+    */
+
+   atkac_mod =  100 + ( GET_ATTACK( ch ) - abs(( GET_AC( victim )) / 10 ) );
+
+   dam = (int)( dam * ( (double)URANGE( 5, atkac_mod, 200 ) / 100 ) );
+
+   /*
+    * Handle Res Pen -Davenge
+    */
+   dam = res_pen( ch, victim, dam, obj->damtype );
+   /*
+    * Handle Weight of Weapon Vs. Armor Weight -Davenge
+    */
+
+   armor_weight = body_part_weight[hit_wear];
+
+   if( vic_eq )
+      armor_weight += vic_eq->weight;
+
+   wep_weight = get_fist_weight( ch );
+
+   if( wield )
+      wep_weight += wield->weight;
+
+   /*
+    * Calculate Proficiencies -Davenge
+    * -Need to figure out where to put this-
+    */
+
 
    if( !IS_AWAKE( victim ) )
       dam *= 2;
-   if( dt == gsn_backstab )
-      dam *= ( 2 + URANGE( 2, ch->level - ( victim->level / 4 ), 30 ) / 8 );
-
-   if( dt == gsn_circle )
-      dam *= ( 2 + URANGE( 2, ch->level - ( victim->level / 4 ), 30 ) / 16 );
 
    if( dam <= 0 )
       dam = 1;
-
-   plusris = 0;
-
-   if( wield )
-   {
-      if( IS_OBJ_STAT( wield, ITEM_MAGIC ) )
-         dam = ris_damage( victim, dam, RIS_MAGIC );
-      else
-         dam = ris_damage( victim, dam, RIS_NONMAGIC );
-
-   }
-   else
-      dam = ris_damage( victim, dam, RIS_NONMAGIC );
-
-   /*
-    * check for RIS_PLUSx                -Thoric 
-    */
-   if( dam )
-   {
-      int x, res, imm, sus, mod;
-
-      if( plusris )
-         plusris = RIS_PLUS1 << UMIN( plusris, 7 );
-
-      /*
-       * initialize values to handle a zero plusris 
-       */
-      imm = res = -1;
-      sus = 1;
-
-      /*
-       * find high ris 
-       */
-      for( x = RIS_PLUS1; x <= RIS_PLUS6; x <<= 1 )
-      {
-         if( IS_SET( victim->immune, x ) )
-            imm = x;
-         if( IS_SET( victim->resistant, x ) )
-            res = x;
-         if( IS_SET( victim->susceptible, x ) )
-            sus = x;
-      }
-      mod = 10;
-      if( imm >= plusris )
-         mod -= 10;
-      if( res >= plusris )
-         mod -= 2;
-      if( sus <= plusris )
-         mod += 2;
-
-      /*
-       * check if immune 
-       */
-      if( mod <= 0 )
-         dam = -1;
-      if( mod != 10 )
-         dam = ( dam * mod ) / 10;
-   }
-
-   if( prof_gsn != -1 )
-   {
-      if( dam > 0 )
-         learn_from_success( ch, prof_gsn );
-      else
-         learn_from_failure( ch, prof_gsn );
-   }
 
    /*
     * immune to damage 
@@ -3992,4 +3929,54 @@ bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart )
    else if( dt == TYPE_UNDEFINED && range >= get_max_range( ch ) )
       return FALSE;
    return TRUE;
+}
+
+int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype )
+{
+   double mod, mod_pen, mod_res;
+   int counter, split_dam;
+   int num_damtype = 0;
+   int progress = 0;
+
+   for( counter = 0; counter < MAX_DAMTYPE; counter++ )
+      if( xIS_SET( damtype, counter ) )
+         num_damtype++;
+
+   if( num_damtype <= 0 )
+   {
+      bug( "res_pen being called with no damtypes" );
+      return dam;
+   }
+
+   split_dam = dam / num_damtype;
+   dam = 0;
+
+   for( counter = DAM_PIERCE; counter < MAX_DAMTYPE; counter++ )
+   {
+      if( xIS_SET( damtype, counter ) )
+      {
+         mod_pen = ch->penetration[DAM_ALL];
+         mod_res = victim->resistance[DAM_ALL];
+
+         if( counter >= DAM_PIERCE && counter <= DAM_BLUNT )
+         {
+            mod_pen += ch->penetration[DAM_PHYSICAL] + ch->penetration[counter];
+            mod_res += victim->resistance[DAM_PHYISCAL] + victim->resistance[counter];
+
+            mod = (100 + URANGE( -95, ( mod_pen - mod_res ), 95 )) / 100;
+            dam += (int)( split_dam * mod );
+         }
+         if( counter >= DAM_WIND && counter <= DAM_DARK )
+         {
+            mod_pen += ch->penetration[DAM_MAGICAL] + ch->penetration[counter];
+            mod_res += victim->resistance[DAM_PHYSICAL] + victim->resistance[counter];
+
+            mod = (100 +URANGE( -95, ( mod_pen - mod_res ), 95 )) / 100;
+            dam += (int)( split_dam * mod );
+         }
+         if( ++progress == num_damtype )
+            break;
+      }
+   }
+   return dam; 
 }

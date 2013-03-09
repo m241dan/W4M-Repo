@@ -5903,3 +5903,82 @@ void set_on_cooldown( CHAR_DATA *ch, int gsn )
    LINK( cdat, ch->first_cooldown, ch->last_cooldown, next, prev );
    return;
 }
+
+int weight_ratio_str( int str, int weight )
+{
+   int x;
+
+   x = weight / ( str / 10 ) ;
+
+   return URANGE( 1, x, 10 );
+}
+int weight_ratio_dex( int dex, int weight )
+{
+   int x;
+
+   x = dex / abs(weight);
+
+   return URANGE( 1, x, 10 );
+}
+HIT_DATA *init_hitdata( void )
+{
+   HIT_DATA *hit_data;
+
+   CREATE( hit_data, HIT_DATA, 1 );
+
+   hit_data->max_locations = 10;
+   hit_data->hit_locs = 9;
+   hit_data->miss_locs = 1;
+   hit_data->locations[0] = HIT_HEAD;
+   hit_data->locations[1] = HIT_BODY;
+   hit_data->locations[2] = HIT_BODY;
+   hit_data->locations[3] = HIT_WAIST;
+   hit_data->locations[4] = HIT_WAIST;
+   hit_data->locations[5] = HIT_ARMS;
+   hit_data->locations[6] = HIT_HANDS;
+   hit_data->locations[7] = HIT_LEGS;
+   hit_data->locations[8] = HIT_FEET;
+   hit_data->locations[9] = MISS_GENERAL;
+
+   return hit_data;
+}
+
+HIT_DATA *generate_hit_data( CHAR_DATA *victim )
+{
+   OBJ_DATA *obj;
+   HIT_DATA *hit_data;
+   int str, dex, amount, counter;
+
+   str = get_curr_str( victim );
+   dex = get_curr_dex( victim );
+
+   hit_data = populate_hitdata( );
+
+   for( obj = victim->first_carrying; obj; obj = obj->next_content )
+   {
+      if( ( obj->wear_loc >= WEAR_BODY && obj->wear_loc <= WEAR_ARMS ) || obj->wear_loc == WEAR_WAIST )
+      {
+         if( obj->weight > 0 )
+         {
+            amount = weight_ratio_str( str, obj->weight )
+            for( counter = 0; counter < amount; counter++ )
+            {
+               hit_data->locations[max_locations] = obj->wear_loc;
+               hit_data->hit_locs++;
+               hit_data->max_locations++;
+            }
+         }
+         else if( obj->weight < 0 )
+         {
+            amount = weight_ratio_dex( dex, obj->weight )
+            for( counter = 0; counter < amount; counter++ )
+            {
+               hit_data->locations[max_locations] = ( obj->wear_loc + MAX_WEAR );
+               hit_data->miss_locs++;
+               hit_data->max_locations++;
+            }
+         }
+      }
+   }
+   return hit_data;
+}
