@@ -5982,3 +5982,5 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
    }
    return hit_data;
 }
+
+

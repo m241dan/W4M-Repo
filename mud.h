@@ -1960,6 +1960,8 @@ typedef enum
    MAX_WEAR
 } wear_locations;
 
+extern const int   body_part_weight[MAX_WEAR];
+
 #define MISS_BODY    (WEAR_BODY  * -1)
 #define MISS_HEAD    (WEAR_HEAD  * -1)
 #define MISS_LEGS    (WEAR_HEAD  * -1)

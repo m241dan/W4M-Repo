@@ -46,6 +46,15 @@ const char *const npc_class[MAX_NPC_CLASS] = {
 const double base_class_lag[MAX_CLASS] = {
    4, 4, 4, 3, 3, 3, 2.5, 2.5, 2.5
 };
+
+/*
+ * only relavant body parts are added -Davenge
+ */
+
+const int body_part_weight[WEAR_WAIST] = {
+   0, 0, 0, 0, 0, 10, 7, 8, 4, 2, 6, 0, 0, 10
+};
+
 /*
  * Attribute bonus tables.
  */

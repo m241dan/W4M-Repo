@@ -847,7 +847,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    HIT_DATA *hit_data;
    EXT_BV *damtype;
 
-   int dam, atkac_mod, plusris, prof_bonus, prof_gsn = -1;
+   int dam, plusris, prof_bonus, prof_gsn = -1;
    int max_range, wep_weight, armor_weight, hit_wear, amount, subcount;
    int subtable[];
    ch_ret retcode = rNONE;
@@ -958,6 +958,8 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
     */
    dam += get_curr_str( ch ) - get_curr_con( victim );
 
+   if( dam <= 0 )
+      dam = 1;
    /*
     * Wear_loc native bonuses -Davenge
     */
@@ -971,9 +973,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
     * Calculate Damage after attack vs. ac -Davenge
     */
 
-   atkac_mod =  100 + ( GET_ATTACK( ch ) - abs(( GET_AC( victim )) / 10 ) );
-
-   dam = (int)( dam * ( (double)URANGE( 5, atkac_mod, 200 ) / 100 ) );
+   dam = attack_ac_mod( ch, victim, dam );
 
    /*
     * Handle Res Pen -Davenge
@@ -983,16 +983,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
     * Handle Weight of Weapon Vs. Armor Weight -Davenge
     */
 
-   armor_weight = body_part_weight[hit_wear];
-
-   if( vic_eq )
-      armor_weight += vic_eq->weight;
-
-   wep_weight = get_fist_weight( ch );
-
-   if( wield )
-      wep_weight += wield->weight;
-
+   dam = calc_weight_mod( ch, victim, hit_wear, dam );
    /*
     * Calculate Proficiencies -Davenge
     * -Need to figure out where to put this-
@@ -1004,37 +995,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 
    if( dam <= 0 )
       dam = 1;
-
-   /*
-    * immune to damage 
-    */
-   if( dam == -1 )
-   {
-      if( dt >= 0 && dt < num_skills )
-      {
-         SKILLTYPE *skill = skill_table[dt];
-         bool found = FALSE;
-
-         if( skill->imm_char && skill->imm_char[0] != '\0' )
-         {
-            act( AT_HIT, skill->imm_char, ch, NULL, victim, TO_CHAR );
-            found = TRUE;
-         }
-         if( skill->imm_vict && skill->imm_vict[0] != '\0' )
-         {
-            act( AT_HITME, skill->imm_vict, ch, NULL, victim, TO_VICT );
-            found = TRUE;
-         }
-         if( skill->imm_room && skill->imm_room[0] != '\0' )
-         {
-            act( AT_ACTION, skill->imm_room, ch, NULL, victim, TO_NOTVICT );
-            found = TRUE;
-         }
-         if( found )
-            return rNONE;
-      }
-      dam = 0;
-   }
 
    if( ( retcode = damage( ch, victim, dam, dt ) ) != rNONE )
       return retcode;
@@ -1693,28 +1653,8 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
        */
       if( IS_AFFECTED( ch, AFF_HIDE ) )
          xREMOVE_BIT( ch->affected_by, AFF_HIDE );
-      /*
-       * Damage modifiers.
-       */
-      if( IS_AFFECTED( victim, AFF_SANCTUARY ) )
-         dam /= 2;
-
-      if( IS_AFFECTED( victim, AFF_PROTECT ) && IS_EVIL( ch ) )
-         dam -= ( int )( dam / 4 );
-
-      if( dam < 0 )
-         dam = 0;
-
-      /*
-       * Check for disarm, trip, parry, dodge and tumble.
-       */
       if( dt >= TYPE_HIT  )
       {
-         if( IS_NPC( ch ) && xIS_SET( ch->defenses, DFND_DISARM ) && ch->level > 9 && number_percent(  ) < ch->level / 3 ) /* Was 2 try this --Shaddai */
-            disarm( ch, victim );
-
-         if( IS_NPC( ch ) && xIS_SET( ch->attacks, ATCK_TRIP ) && ch->level > 5 && number_percent(  ) < ch->level / 2 )
-            trip( ch, victim );
 
          if( check_parry( ch, victim ) )
             return rNONE;
@@ -1745,30 +1685,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
          dam = ( dam * dampmod ) / 100;
    }
 
-   /*
-    * Code to handle equipment getting damaged, and also support  -Thoric
-    * bonuses/penalties for having or not having equipment where hit
-    */
-   if( dam > 10 && dt != TYPE_UNDEFINED )
-   {
-      /*
-       * get a random body eq part 
-       */
-      dameq = number_range( WEAR_LIGHT, WEAR_ANKLE_R );
-      damobj = get_eq_char( victim, dameq );
-      if( damobj )
-      {
-         if( dam > get_obj_resistance( damobj ) && number_bits( 1 ) == 0 )
-         {
-            set_cur_obj( damobj );
-            damage_obj( damobj );
-         }
-         dam -= 5;   /* add a bonus for having something to block the blow */
-      }
-      else
-         dam += 5;   /* add penalty for bare skin! */
-   }
-
    if( ch != victim )
       dam_message( ch, victim, dam, dt );
 
@@ -1777,20 +1693,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
     * Inform the victim of his new state.
     */
    victim->hit -= dam;
-
-   /*
-    * Get experience based on % of damage done       -Thoric
-    */
-   if( dam && ch != victim && !IS_NPC( ch ) && ch->fighting && ch->fighting->xp )
-   {
-      if( ch->fighting->who == victim )
-         xp_gain = ( int )( ch->fighting->xp * dam ) / victim->max_hit;
-      else
-         xp_gain = ( int )( xp_compute( ch, victim ) * 0.85 * dam ) / victim->max_hit;
-      if( dt == gsn_backstab || dt == gsn_circle )
-         xp_gain = 0;
-      gain_exp( ch, xp_gain );
-   }
 
    if( !IS_NPC( victim ) && victim->level >= LEVEL_IMMORTAL && victim->hit < 1 )
       victim->hit = 1;
@@ -1854,26 +1756,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
          }
          act( AT_DEAD, "$n is DEAD!!", victim, 0, 0, TO_ROOM );
          act( AT_DEAD, "You have been KILLED!!\r\n", victim, 0, 0, TO_CHAR );
-         break;
-
-      default:
-         /*
-          * Victim mentalstate affected, not attacker -- oops ;)
-          * Thanks to gfinello@mail.karmanet.it for finding this bug
-          */
-         if( dam > victim->max_hit / 4 )
-         {
-            act( AT_HURT, "That really did HURT!", victim, 0, 0, TO_CHAR );
-            if( number_bits( 3 ) == 0 )
-               worsen_mental_state( victim, 1 );
-         }
-         if( victim->hit < victim->max_hit / 4 )
-
-         {
-            act( AT_DANGER, "You wish that your wounds would stop BLEEDING so much!", victim, 0, 0, TO_CHAR );
-            if( number_bits( 2 ) == 0 )
-               worsen_mental_state( victim, 1 );
-         }
          break;
    }
 
@@ -3979,4 +3861,105 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype )
       }
    }
    return dam; 
+}
+
+int get_fist_weight( CHAR_DATA * ch )
+{
+   OBJ_DATA *obj;
+   int fist_weight;
+
+   /*
+    * Base body part weight, the hand -Davenge 
+    */
+   fist_weight = body_part_weight[WEAR_HANDS];
+
+   /*
+    * Add weight of any gloves -Davenge
+    */
+   if( ( obj = get_eq_char( ch, WEAR_HANDS ) ) != NULL )  
+      fist_weight += obj->weight;
+
+   /*
+    * Add the weight of a weapon -Davenge
+    */
+   if( used_weapon )
+      fist_weight += used_weapon->weight;
+
+   /*
+    * Augment points to heavy_handed -Davenge
+    *
+    * Not in yet, will add with augment system
+    */
+   return fist_weight;
+}
+
+int get_wear_loc_weight( CHAR_DATA * ch, int hit_wear )
+{
+   OBJ_DATA *obj;
+   int loc_weight;
+
+   /*
+    * Base bofdy part weight -Davenge
+    */
+
+   loc_weight = body_part_weight[hit_wear];
+
+   /*
+    * If armored at that location -Davenge
+    */
+   if( ( obj = get_eq_char( ch, hit_wear ) ) != NULL )
+      loc_weight += obj->weight;
+
+   /*
+    * Augment points spent on a body_part -Davenge
+    *
+    * Not in yet, will add with augment system
+    */
+    return loc_weight;
+}
+
+int calc_weight_mod( CHAR_DATA *ch, CHAR_DATA *victim, int hit_wear, int dam )
+{
+   int armor_weight, weapon_weight;
+   int mod;
+
+   /*
+    * Get the weights of each -Davenge
+    */
+
+   armor_weight = get_wear_loc_weight( victim, hit_wear );
+   weapon_weight = get_fist_weight( ch );
+
+   /*
+    * Do math, basically floor at 95% damage reduction/increase to the damage
+    * -Davenge
+    */
+   mod = URANGE( (int)( armor_weight * .05), (armor_weight + ( armor_weight - weapon_weight )), (int)( armor_weight * 1.95 ));
+
+   /*
+    * Multiply the dam passed by our mod turned into an appropriate percentage
+    * -Davenge
+    */
+   dam = (int)( dam * ( mod / armor_weight ) );
+
+   return dam;
+}
+
+int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
+{
+   int atkac_mod;
+
+   /*
+    * Basically make 1 attack equal to 10 armor for 1% damage increase/redux
+    * -Davenge
+    */
+   atkac_mod = 100 + ( GET_ATTACK( ch ) - abs(( GET_AC( victim )) / 10 ) );
+
+   /*
+    * Apply the mod after turning it into an appropriate percentage capping at
+    * %5 to 95% increase respectively -Davenge
+    */
+   dam = (int)( dam * ( (double)URANGE( 5, atkac_mod, 195 ) / 100 ) );
+
+   return dam;
 }
