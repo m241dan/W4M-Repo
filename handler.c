@@ -587,8 +587,7 @@ int get_exp_worth( CHAR_DATA * ch )
    wexp = ch->level * ch->level * ch->level * 5;
    wexp += ch->max_hit;
    wexp -= ( ch->armor - 50 ) * 2;
-   wexp += ( ch->barenumdie * ch->baresizedie + GET_DAMROLL( ch ) ) * 50;
-   wexp += GET_HITROLL( ch ) * ch->level * 10;
+   wexp += ( ch->barenumdie * ch->baresizedie + GET_ATTACK( ch ) ) * 50;
    if( IS_AFFECTED( ch, AFF_SANCTUARY ) )
       wexp += ( int )( wexp * 1.5 );
    if( IS_AFFECTED( ch, AFF_FIRESHIELD ) )
@@ -804,22 +803,22 @@ short get_curr_cha( CHAR_DATA * ch )
 }
 
 /*
- * Retrieve character's current luck.
+ * Retrieve character's current passion.
  */
-short get_curr_lck( CHAR_DATA * ch )
+short get_curr_pas( CHAR_DATA * ch )
 {
    short max;
 
-   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_LCK )
+   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_PAS )
       max = 25;
-   else if( class_table[ch->Class]->attr_second == APPLY_LCK )
+   else if( class_table[ch->Class]->attr_second == APPLY_PAS )
       max = 22;
-   else if( class_table[ch->Class]->attr_deficient == APPLY_LCK )
+   else if( class_table[ch->Class]->attr_deficient == APPLY_PAS )
       max = 16;
    else
       max = 20;
 
-   return URANGE( 3, ch->perm_lck + ch->mod_lck, max );
+   return URANGE( 3, ch->perm_pas + ch->mod_pas, max );
 }
 
 /*
@@ -1133,8 +1132,8 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_CHA:
          ch->mod_cha += mod;
          break;
-      case APPLY_LCK:
-         ch->mod_lck += mod;
+      case APPLY_PAS:
+         ch->mod_pas += mod;
          break;
       case APPLY_SEX:
          ch->sex = ( ch->sex + mod ) % 3;
@@ -1178,11 +1177,8 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_AC:
          ch->armor += mod;
          break;
-      case APPLY_HITROLL:
-         ch->hitroll += mod;
-         break;
-      case APPLY_DAMROLL:
-         ch->damroll += mod;
+      case APPLY_ATTACK:
+         ch->attack += mod;
          break;
       case APPLY_SAVING_POISON:
          ch->saving_poison_death += mod;
@@ -1384,6 +1380,27 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_SECTORTYPE:
       case APPLY_ROOMLIGHT:
       case APPLY_TELEVNUM:
+         break;
+      case APPLY_PENETRATION:
+         int damtype, amount;
+         /*
+          * Undo our little hack to get two sets of varying info from one variable
+          * Don't doubt, just trust -Davenge
+          */
+         damtype = abs( mod / 10000 );
+         amount = mod % 10000;
+
+         ch->penetration[damtype] += amount;
+         break;
+      case APPLY_RESISTANCE:
+         /*
+          * Undo our little hack to get two sets of varying info from one variable
+          * Don't doubt, just trust -Davenge
+          */
+         damtype = abs( mod / 10000 );
+         amount = mod % 10000;
+
+         ch->resistance[damtype] += amount;
          break;
 
          /*
@@ -3476,8 +3493,8 @@ const char *affect_loc_name( int location )
          return "constitution";
       case APPLY_CHA:
          return "charisma";
-      case APPLY_LCK:
-         return "luck";
+      case APPLY_PAS:
+         return "passion";
       case APPLY_SEX:
          return "sex";
       case APPLY_CLASS:
@@ -3498,10 +3515,8 @@ const char *affect_loc_name( int location )
          return "experience";
       case APPLY_AC:
          return "armor class";
-      case APPLY_HITROLL:
-         return "hit roll";
-      case APPLY_DAMROLL:
-         return "damage roll";
+      case APPLY_ATTACK:
+         return "attack";
       case APPLY_SAVING_POISON:
          return "save vs poison";
       case APPLY_SAVING_ROD:
@@ -3796,6 +3811,50 @@ const char *pull_type_name( int pulltype )
       return "ERROR";
 
    return ex_pmisc[pulltype];
+}
+
+/*
+ * Return ascii name of damage types.
+ * -Davenge
+ */
+
+const char *damage_type_name( EXT_BV * damtype )
+{
+   static char buf[512];
+
+   buf[0] = '\0';
+
+   if( xIS_SET( *damtype, DAM_ALL ) )
+      mudstrlcat( buf, " All", 512 );
+   if( xIS_SET( *damtype, DAM_MAGIC ) )
+      mudstrlcat( buf, " All_Magic", 512 );
+   if( xIS_SET( *damtype, DAM_PHYSICAL ) )
+      mudstrlcat( buf, " All_Physical", 512 );
+   if( xIS_SET( *damtype, DAM_PIERCE ) )
+      mudstrlcat( buf, " Piercing", 512 );
+   if( xIS_SET( *damtype, DAM_SLASH ) )
+      mudstrlcat( buf, " Slashing", 512 );
+   if( xIS_SET( *damtype, DAM_BLUNT ) )
+      mudstrlcat( buf, " Blunt", 512 );
+   if( xIS_SET( *damtype, DAM_WIND ) )
+      mudstrlcat( buf, " Wind", 512 );
+   if( xIS_SET( *damtype, DAM_EARTH ) )
+      mudstrlcat( buf, " Earth", 512 );
+   if( xIS_SET( *damtype, DAM_FIRE ) )
+      mudstrlcat( buf, " Fire", 512 );
+   if( xIS_SET( *damtype, DAM_ICE ) )
+      mudstrlcat( buf, " Ice", 512 );
+   if( xIS_SET( *damtype, DAM_WATER ) )
+      mudstrlcat( buf, " Water", 512 );
+   if( xIS_SET( *damtype, DAM_LIGHTNING ) )
+      mudstrlcat( buf, " Lightning", 512 );
+   if( xIS_SET( *damtype, DAM_LIGHT ) )
+      mudstrlcat( buf, " Light", 512 );
+   if( xIS_SET( *damtype, DAM_DARK ) )
+      mudstrlcat( buf, " Darkness", 512 );
+   if( xIS_SET( *damtype, DAM_INHERITED ) )
+      mudstrlcat( buf, " Inherited", 512 );
+   return ( buf[0] != '\0' ) ? buf + 1 : ( char * )"none";
 }
 
 /*
@@ -4219,14 +4278,14 @@ void name_stamp_stats( CHAR_DATA * ch )
    ch->perm_int = UMIN( 18, ch->perm_int );
    ch->perm_con = UMIN( 18, ch->perm_con );
    ch->perm_cha = UMIN( 18, ch->perm_cha );
-   ch->perm_lck = UMIN( 18, ch->perm_lck );
+   ch->perm_pas = UMIN( 18, ch->perm_pas );
    ch->perm_str = UMAX( 9, ch->perm_str );
    ch->perm_wis = UMAX( 9, ch->perm_wis );
    ch->perm_dex = UMAX( 9, ch->perm_dex );
    ch->perm_int = UMAX( 9, ch->perm_int );
    ch->perm_con = UMAX( 9, ch->perm_con );
    ch->perm_cha = UMAX( 9, ch->perm_cha );
-   ch->perm_lck = UMAX( 9, ch->perm_lck );
+   ch->perm_pas = UMAX( 9, ch->perm_pas );
 
    for( x = 0; x < strlen( ch->name ); x++ )
    {
@@ -4254,7 +4313,7 @@ void name_stamp_stats( CHAR_DATA * ch )
             ch->perm_cha = UMIN( 18, ch->perm_cha + a );
             break;
          case 6:
-            ch->perm_lck = UMIN( 18, ch->perm_lck + a );
+            ch->perm_pas = UMIN( 18, ch->perm_pas + a );
             break;
          case 7:
             ch->perm_str = UMAX( 9, ch->perm_str - a );
@@ -4275,7 +4334,7 @@ void name_stamp_stats( CHAR_DATA * ch )
             ch->perm_cha = UMAX( 9, ch->perm_cha - a );
             break;
          case 13:
-            ch->perm_lck = UMAX( 9, ch->perm_lck - a );
+            ch->perm_pas = UMAX( 9, ch->perm_pas - a );
             break;
       }
    }
@@ -4326,9 +4385,8 @@ void fix_char( CHAR_DATA * ch )
    ch->mod_int = 0;
    ch->mod_con = 0;
    ch->mod_cha = 0;
-   ch->mod_lck = 0;
-   ch->damroll = 0;
-   ch->hitroll = 0;
+   ch->mod_pas = 0;
+   ch->attack = 0;
    ch->alignment = URANGE( -1000, ch->alignment, 1000 );
    ch->saving_breath = 0;
    ch->saving_wand = 0;
@@ -4420,6 +4478,15 @@ void showaffect( CHAR_DATA * ch, AFFECT_DATA * paf )
                }
             mudstrlcat( buf, "\r\n", MAX_STRING_LENGTH );
             break;
+         case APPLY_PENETRATION:
+         case APPLY_RESISTANCE:
+            int damtype, amount;
+
+            damtype = abs( paf->modifier / 10000 );
+            amount = paf->modifier % 10000;
+            snprintf( buf, MAX_STRING_LENGTH,  "&cAffects &w%s &c%s &cby &w%d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
+            break;
+
       }
       send_to_char( buf, ch );
    }
@@ -4768,7 +4835,7 @@ maximum penalty will only be half that of the other clan types.
 
    ms = 10 - abs( ch->mental_state );
 
-   if( ( number_percent(  ) - get_curr_lck( ch ) + 13 - ms ) + deity_factor <= percent )
+   if( ( number_percent(  ) - get_curr_pas( ch ) + 13 - ms ) + deity_factor <= percent )
       return TRUE;
    else
       return FALSE;
@@ -4790,7 +4857,7 @@ bool chance_attrib( CHAR_DATA * ch, short percent, short attrib )
    else
       deity_factor = 0;
 
-   if( number_percent(  ) - get_curr_lck( ch ) + 13 - attrib + 13 + deity_factor <= percent )
+   if( number_percent(  ) - get_curr_pas( ch ) + 13 - attrib + 13 + deity_factor <= percent )
       return TRUE;
    else
       return FALSE;

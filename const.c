@@ -299,6 +299,18 @@ const char *const attack_table[18] = {
    "stone", "pea"
 };
 
+const char *const weapon_table[MAX_WEAPON] = {
+   "unarmed", "great-axe", "axe", "pole-axe", "pole-arm", "scythe",
+   "staff", "dagger", "claw", "knuckles", "orb", "shield", "sword",
+   "club", "book"
+};
+
+const char *const damage_table[DAM_INHERITED+1] = {
+   "all", "magic", "physical", "pierce", "slash", "blunt",
+   "wind", "earth", "fire", "ice", "water", "lightning",
+   "light", "dark", "(null)", "inherited"
+};
+
 const char *s_blade_messages[24] = {
    "miss", "barely scratch", "scratch", "nick", "cut", "hit", "tear",
    "rip", "gash", "lacerate", "hack", "maul", "rend", "decimate",

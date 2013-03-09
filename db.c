@@ -1258,7 +1258,7 @@ void load_mobiles( AREA_DATA * tarea, FILE * fp )
          pMobIndex->perm_dex = fread_number( fp );
          pMobIndex->perm_con = fread_number( fp );
          pMobIndex->perm_cha = fread_number( fp );
-         pMobIndex->perm_lck = fread_number( fp );
+         pMobIndex->perm_pas = fread_number( fp );
          pMobIndex->saving_poison_death = fread_number( fp );
          pMobIndex->saving_wand = fread_number( fp );
          pMobIndex->saving_para_petri = fread_number( fp );
@@ -1339,8 +1339,7 @@ void load_mobiles( AREA_DATA * tarea, FILE * fp )
          if( !pMobIndex->speaking )
             pMobIndex->speaking = LANG_COMMON;
 
-         pMobIndex->hitroll = fread_number( fp );
-         pMobIndex->damroll = fread_number( fp );
+         pMobIndex->attack = fread_number( fp );
          pMobIndex->xflags = fread_number( fp );
          pMobIndex->resistant = fread_number( fp );
          pMobIndex->immune = fread_number( fp );
@@ -1356,7 +1355,7 @@ void load_mobiles( AREA_DATA * tarea, FILE * fp )
          pMobIndex->perm_wis = 13;
          pMobIndex->perm_cha = 13;
          pMobIndex->perm_con = 13;
-         pMobIndex->perm_lck = 13;
+         pMobIndex->perm_pas = 13;
          pMobIndex->race = 0;
          pMobIndex->Class = 3;
          pMobIndex->xflags = 0;
@@ -2743,9 +2742,8 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    mob->perm_int = pMobIndex->perm_int;
    mob->perm_con = pMobIndex->perm_con;
    mob->perm_cha = pMobIndex->perm_cha;
-   mob->perm_lck = pMobIndex->perm_lck;
-   mob->hitroll = pMobIndex->hitroll;
-   mob->damroll = pMobIndex->damroll;
+   mob->perm_pas = pMobIndex->perm_pas;
+   mob->attack = pMobIndex->attack;
    mob->race = pMobIndex->race;
    mob->Class = pMobIndex->Class;
    mob->xflags = pMobIndex->xflags;
@@ -2911,6 +2909,8 @@ OBJ_DATA *create_object( OBJ_INDEX_DATA * pObjIndex, int level )
          break;
 
       case ITEM_WEAPON:
+         obj->range = pObjIndex->range;
+         obj->damtype = pObjIndex->damtype;
       case ITEM_MISSILE_WEAPON:
       case ITEM_PROJECTILE:
          if( obj->value[1] && obj->value[2] )
@@ -3013,14 +3013,14 @@ void clear_char( CHAR_DATA * ch )
    ch->perm_wis = 13;
    ch->perm_cha = 13;
    ch->perm_con = 13;
-   ch->perm_lck = 13;
+   ch->perm_pas = 13;
    ch->mod_str = 0;
    ch->mod_dex = 0;
    ch->mod_int = 0;
    ch->mod_wis = 0;
    ch->mod_cha = 0;
    ch->mod_con = 0;
-   ch->mod_lck = 0;
+   ch->mod_pas = 0;
    return;
 }
 
@@ -5689,7 +5689,7 @@ MOB_INDEX_DATA *make_mobile( int vnum, int cvnum, const char *name )
       pMobIndex->perm_wis = 13;
       pMobIndex->perm_cha = 13;
       pMobIndex->perm_con = 13;
-      pMobIndex->perm_lck = 13;
+      pMobIndex->perm_pas = 13;
       pMobIndex->race = 0;
       pMobIndex->Class = 3;
       pMobIndex->xflags = 0;
@@ -5734,7 +5734,7 @@ MOB_INDEX_DATA *make_mobile( int vnum, int cvnum, const char *name )
       pMobIndex->perm_wis = cMobIndex->perm_wis;
       pMobIndex->perm_cha = cMobIndex->perm_cha;
       pMobIndex->perm_con = cMobIndex->perm_con;
-      pMobIndex->perm_lck = cMobIndex->perm_lck;
+      pMobIndex->perm_pas = cMobIndex->perm_pas;
       pMobIndex->race = cMobIndex->race;
       pMobIndex->Class = cMobIndex->Class;
       pMobIndex->xflags = cMobIndex->xflags;
@@ -7159,7 +7159,7 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
                pMobIndex->perm_dex = x4;
                pMobIndex->perm_con = x5;
                pMobIndex->perm_cha = x6;
-               pMobIndex->perm_lck = x7;
+               pMobIndex->perm_pas = x7;
 
                break;
             }
@@ -7275,6 +7275,29 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'P':
+            if( !strcmp( word, "Penetration" ) )
+            {
+               int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14;
+               char *line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               pMobIndex->penetration[0] = x1;
+               pMobIndex->penetration[1] = x2;
+               pMobIndex->penetration[2] = x3;
+               pMobIndex->penetration[3] = x4;
+               pMobIndex->penetration[4] = x5;
+               pMobIndex->penetration[5] = x6;
+               pMobIndex->penetration[6] = x7;
+               pMobIndex->penetration[7] = x8;
+               pMobIndex->penetration[8] = x9;
+               pMobIndex->penetration[9] = x10;
+               pMobIndex->penetration[10] = x11;
+               pMobIndex->penetration[11] = x12;
+               pMobIndex->penetration[12] = x13;
+               pMobIndex->penetration[13] = x14;
+               fMatch = TRUE;
+               break;
+            }
             if( !str_cmp( word, "Position" ) )
             {
                short position = get_npc_position( fread_flagstring( fp ) );
@@ -7338,6 +7361,29 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
                   else
                      SET_BIT( pMobIndex->resistant, 1 << value );
                }
+               break;
+            }
+            if( !strcmp( word, "Resistance" ) )
+            {
+               int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14;
+               char *line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               pMobIndex->resistance[0] = x1;
+               pMobIndex->resistance[1] = x2;
+               pMobIndex->resistance[2] = x3;
+               pMobIndex->resistance[3] = x4;
+               pMobIndex->resistance[4] = x5;
+               pMobIndex->resistance[5] = x6;
+               pMobIndex->resistance[6] = x7;
+               pMobIndex->resistance[7] = x8;
+               pMobIndex->resistance[8] = x9;
+               pMobIndex->resistance[9] = x10;
+               pMobIndex->resistance[10] = x11;
+               pMobIndex->resistance[11] = x12;
+               pMobIndex->resistance[12] = x13;
+               pMobIndex->resistance[13] = x14;
+               fMatch = TRUE;
                break;
             }
             break;
@@ -7491,16 +7537,15 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             if( !str_cmp( word, "Stats4" ) )
             {
                char *ln = fread_line( fp );
-               int x1, x2, x3, x4, x5;
+               int x1, x2, x3, x4;
 
-               x1 = x2 = x3 = x4 = x5 = 0;
-               sscanf( ln, "%d %d %d %d %d", &x1, &x2, &x3, &x4, &x5 );
+               x1 = x2 = x3 = x4 = 0;
+               sscanf( ln, "%d %d %d %d", &x1, &x2, &x3, &x4);
 
                pMobIndex->height = x1;
                pMobIndex->weight = x2;
                pMobIndex->numattacks = x3;
-               pMobIndex->hitroll = x4;
-               pMobIndex->damroll = x5;
+               pMobIndex->attack = x4;
 
                break;
             }

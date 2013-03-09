@@ -31,7 +31,6 @@ void group_gain( CHAR_DATA * ch, CHAR_DATA * victim );
 int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim );
 int align_compute( CHAR_DATA * gch, CHAR_DATA * victim );
 ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt );
-int obj_hitroll( OBJ_DATA * obj );
 void show_condition( CHAR_DATA * ch, CHAR_DATA * victim );
 
 bool loot_coins_from_corpse( CHAR_DATA * ch, OBJ_DATA * corpse )
@@ -806,85 +805,7 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
  */
 int weapon_prof_bonus_check( CHAR_DATA * ch, OBJ_DATA * wield, int *gsn_ptr )
 {
-   int bonus;
-
-   bonus = 0;
-   *gsn_ptr = -1;
-   if( !IS_NPC( ch ) && ch->level > 5 && wield )
-   {
-      switch ( wield->value[3] )
-      {
-         default:
-            *gsn_ptr = -1;
-            break;
-         case DAM_HIT:
-         case DAM_SUCTION:
-         case DAM_BITE:
-         case DAM_BLAST:
-            *gsn_ptr = gsn_pugilism;
-            break;
-         case DAM_SLASH:
-         case DAM_SLICE:
-            *gsn_ptr = gsn_long_blades;
-            break;
-         case DAM_PIERCE:
-         case DAM_STAB:
-            *gsn_ptr = gsn_short_blades;
-            break;
-         case DAM_WHIP:
-            *gsn_ptr = gsn_flexible_arms;
-            break;
-         case DAM_CLAW:
-            *gsn_ptr = gsn_talonous_arms;
-            break;
-         case DAM_POUND:
-         case DAM_CRUSH:
-            *gsn_ptr = gsn_bludgeons;
-            break;
-         case DAM_BOLT:
-         case DAM_ARROW:
-         case DAM_DART:
-         case DAM_STONE:
-         case DAM_PEA:
-            *gsn_ptr = gsn_missile_weapons;
-            break;
-
-      }
-      if( *gsn_ptr != -1 )
-         bonus = ( int )( ( LEARNED( ch, *gsn_ptr ) - 50 ) / 10 );
-
-      /*
-       * Reduce weapon bonuses for misaligned clannies.
-       * if ( IS_CLANNED(ch) )
-       * {
-       * bonus = bonus * 1000 / 
-       * ( 1 + abs( ch->alignment - ch->pcdata->clan->alignment ) );
-       * }
-       */
-
-      if( IS_DEVOTED( ch ) )
-         bonus -= ch->pcdata->favor / -400;
-
-   }
-   return bonus;
-}
-
-/*
- * Calculate the tohit bonus on the object and return RIS values.
- * -- Altrag
- */
-int obj_hitroll( OBJ_DATA * obj )
-{
-   int tohit = 0;
-   AFFECT_DATA *paf;
-
-   for( paf = obj->pIndexData->first_affect; paf; paf = paf->next )
-      if( paf->location == APPLY_HITROLL )
-         tohit += paf->modifier;
-   for( paf = obj->first_affect; paf; paf = paf->next )
-      if( paf->location == APPLY_HITROLL )
-         tohit += paf->modifier;
-   return tohit;
+   return 0;
 }
 
 /*
@@ -923,7 +844,7 @@ short off_shld_lvl( CHAR_DATA * ch, CHAR_DATA * victim )
 ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 {
    OBJ_DATA *wield;
-   int victim_ac, thac0, thac0_00, thac0_32, plusris, dam, diceroll, prof_bonus, prof_gsn = -1;
+   int victim_ac, thac0_00, thac0_32, plusris, dam, diceroll, prof_bonus, prof_gsn = -1;
    int max_range;
    ch_ret retcode = rNONE;
    static bool dual_flip = FALSE;
@@ -991,7 +912,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       thac0_00 = class_table[ch->Class]->thac0_00;
       thac0_32 = class_table[ch->Class]->thac0_32;
    }
-   thac0 = interpolate( ch->level, thac0_00, thac0_32 ) - GET_HITROLL( ch );
    victim_ac = UMAX( -19, ( int )( GET_AC( victim ) / 10 ) );
 
    /*
@@ -1032,7 +952,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    while( ( diceroll = number_bits( 5 ) ) >= 20 )
       ;
 
-   if( diceroll == 0 || ( diceroll != 19 && diceroll < thac0 - victim_ac ) )
+   if( diceroll == 0 || ( diceroll != 19 && diceroll < victim_ac ) )
    {
       /*
        * Miss. 
@@ -1060,7 +980,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    /*
     * Bonuses.
     */
-   dam += GET_DAMROLL( ch );
+   dam += GET_ATTACK( ch );
 
    if( prof_bonus )
       dam += prof_bonus / 4;
@@ -1091,10 +1011,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       else
          dam = ris_damage( victim, dam, RIS_NONMAGIC );
 
-      /*
-       * Handle PLUS1 - PLUS6 ris bits vs. weapon hitroll   -Thoric
-       */
-      plusris = obj_hitroll( wield );
    }
    else
       dam = ris_damage( victim, dam, RIS_NONMAGIC );
@@ -1266,7 +1182,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ_DATA * projectile, short dist )
 {
    int victim_ac;
-   int thac0;
    int thac0_00;
    int thac0_32;
    int plusris;
@@ -1326,7 +1241,6 @@ ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ
       thac0_00 = class_table[ch->Class]->thac0_00;
       thac0_32 = class_table[ch->Class]->thac0_32;
    }
-   thac0 = interpolate( ch->level, thac0_00, thac0_32 ) - GET_HITROLL( ch ) + ( dist * 2 );
    victim_ac = UMAX( -19, ( int )( GET_AC( victim ) / 10 ) );
 
    /*
@@ -1348,7 +1262,7 @@ ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ
    while( ( diceroll = number_bits( 5 ) ) >= 20 )
       ;
 
-   if( diceroll == 0 || ( diceroll != 19 && diceroll < thac0 - victim_ac ) )
+   if( diceroll == 0 || ( diceroll != 19 && diceroll < victim_ac ) )
    {
       /*
        * Miss. 
@@ -1387,7 +1301,7 @@ ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ
    /*
     * Bonuses.
     */
-   dam += GET_DAMROLL( ch );
+   dam += GET_ATTACK( ch );
 
    if( prof_bonus )
       dam += prof_bonus / 4;
@@ -1411,12 +1325,6 @@ ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ
       dam = ris_damage( victim, dam, RIS_MAGIC );
    else
       dam = ris_damage( victim, dam, RIS_NONMAGIC );
-
-   /*
-    * Handle PLUS1 - PLUS6 ris bits vs. weapon hitroll  -Thoric
-    */
-   if( wield )
-      plusris = obj_hitroll( wield );
 
    /*
     * check for RIS_PLUSx                -Thoric 
@@ -1641,38 +1549,9 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
    npcvict = IS_NPC( victim );
 
    /*
-    * Check damage types for RIS            -Thoric
+    * Need to rewrite damage resistances here           -Thoric
     */
-   if( dam && dt != TYPE_UNDEFINED )
    {
-      if( IS_FIRE( dt ) )
-         dam = ris_damage( victim, dam, RIS_FIRE );
-      else if( IS_COLD( dt ) )
-         dam = ris_damage( victim, dam, RIS_COLD );
-      else if( IS_ACID( dt ) )
-         dam = ris_damage( victim, dam, RIS_ACID );
-      else if( IS_ELECTRICITY( dt ) )
-         dam = ris_damage( victim, dam, RIS_ELECTRICITY );
-      else if( IS_ENERGY( dt ) )
-         dam = ris_damage( victim, dam, RIS_ENERGY );
-      else if( IS_DRAIN( dt ) )
-         dam = ris_damage( victim, dam, RIS_DRAIN );
-      else if( dt == gsn_poison || IS_POISON( dt ) )
-         dam = ris_damage( victim, dam, RIS_POISON );
-      else
-         if( dt == ( TYPE_HIT + DAM_POUND ) || dt == ( TYPE_HIT + DAM_CRUSH )
-             || dt == ( TYPE_HIT + DAM_STONE ) || dt == ( TYPE_HIT + DAM_PEA ) )
-         dam = ris_damage( victim, dam, RIS_BLUNT );
-      else
-         if( dt == ( TYPE_HIT + DAM_STAB ) || dt == ( TYPE_HIT + DAM_PIERCE )
-             || dt == ( TYPE_HIT + DAM_BITE ) || dt == ( TYPE_HIT + DAM_BOLT )
-             || dt == ( TYPE_HIT + DAM_DART ) || dt == ( TYPE_HIT + DAM_ARROW ) )
-         dam = ris_damage( victim, dam, RIS_PIERCE );
-      else
-         if( dt == ( TYPE_HIT + DAM_SLICE ) || dt == ( TYPE_HIT + DAM_SLASH )
-             || dt == ( TYPE_HIT + DAM_WHIP ) || dt == ( TYPE_HIT + DAM_CLAW ) )
-         dam = ris_damage( victim, dam, RIS_SLASH );
-
       if( dam == -1 )
       {
          if( dt >= 0 && dt < num_skills )
@@ -3149,9 +3028,8 @@ OBJ_DATA *raw_kill( CHAR_DATA * ch, CHAR_DATA * victim )
    victim->mod_int = 0;
    victim->mod_con = 0;
    victim->mod_cha = 0;
-   victim->mod_lck = 0;
-   victim->damroll = 0;
-   victim->hitroll = 0;
+   victim->mod_pas = 0;
+   victim->attack = 0;
    victim->mental_state = -10;
    victim->alignment = URANGE( -1000, victim->alignment, 1000 );
 /*  victim->alignment		= race_table[victim->race]->alignment;

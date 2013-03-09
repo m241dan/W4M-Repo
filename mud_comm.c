@@ -2656,7 +2656,7 @@ void do_mpapplyb( CHAR_DATA* ch, const char* argument)
          victim->perm_wis = 13;
          victim->perm_cha = 13;
          victim->perm_con = 13;
-         victim->perm_lck = 13;
+         victim->perm_pas = 13;
          switch ( class_table[victim->Class]->attr_prime )
          {
             case APPLY_STR:
@@ -2677,8 +2677,8 @@ void do_mpapplyb( CHAR_DATA* ch, const char* argument)
             case APPLY_CHA:
                victim->perm_cha = 16;
                break;
-            case APPLY_LCK:
-               victim->perm_lck = 16;
+            case APPLY_PAS:
+               victim->perm_pas = 16;
                break;
          }
          victim->perm_str += race_table[victim->race]->str_plus;
@@ -2687,7 +2687,7 @@ void do_mpapplyb( CHAR_DATA* ch, const char* argument)
          victim->perm_dex += race_table[victim->race]->dex_plus;
          victim->perm_con += race_table[victim->race]->con_plus;
          victim->perm_cha += race_table[victim->race]->cha_plus;
-         victim->perm_lck += race_table[victim->race]->lck_plus;
+         victim->perm_pas += race_table[victim->race]->pas_plus;
          name_stamp_stats( victim );   /* Take care of auth cons -- Blodkai */
          REMOVE_BIT( victim->pcdata->flags, PCFLAG_UNAUTHED );
          if( victim->fighting )

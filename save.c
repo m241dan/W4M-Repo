@@ -407,8 +407,7 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "Favor	       %d\n", ch->pcdata->favor );
    fprintf( fp, "Glory        %d\n", ch->pcdata->quest_curr );
    fprintf( fp, "MGlory       %d\n", ch->pcdata->quest_accum );
-   fprintf( fp, "Hitroll      %d\n", ch->hitroll );
-   fprintf( fp, "Damroll      %d\n", ch->damroll );
+   fprintf( fp, "Attack      %d\n", ch->attack );
    fprintf( fp, "Range        %d\n", ch->range );
    fprintf( fp, "Armor        %d\n", ch->armor );
    if( ch->wimpy )
@@ -503,11 +502,18 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "IllegalPK    %d\n", ch->pcdata->illegal_pk );
    fprintf( fp, "Timezone     %d\n", ch->pcdata->timezone );
    fprintf( fp, "AttrPerm     %d %d %d %d %d %d %d\n",
-            ch->perm_str, ch->perm_int, ch->perm_wis, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_lck );
+            ch->perm_str, ch->perm_int, ch->perm_wis, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_pas );
 
    fprintf( fp, "AttrMod      %d %d %d %d %d %d %d\n",
-            ch->mod_str, ch->mod_int, ch->mod_wis, ch->mod_dex, ch->mod_con, ch->mod_cha, ch->mod_lck );
-
+            ch->mod_str, ch->mod_int, ch->mod_wis, ch->mod_dex, ch->mod_con, ch->mod_cha, ch->mod_pas );
+   fprintf( fp, "Resistance  " );
+   for( count = 0; count < MAX_DAMTYPE; count++ )
+      fprintf( fp, " %d", ch->resistance[count] );
+   fprintf( fp, "\n" );
+   fprintf( fp, "Penetration " );
+   for( count = 0; count < MAX_DAMTYPE; count++ )
+      fprintf( fp, " %d", ch->penetration[count] );
+   fprintf( fp, "\n" );
    fprintf( fp, "Condition    %d %d %d %d\n",
             ch->pcdata->condition[0], ch->pcdata->condition[1], ch->pcdata->condition[2], ch->pcdata->condition[3] );
    if( ch->desc && ch->desc->host )
@@ -733,7 +739,8 @@ void fwrite_obj( CHAR_DATA * ch, OBJ_DATA * obj, FILE * fp, int iNest, short os_
          break;
       case ITEM_WEAPON:
          fprintf( fp,    "Range         %d\n", obj->range );
-         break;    
+         fprintf( fp,    "DamType       %s\n", print_bitvector( &obj->damtype ) );
+         break;
    }
 
    for( paf = obj->first_affect; paf; paf = paf->next )
@@ -789,7 +796,7 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
    ch->perm_dex = 13;
    ch->perm_con = 13;
    ch->perm_cha = 13;
-   ch->perm_lck = 13;
+   ch->perm_pas = 13;
    ch->no_resistant = 0;
    ch->no_susceptible = 0;
    ch->no_immune = 0;
@@ -1017,7 +1024,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
    char buf[MAX_STRING_LENGTH];
    char *line;
    const char *word;
-   int x1, x2, x3, x4, x5, x6, x7;
+   int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14;
    short killcnt;
    bool fMatch;
    int max_colors = 0;  /* Color code */
@@ -1151,7 +1158,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   break;
                }
             }
-
+            KEY( "Attack", ch->attack, fread_number( fp ) );
             if( !strcmp( word, "AttrMod" ) )
             {
                line = fread_line( fp );
@@ -1163,9 +1170,9 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                ch->mod_dex = x4;
                ch->mod_con = x5;
                ch->mod_cha = x6;
-               ch->mod_lck = x7;
+               ch->mod_pas = x7;
                if( !x7 )
-                  ch->mod_lck = 0;
+                  ch->mod_pas = 0;
                fMatch = TRUE;
                break;
             }
@@ -1181,9 +1188,9 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                ch->perm_dex = x4;
                ch->perm_con = x5;
                ch->perm_cha = x6;
-               ch->perm_lck = x7;
+               ch->perm_pas = x7;
                if( !x7 || x7 == 0 )
-                  ch->perm_lck = 13;
+                  ch->perm_pas = 13;
                fMatch = TRUE;
                break;
             }
@@ -1262,7 +1269,6 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'D':
-            KEY( "Damroll", ch->damroll, fread_number( fp ) );
             KEY( "Deaf", ch->deaf, fread_number( fp ) );
             if( !strcmp( word, "Deity" ) )
             {
@@ -1336,7 +1342,6 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                break;
             }
 
-            KEY( "Hitroll", ch->hitroll, fread_number( fp ) );
             KEY( "Homepage", ch->pcdata->homepage, fread_string_nohash( fp ) );
 
             if( !strcmp( word, "HpManaMove" ) )
@@ -1533,6 +1538,28 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             KEY( "Pagerlen", ch->pcdata->pagerlen, fread_number( fp ) );
             KEY( "Password", ch->pcdata->pwd, fread_string_nohash( fp ) );
             KEY( "PDeaths", ch->pcdata->pdeaths, fread_number( fp ) );
+            if( !strcmp( word, "Penetration" ) )
+            {
+               line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               ch->penetration[0] = x1;
+               ch->penetration[1] = x2;
+               ch->penetration[2] = x3;
+               ch->penetration[3] = x4;
+               ch->penetration[4] = x5;
+               ch->penetration[5] = x6;
+               ch->penetration[6] = x7;
+               ch->penetration[7] = x8;
+               ch->penetration[8] = x9;
+               ch->penetration[9] = x10;
+               ch->penetration[10] = x11;
+               ch->penetration[11] = x12;
+               ch->penetration[12] = x13;
+               ch->penetration[13] = x14;
+               fMatch = TRUE;
+               break;
+            }
             KEY( "PKills", ch->pcdata->pkills, fread_number( fp ) );
             KEY( "Played", ch->played, fread_number( fp ) );
             /*
@@ -1600,6 +1627,29 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             KEY( "Range", ch->range, fread_number( fp ) );
             KEY( "Rank", ch->pcdata->rank, fread_string_nohash( fp ) );
             KEY( "Resistant", ch->resistant, fread_number( fp ) );
+            if( !strcmp( word, "Resistance" ) )
+            {
+               line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               ch->resistance[0] = x1;
+               ch->resistance[1] = x2;
+               ch->resistance[2] = x3;
+               ch->resistance[3] = x4;
+               ch->resistance[4] = x5;
+               ch->resistance[5] = x6;
+               ch->resistance[6] = x7;
+               ch->resistance[7] = x8;
+               ch->resistance[8] = x9;
+               ch->resistance[9] = x10;
+               ch->resistance[10] = x11;
+               ch->resistance[11] = x12;
+               ch->resistance[12] = x13;
+               ch->resistance[13] = x14;
+               fMatch = TRUE;
+               break;
+            }
+
             KEY( "Restore_time", ch->pcdata->restore_time, fread_number( fp ) );
 
             if( !strcmp( word, "Room" ) )
@@ -1996,6 +2046,7 @@ void fread_obj( CHAR_DATA * ch, FILE * fp, short os_type )
             break;
 
          case 'D':
+            KEY( "DamType", obj->damtype, fread_bitvector( fp ) );
             KEY( "Description", obj->description, fread_string( fp ) );
             break;
 

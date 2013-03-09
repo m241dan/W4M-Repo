@@ -1079,7 +1079,7 @@ struct race_type
    short int_plus;   /* Int      "        */
    short con_plus;   /* Con      "        */
    short cha_plus;   /* Cha      "        */
-   short lck_plus;   /* Lck       "       */
+   short pas_plus;   /* Lck       "       */
    short hit;
    short mana;
    int resist;
@@ -1295,7 +1295,7 @@ struct affect_data
 {
    AFFECT_DATA *next;
    AFFECT_DATA *prev;
-   short type;
+   short type;   //skill that gives affect
    double duration;
    short location;
    int modifier;
@@ -1788,10 +1788,10 @@ typedef enum
    APPLY_NONE, APPLY_STR, APPLY_DEX, APPLY_INT, APPLY_WIS, APPLY_CON,
    APPLY_SEX, APPLY_CLASS, APPLY_LEVEL, APPLY_AGE, APPLY_HEIGHT, APPLY_WEIGHT,
    APPLY_MANA, APPLY_HIT, APPLY_MOVE, APPLY_GOLD, APPLY_EXP, APPLY_AC,
-   APPLY_HITROLL, APPLY_DAMROLL, APPLY_SAVING_POISON, APPLY_SAVING_ROD,
+   APPLY_ATTACK, APPLY_SAVING_POISON, APPLY_SAVING_ROD,
    APPLY_SAVING_PARA, APPLY_SAVING_BREATH, APPLY_SAVING_SPELL, APPLY_CHA,
    APPLY_AFFECT, APPLY_RESISTANT, APPLY_IMMUNE, APPLY_SUSCEPTIBLE,
-   APPLY_WEAPONSPELL, APPLY_LCK, APPLY_BACKSTAB, APPLY_PICK, APPLY_TRACK,
+   APPLY_WEAPONSPELL, APPLY_PAS, APPLY_BACKSTAB, APPLY_PICK, APPLY_TRACK,
    APPLY_STEAL, APPLY_SNEAK, APPLY_HIDE, APPLY_PALM, APPLY_DETRAP, APPLY_DODGE,
    APPLY_PEEK, APPLY_SCAN, APPLY_GOUGE, APPLY_SEARCH, APPLY_MOUNT, APPLY_DISARM,
    APPLY_KICK, APPLY_PARRY, APPLY_BASH, APPLY_STUN, APPLY_PUNCH, APPLY_CLIMB,
@@ -1800,7 +1800,7 @@ typedef enum
    APPLY_FULL, APPLY_THIRST, APPLY_DRUNK, APPLY_BLOOD, APPLY_COOK,
    APPLY_RECURRINGSPELL, APPLY_CONTAGIOUS, APPLY_EXT_AFFECT, APPLY_ODOR,
    APPLY_ROOMFLAG, APPLY_SECTORTYPE, APPLY_ROOMLIGHT, APPLY_TELEVNUM,
-   APPLY_TELEDELAY, MAX_APPLY_TYPE
+   APPLY_TELEDELAY, APPLY_PENETRATION, APPLY_RESISTANCE, MAX_APPLY_TYPE
 } apply_types;
 
 #define REVERSE_APPLY		   1000
@@ -2091,6 +2091,25 @@ struct timer_data
 #define AFLAG_PROTOTYPE             BV04
 
 /*
+ * Damage types from the damage_table[]
+ */
+typedef enum
+{
+   DAM_ALL, DAM_MAGIC, DAM_PHYSICAL, DAM_PIERCE,
+   DAM_SLASH, DAM_BLUNT, DAM_WIND, DAM_EARTH,
+   DAM_FIRE, DAM_ICE, DAM_WATER, DAM_LIGHTNING,
+   DAM_LIGHT, DAM_DARK, MAX_DAMTYPE, DAM_INHERITED
+} damage_types;
+
+typedef enum
+{
+   WPN_UNARMED, WPN_GAXE, WPN_AXE, WPN_PAXE, WPN_PARM, WPN_SCYTHE,
+   WPN_STAFF, WPN_DAGGER, WPN_CLAW, WPN_KNUCKLES, WPN_ORB, WPN_SHIELD,
+   WPN_SWORD, WPN_CLUB, WPN_BOOK, MAX_WEAPON
+} weapon_types;
+
+
+/*
  * Prototype for a mob.
  * This is the in-memory version of #MOBILES.
  */
@@ -2141,21 +2160,22 @@ struct mob_index_data
    short weight;
    short race;
    short Class;
-   short hitroll;
-   short damroll;
+   short attack;
    short perm_str;
    short perm_int;
    short perm_wis;
    short perm_dex;
    short perm_con;
    short perm_cha;
-   short perm_lck;
+   short perm_pas;
    short saving_poison_death;
    short saving_wand;
    short saving_para_petri;
    short saving_breath;
    short saving_spell_staff;
    int range;
+   short penetration[MAX_DAMTYPE];
+   short resistance[MAX_DAMTYPE];
 };
 
 struct hunt_hate_fear
@@ -2283,8 +2303,7 @@ struct char_data
    short barenumdie;
    short baresizedie;
    short mobthac0;
-   short hitroll;
-   short damroll;
+   short attack;
    short hitplus;
    short damplus;
    short position;
@@ -2301,14 +2320,14 @@ struct char_data
    short perm_dex;
    short perm_con;
    short perm_cha;
-   short perm_lck;
+   short perm_pas;
    short mod_str;
    short mod_int;
    short mod_wis;
    short mod_dex;
    short mod_con;
    short mod_cha;
-   short mod_lck;
+   short mod_pas;
    short mental_state;  /* simplified */
    short emotional_state;  /* simplified */
    int retran;
@@ -2328,6 +2347,8 @@ struct char_data
    bool stopkill;
    CD_DATA *first_cooldown;
    CD_DATA *last_cooldown;
+   short resistance[MAX_DAMTYPE];
+   short penetration[MAX_DAMTYPE];
 };
 
 struct target_data
@@ -2441,16 +2462,6 @@ struct liq_type
 };
 
 /*
- * Damage types from the attack_table[]
- */
-typedef enum
-{
-   DAM_HIT, DAM_SLICE, DAM_STAB, DAM_SLASH, DAM_WHIP, DAM_CLAW,
-   DAM_BLAST, DAM_POUND, DAM_CRUSH, DAM_GREP, DAM_BITE, DAM_PIERCE,
-   DAM_SUCTION, DAM_BOLT, DAM_ARROW, DAM_DART, DAM_STONE, DAM_PEA
-} damage_types;
-
-/*
  * Extra description data for a room or object.
  */
 struct extra_descr_data
@@ -2492,6 +2503,7 @@ struct obj_index_data
    short level;
    short item_type;
    int range;
+   EXT_BV damtype;
 };
 
 /*
@@ -2535,6 +2547,7 @@ struct obj_data
    short count;   /* support for object grouping */
    int serial; /* serial number         */
    int room_vnum; /* hotboot tracker */
+   EXT_BV damtype;
 };
 
 /*
@@ -2965,6 +2978,7 @@ struct skill_type
    struct timerset userec; /* Usage record         */
    const char *cdmsg; /* Message for when skill is on cooldown */
    double cooldown; /* Amount of time before skill can be used again */
+   EXT_BV damtype;
 };
 
 /* how many items to track.... prevent repeat auctions */
@@ -3354,7 +3368,7 @@ do								\
 				    +(2-(abs((ch)->mental_state)/10)))
 
 /* Thanks to Chriss Baeke for noticing damplus was unused */
-#define GET_DAMROLL(ch)		((ch)->damroll                              \
+#define GET_ATTACK(ch)		((ch)->attack                              \
 				    +(ch)->damplus			    \
 				    +str_app[get_curr_str(ch)].todam	    \
 				    +(((ch)->mental_state > 5		    \
@@ -3560,6 +3574,8 @@ extern const struct race_type _race_table[MAX_RACE];
 extern struct race_type *race_table[MAX_RACE];
 extern const struct liq_type liq_table[LIQ_MAX];
 extern const char *const attack_table[18];
+extern const char *const weapon_table[MAX_WEAPON];
+extern const char *const damage_table[DAM_INHERITED+1];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];
@@ -4531,7 +4547,8 @@ void realm( CHAR_DATA * ch, const char * argument );
 void write_realm_list( void );
 ROOM_INDEX_DATA *get_room_at_coord( CHAR_DATA *ch, int x, int y, int z );
 REALM_DATA *get_realm_from_char( CHAR_DATA *ch );
-
+int get_weapontype( const char *type );
+int get_damtype( const char *type );
 
 /* clans.c */
 CL *get_clan( const char *name );
@@ -4806,7 +4823,7 @@ short get_curr_wis( CHAR_DATA * ch );
 short get_curr_dex( CHAR_DATA * ch );
 short get_curr_con( CHAR_DATA * ch );
 short get_curr_cha( CHAR_DATA * ch );
-short get_curr_lck( CHAR_DATA * ch );
+short get_curr_pas( CHAR_DATA * ch );
 bool can_take_proto args( ( CHAR_DATA * ch ) );
 int can_carry_n args( ( CHAR_DATA * ch ) );
 int can_carry_w args( ( CHAR_DATA * ch ) );
@@ -4866,6 +4883,7 @@ const char *affect_bit_name args( ( EXT_BV * vector ) );
 const char *extra_bit_name args( ( EXT_BV * extra_flags ) );
 const char *magic_bit_name args( ( int magic_flags ) );
 const char *pull_type_name args( ( int pulltype ) );
+const char *damage_type_name args( ( EXT_BV * damtype ) ); // Added by Davenge
 ch_ret check_for_trap args( ( CHAR_DATA * ch, OBJ_DATA * obj, int flag ) );
 ch_ret check_room_for_traps args( ( CHAR_DATA * ch, int flag ) );
 bool is_trapped args( ( OBJ_DATA * obj ) );

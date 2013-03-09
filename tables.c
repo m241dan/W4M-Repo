@@ -412,7 +412,7 @@ void write_race_file( int ra )
    fprintf( fpout, "Int_Plus    %d\n", race->int_plus );
    fprintf( fpout, "Con_Plus    %d\n", race->con_plus );
    fprintf( fpout, "Cha_Plus    %d\n", race->cha_plus );
-   fprintf( fpout, "Lck_Plus    %d\n", race->lck_plus );
+   fprintf( fpout, "Pas_Plus    %d\n", race->pas_plus );
    fprintf( fpout, "Hit         %d\n", race->hit );
    fprintf( fpout, "Mana        %d\n", race->mana );
    fprintf( fpout, "Affected    %s\n", print_bitvector( &race->affected ) );
@@ -536,7 +536,7 @@ bool load_race_file( const char *fname )
 
          case 'L':
             KEY( "Language", race->language, fread_number( fp ) );
-            KEY( "Lck_Plus", race->lck_plus, fread_number( fp ) );
+            KEY( "Pas_Plus", race->pas_plus, fread_number( fp ) );
             break;
 
          case 'M':
@@ -756,6 +756,7 @@ void fwrite_skill( FILE * fpout, SKILLTYPE * skill )
       fprintf( fpout, "Range        %d\n", skill->range );
    if( skill->cooldown )
       fprintf( fpout, "Cooldown     %f\n", skill->cooldown );
+   fprintf( fpout, "DamType      %s\n", print_bitvector( &skill->damtype ) );
    if( skill->guild != -1 )
       fprintf( fpout, "Guild        %d\n", skill->guild );
    if( skill->skill_fun )
@@ -1124,6 +1125,7 @@ SKILLTYPE *fread_skill( FILE * fp )
 
          case 'D':
             KEY( "Dammsg", skill->noun_damage, fread_string_nohash( fp ) );
+            KEY( "Damtype", skill->damtype, fread_bitvector( fp ) );
             KEY( "Dice", skill->dice, fread_string_nohash( fp ) );
             KEY( "Diechar", skill->die_char, fread_string_nohash( fp ) );
             KEY( "Dieroom", skill->die_room, fread_string_nohash( fp ) );

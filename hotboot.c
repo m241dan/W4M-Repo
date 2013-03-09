@@ -390,7 +390,7 @@ CHAR_DATA *load_mobile( FILE * fp )
             break;
 
          case 'R':
-            KEY( "Range", inroom, fread_number( fp ) );
+            KEY( "Range", mob->range, fread_number( fp ) );
             KEY( "Room", inroom, fread_number( fp ) );
             KEY( "Resetvnum", mob->resetvnum, fread_number( fp ) );
             KEY( "Resetnum", mob->resetnum, fread_number( fp ) );
