@@ -756,6 +756,7 @@ void fwrite_skill( FILE * fpout, SKILLTYPE * skill )
       fprintf( fpout, "Range        %d\n", skill->range );
    if( skill->cooldown )
       fprintf( fpout, "Cooldown     %f\n", skill->cooldown );
+   fprintf( fpout, "DamType      %s\n", print_bitvector( &skill->damtype ) );
    if( skill->guild != -1 )
       fprintf( fpout, "Guild        %d\n", skill->guild );
    if( skill->skill_fun )
@@ -1124,6 +1125,7 @@ SKILLTYPE *fread_skill( FILE * fp )
 
          case 'D':
             KEY( "Dammsg", skill->noun_damage, fread_string_nohash( fp ) );
+            KEY( "Damtype", skill->damtype, fread_bitvector( fp ) );
             KEY( "Dice", skill->dice, fread_string_nohash( fp ) );
             KEY( "Diechar", skill->die_char, fread_string_nohash( fp ) );
             KEY( "Dieroom", skill->die_room, fread_string_nohash( fp ) );
