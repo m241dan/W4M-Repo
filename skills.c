@@ -860,9 +860,9 @@ void do_slookup( CHAR_DATA* ch, const char* argument)
       }
 
       ch_printf( ch, "Sn: %4d Slot: %4d %s: '%-20s'\r\n", sn, skill->slot, skill_tname[skill->type], skill->name );
+      ch_printf( ch, "DamType: %s\r\n", damage_type_name( &skill->damtype ) );
       if( skill->info )
-         ch_printf( ch, "DamType: %s  ActType: %s   ClassType: %s   PowerType: %s\r\n",
-                    spell_damage[SPELL_DAMAGE( skill )],
+         ch_printf( ch, "ActType: %s   ClassType: %s   PowerType: %s\r\n",
                     spell_action[SPELL_ACTION( skill )],
                     spell_class[SPELL_CLASS( skill )], spell_power[SPELL_POWER( skill )] );
       if( skill->flags )
@@ -1175,15 +1175,14 @@ void do_sset( CHAR_DATA* ch, const char* argument)
       }
       if( !str_cmp( arg2, "damtype" ) )
       {
-         int x = get_sdamage( argument );
-
-         if( x == -1 )
-            send_to_char( "Not a spell damage type.\r\n", ch );
-         else
+         int x;
+         if( ( x = get_damtype( argument ) ) == -1 )
          {
-            SET_SDAM( skill, x );
-            send_to_char( "Ok.\r\n", ch );
+            send_to_char( "&RNot a valid damtype.\r\n&PValid Choices: &wall, &Cmagic, &cphysical, pierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
+            return;
          }
+         xTOGGLE_BIT( skill->damtype, x );
+         send_to_char( "Ok.\r\n", ch );
          return;
       }
       if( !str_cmp( arg2, "acttype" ) )

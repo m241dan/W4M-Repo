@@ -3215,6 +3215,7 @@ ch_ret spell_identify( int sn, int level, CHAR_DATA * ch, void *vo )
                        obj->value[1], obj->value[2],
                        ( obj->value[1] + obj->value[2] ) / 2,
                        IS_OBJ_STAT( obj, ITEM_POISONED ) ? ", and is poisonous." : "." );
+             ch_printf( ch, "Damage Type: %s\r\n", damage_type_name( &obj->damtype ) );
 	     ch_printf( ch, "Range is %d\r\n", obj->range);
             break;
 

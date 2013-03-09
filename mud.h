@@ -4548,7 +4548,7 @@ void write_realm_list( void );
 ROOM_INDEX_DATA *get_room_at_coord( CHAR_DATA *ch, int x, int y, int z );
 REALM_DATA *get_realm_from_char( CHAR_DATA *ch );
 int get_weapontype( const char *type );
-int get_damagetype( const char *type );
+int get_damtype( const char *type );
 
 /* clans.c */
 CL *get_clan( const char *name );
