@@ -1176,9 +1176,9 @@ void do_sset( CHAR_DATA* ch, const char* argument)
       if( !str_cmp( arg2, "damtype" ) )
       {
          int x;
-         if( ( x = get_damtype( argument ) ) == -1 )
+         if( ( x = get_damtype( argument ) ) == -1 || ( x >= DAM_ALL && x <= DAM_PIERCE ) ))
          {
-            send_to_char( "&RNot a valid damtype.\r\n&PValid Choices: &wall, &Cmagic, &cphysical, pierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
+            send_to_char( "&RNot a valid damtype.\r\n&PValid Choices: &wpierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
             return;
          }
          xTOGGLE_BIT( skill->damtype, x );

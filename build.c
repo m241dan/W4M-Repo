@@ -3633,9 +3633,9 @@ void do_oset( CHAR_DATA* ch, const char* argument)
          send_to_char( "Non-weapons cannot have damage types.\r\n", ch );
          return;
       }
-      if( ( value = get_damtype( arg3 ) ) == -1 )
+      if( ( value = get_damtype( arg3 ) ) == -1 || ( value >= DAM_ALL && <= DAM_PHYISCAL ) )
       {
-         send_to_char( "&RInvalid damage type.&w\r\n&PValid Choices: &wall, &Cmagic, &cphysical, pierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
+         send_to_char( "&RInvalid damage type.&w\r\n&PValid Choices: &wpierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
          return;
       }
       xTOGGLE_BIT( obj->damtype, value );

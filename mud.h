@@ -2676,7 +2676,7 @@ struct hit_data
    int miss_locs;
    int hit_locs;
 
-}
+};
 
 /*
  * Creating a timer that is queued and runs every pulse of the CPU
