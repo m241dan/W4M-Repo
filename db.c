@@ -2909,6 +2909,8 @@ OBJ_DATA *create_object( OBJ_INDEX_DATA * pObjIndex, int level )
          break;
 
       case ITEM_WEAPON:
+         obj->range = pObjIndex->range;
+         obj->damtype = pObjIndex->damtype;
       case ITEM_MISSILE_WEAPON:
       case ITEM_PROJECTILE:
          if( obj->value[1] && obj->value[2] )
