@@ -847,10 +847,11 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    HIT_DATA *hit_data;
    EXT_BV *damtype;
 
-   int dam, plusris, prof_bonus, prof_gsn = -1;
-   int max_range, wep_weight, armor_weight, hit_wear, amount, subcount;
-   int subtable[];
+   int dam, prof_bonus, prof_gsn = -1;
+   int max_range, hit_wear, subcount;
+   int subtable[21];
    ch_ret retcode = rNONE;
+   bool crit, physical;
    static bool dual_flip = FALSE;
 
    /*
@@ -867,7 +868,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
     * Figure out the weapon doing the damage         -Thoric
     * Dual wield support -- switch weapons each attack
     */
-   if( ( wield = get_eq_char( ch, WEAR_DUAL_WIELD ) ) != NULL )
+   if( ( wield = get_eq_char( ch, WEAR_DUAL_WIELD ) ) != NULL && dt == TYPE_UNDEFINED )
    {
       if( dual_flip == FALSE )
       {
@@ -901,89 +902,122 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       dt = TYPE_HIT;
       if( wield && wield->item_type == ITEM_WEAPON )
          dt += wield->value[3];
-      damtype = wield->damtype;
+      damtype = &wield->damtype;
    }
+   else
+      damtype = &skill_table[dt]->damtype;
 
-   hit_data = generate_hitdata( victim );
+   if( dt >= TYPE_HIT || skill_table[dt]->type == SKILL_SKILL )
+      physical = TRUE;
 
-   hit_wear = hit_data->locations[number_range( 0, ( hit_data->max_locations - 1 ) )]
-
-   vic_eq = get_eq_char( victim, abs(hit_wear) );
-
-   if( hit_wear == MISS_GENERAL )
+   if( physical )
    {
-      //Miss -Davenge
-      damage( ch, victim, 0, dt );
-      tail_chain( );
-      return rNONE;
-   }
-   if( hit_wear < 0 && wield->weight < 0 )
-   {
-      int counter, did_it_hit;
+      hit_data = generate_hit_data( victim );
 
-      subcount = weight_ratio_dex( get_curr_dex( ch ), wield->weight );
+      hit_wear = hit_data->locations[number_range( 0, ( hit_data->max_locations - 1 ) )];
 
-      for( counter = 0; counter < subcount; counter++ )
-         subtable[counter] = 1;
+      vic_eq = get_eq_char( victim, abs(hit_wear) );
 
-      subcount += weight_ratio_dex( get_curr_dex( victim ), vic_eq->weight );
-
-      for( ; counter < subcount; counter++ )
-         subtable[counter] = -1;
-
-      did_it_hit = number_range( 0, ( subcount -1 ) );
-      if( did_it_hit == -1 )
+      if( hit_wear == MISS_GENERAL )
       {
          //Miss -Davenge
-         damage( ch, victim, 0, dt );
+         damage( ch, victim, 0, dt, hit_wear, FALSE );
          tail_chain( );
-         return rNone:
+         DISPOSE( hit_data );
+         return rNONE;
+      }
+      if( hit_wear < 0 && wield->weight < 0 )
+      {
+         int counter, did_it_hit;
+
+         subcount = weight_ratio_dex( get_curr_dex( ch ), wield->weight );
+
+         for( counter = 0; counter < subcount; counter++ )
+            subtable[counter] = 1;
+
+         subcount += weight_ratio_dex( get_curr_dex( victim ), vic_eq->weight );
+
+         for( ; counter < subcount; counter++ )
+            subtable[counter] = -1;
+
+         did_it_hit = number_range( 0, ( subcount -1 ) );
+         if( did_it_hit == -1 )
+         {
+            //Miss -Davenge
+            damage( ch, victim, 0, dt, hit_wear, FALSE );
+            tail_chain( );
+            DISPOSE( hit_data );
+            return rNONE;
+         }
       }
    }
    /*
     * Hit.
     * Calc damage.
     */
+   if( physical )
+   {
+      if( !wield )   /* bare hand dice formula fixed by Thoric */
+         /*
+          * Fixed again by korbillian@mud.tka.com 4000 (Cold Fusion Mud)
+          */
+         dam = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
+      else
+         dam = number_range( wield->value[1], wield->value[2] );
 
-   if( !wield )   /* bare hand dice formula fixed by Thoric */
       /*
-       * Fixed again by korbillian@mud.tka.com 4000 (Cold Fusion Mud)
+       * STR v. CON calculation, flat addition/subtraction to weapon roll -Davenge
        */
-      dam = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
+      dam += get_curr_str( ch ) - get_curr_con( victim );
+   }
    else
-      dam = number_range( wield->value[1], wield->value[2] );
-
-   /*
-    * STR v. CON calculation, flat addition/subtraction to weapon roll -Davenge
-    */
-   dam += get_curr_str( ch ) - get_curr_con( victim );
+   {
+      /*
+       * Need to come up with base damage for spells -Davenge
+       */
+      dam = 0;
+      /*
+       * Roll int vs. wis for more base damage stuff -Davenge
+       */
+      dam += get_curr_int( ch ) - get_curr_wis( victim );
+   }
 
    if( dam <= 0 )
       dam = 1;
+
+   /*
+    * Did we crit? -Davenge
+    */
+
+    crit = get_crit( ch, dt );
    /*
     * Wear_loc native bonuses -Davenge
     */
-
-   if( hit_wear == HIT_HEAD )
-      dam = (int)( dam * 1.2 );
-   if( hit_wear == HIT_ARMS || hit_wear == HIT_HANDS || hit_wear == HIT_LEGS || hit_wear == HIT_FEET )
-      dam = (int)( dam * .9 );
+   if( physical )
+   {
+      if( hit_wear == HIT_HEAD )
+         dam = (int)( dam * 1.2 );
+      if( hit_wear == HIT_ARMS || hit_wear == HIT_HANDS || hit_wear == HIT_LEGS || hit_wear == HIT_FEET )
+         dam = (int)( dam * .9 );
+   }
 
    /*
     * Calculate Damage after attack vs. ac -Davenge
     */
-
-   dam = attack_ac_mod( ch, victim, dam );
+   if( physical )
+      dam = attack_ac_mod( ch, victim, dam );
 
    /*
     * Handle Res Pen -Davenge
     */
-   dam = res_pen( ch, victim, dam, obj->damtype );
+   dam = res_pen( ch, victim, dam, damtype );
    /*
     * Handle Weight of Weapon Vs. Armor Weight -Davenge
     */
-
-   dam = calc_weight_mod( ch, victim, hit_wear, dam );
+   if( physical )
+      dam = calc_weight_mod( ch, victim, hit_wear, dam, crit );
+   else
+      dam = (int)( dam * 1.5 ); //Magical Crit
    /*
     * Calculate Proficiencies -Davenge
     * -Need to figure out where to put this-
@@ -996,7 +1030,9 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    if( dam <= 0 )
       dam = 1;
 
-   if( ( retcode = damage( ch, victim, dam, dt ) ) != rNONE )
+   DISPOSE( hit_data );
+
+   if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit ) ) != rNONE )
       return retcode;
    if( char_died( ch ) )
       return rCHAR_DIED;
@@ -1180,7 +1216,7 @@ ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ
             obj_from_char( projectile );
          obj_to_room( projectile, victim->in_room );
       }
-      damage( ch, victim, 0, dt );
+//      damage( ch, victim, 0, dt );
       tail_chain(  );
       return rNONE;
    }
@@ -1318,10 +1354,10 @@ ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ
       }
       dam = 0;
    }
-   if( ( retcode = damage( ch, victim, dam, dt ) ) != rNONE )
+//   if( ( retcode = damage( ch, victim, dam, dt ) ) != rNONE )
    {
       extract_obj( projectile );
-      return retcode;
+      return rNONE;
    }
    if( char_died( ch ) )
    {
@@ -1408,18 +1444,20 @@ short ris_damage( CHAR_DATA * ch, short dam, int ris )
    return ( dam * modifier ) / 10;
 }
 
+ch_ret damage( CHAR_DATA * ch, CHAR_DATA *victim, int dam, int dt )
+{
+   return damage( ch, victim, dam, dt, HIT_BODY, FALSE );
+}
+
 /*
  * Inflict damage from a hit.   This is one damn big function.
  */
-ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
+ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear, bool crit )
 {
    char log_buf[MAX_STRING_LENGTH];
    char filename[256];
-   short dameq;
    bool npcvict;
    bool loot;
-   int xp_gain;
-   OBJ_DATA *damobj;
    ch_ret retcode;
    short dampmod;
    CHAR_DATA *gch /*, *lch */ ;
@@ -3821,7 +3859,7 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype )
    int progress = 0;
 
    for( counter = 0; counter < MAX_DAMTYPE; counter++ )
-      if( xIS_SET( damtype, counter ) )
+      if( xIS_SET( *damtype, counter ) )
          num_damtype++;
 
    if( num_damtype <= 0 )
@@ -3835,7 +3873,7 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype )
 
    for( counter = DAM_PIERCE; counter < MAX_DAMTYPE; counter++ )
    {
-      if( xIS_SET( damtype, counter ) )
+      if( xIS_SET( *damtype, counter ) )
       {
          mod_pen = ch->penetration[DAM_ALL];
          mod_res = victim->resistance[DAM_ALL];
@@ -3843,14 +3881,14 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype )
          if( counter >= DAM_PIERCE && counter <= DAM_BLUNT )
          {
             mod_pen += ch->penetration[DAM_PHYSICAL] + ch->penetration[counter];
-            mod_res += victim->resistance[DAM_PHYISCAL] + victim->resistance[counter];
+            mod_res += victim->resistance[DAM_PHYSICAL] + victim->resistance[counter];
 
             mod = (100 + URANGE( -95, ( mod_pen - mod_res ), 95 )) / 100;
             dam += (int)( split_dam * mod );
          }
          if( counter >= DAM_WIND && counter <= DAM_DARK )
          {
-            mod_pen += ch->penetration[DAM_MAGICAL] + ch->penetration[counter];
+            mod_pen += ch->penetration[DAM_MAGIC] + ch->penetration[counter];
             mod_res += victim->resistance[DAM_PHYSICAL] + victim->resistance[counter];
 
             mod = (100 +URANGE( -95, ( mod_pen - mod_res ), 95 )) / 100;
@@ -3918,10 +3956,10 @@ int get_wear_loc_weight( CHAR_DATA * ch, int hit_wear )
     return loc_weight;
 }
 
-int calc_weight_mod( CHAR_DATA *ch, CHAR_DATA *victim, int hit_wear, int dam )
+int calc_weight_mod( CHAR_DATA *ch, CHAR_DATA *victim, int hit_wear, int dam, bool crit )
 {
    int armor_weight, weapon_weight;
-   int mod;
+   double mod;
 
    /*
     * Get the weights of each -Davenge
@@ -3934,13 +3972,26 @@ int calc_weight_mod( CHAR_DATA *ch, CHAR_DATA *victim, int hit_wear, int dam )
     * Do math, basically floor at 95% damage reduction/increase to the damage
     * -Davenge
     */
-   mod = URANGE( (int)( armor_weight * .05), (armor_weight + ( armor_weight - weapon_weight )), (int)( armor_weight * 1.95 ));
+   mod = (double)URANGE( (int)( armor_weight * .05), (armor_weight + ( armor_weight - weapon_weight )), (int)( armor_weight * 1.95 ));
 
    /*
-    * Multiply the dam passed by our mod turned into an appropriate percentage
+    * convert out mod into proper percentage -Davenge
+    */
+   mod = mod / armor_weight;
+
+   /*
+    * If we crit, and we are already doing extra damage, add to it
+    * If we crit and we are getting penalized, just make no mod -Davenge
+    */
+   if( crit && mod > 1 )
+      mod += .25;
+   else if( crit && mod < 1 )
+      return dam;
+   /*
+    * Multiply the dam passed by our mod
     * -Davenge
     */
-   dam = (int)( dam * ( mod / armor_weight ) );
+   dam = (int)( dam * mod );
 
    return dam;
 }
@@ -3962,4 +4013,45 @@ int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
    dam = (int)( dam * ( (double)URANGE( 5, atkac_mod, 195 ) / 100 ) );
 
    return dam;
+}
+
+bool get_crit( CHAR_DATA *ch, int dt )
+{
+   double chance;
+   int counter;
+
+   if( dt >= TYPE_HIT || ( dt < TYPE_HIT && skill_table[dt]->type == SKILL_SKILL ) )
+   {
+      for( counter = 0; counter < get_curr_dex( ch ); counter++ )
+      {
+         if( counter >= 0 && counter <= 15 )
+            chance += .4;
+         if( counter > 15 && counter <= 30 )
+            chance += .25;
+         if( counter > 30 && counter <= 50 )
+            chance += .1;
+         if( counter > 50 )
+            chance += .05;
+      }
+      chance = URANGE( 0, (int)chance, 50 );
+   }
+   else if( skill_table[dt]->type == SKILL_SPELL )
+   {
+      for( counter = 0; counter < get_curr_pas( ch ); counter++ )
+      {
+         if( counter >= 0 && counter <= 15 )
+            chance += .65;
+         if( counter > 15 && counter <= 30 )
+            chance += .45;
+         if( counter > 30 && counter <= 50 )
+            chance += .20;
+         if( counter > 50 )
+            chance += .08;
+      }
+      chance = URANGE( 0, (int) chance, 75 );
+   }
+
+   if( number_percent( ) > chance )
+      return FALSE;
+   return TRUE;
 }

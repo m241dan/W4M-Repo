@@ -1960,7 +1960,7 @@ typedef enum
    MAX_WEAR
 } wear_locations;
 
-extern const int   body_part_weight[MAX_WEAR];
+extern const int   body_part_weight[WEAR_WAIST+1];
 
 #define MISS_BODY    (WEAR_BODY  * -1)
 #define MISS_HEAD    (WEAR_HEAD  * -1)
@@ -1974,7 +1974,7 @@ extern const int   body_part_weight[MAX_WEAR];
 #define HIT_HEAD     WEAR_HEAD
 #define HIT_LEGS     WEAR_LEGS
 #define HIT_FEET     WEAR_FEET
-#define HIT_HANDS    WEAR_HANBDS
+#define HIT_HANDS    WEAR_HANDS
 #define HIT_ARMS     WEAR_ARMS
 #define HIT_WAIST    WEAR_WAIST
 
@@ -4703,6 +4703,7 @@ ch_ret multi_hit args( ( CHAR_DATA * ch, TARGET_DATA * target, int dt ) );
 ch_ret projectile_hit args( ( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ_DATA * projectile, short dist ) );
 short ris_damage args( ( CHAR_DATA * ch, short dam, int ris ) );
 ch_ret damage args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt ) );
+ch_ret damage args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear, bool crit ) );
 void update_pos args( ( CHAR_DATA * victim ) );
 void set_fighting args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 void stop_fighting args( ( CHAR_DATA * ch, bool fBoth ) );
@@ -4729,6 +4730,12 @@ bool in_arena args( ( CHAR_DATA * ch ) );
 bool can_astral args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart );
 int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype );
+int get_fist_weight( CHAR_DATA * ch );
+int get_wear_loc_weight( CHAR_DATA * ch, int hit_wear );
+int calc_weight_mod( CHAR_DATA * ch, CHAR_DATA * victim, int hit_wear, int dam, bool crit );
+int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam );
+bool get_crit( CHAR_DATA *ch, int dt );
+ 
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );
@@ -4989,7 +4996,8 @@ HIT_DATA *generate_hit_data( CHAR_DATA * victim );
 HIT_DATA *init_hitdata( void );
 int weight_ratio_dex( int dex, int weight );
 int weight_ratio_str( int str, int weight );
-
+bool is_physical( EXT_BV *damtype );
+bool is_magical( EXT_BV *damtype );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

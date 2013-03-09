@@ -51,7 +51,7 @@ const double base_class_lag[MAX_CLASS] = {
  * only relavant body parts are added -Davenge
  */
 
-const int body_part_weight[WEAR_WAIST] = {
+const int body_part_weight[WEAR_WAIST+1] = {
    0, 0, 0, 0, 0, 10, 7, 8, 4, 2, 6, 0, 0, 10
 };
 

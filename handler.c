@@ -3938,7 +3938,7 @@ ch_ret spring_trap( CHAR_DATA * ch, OBJ_DATA * obj )
           */
          retcode = obj_cast_spell( gsn_poison, lev, ch, ch, NULL );
          if( retcode == rNONE )
-            retcode = damage( ch, ch, dam, TYPE_UNDEFINED );
+            retcode = damage( ch, ch, dam, TYPE_UNDEFINED, HIT_BODY, FALSE );
          break;
       case TRAP_TYPE_POISON_GAS:
          retcode = obj_cast_spell( gsn_poison, lev, ch, ch, NULL );
@@ -3961,7 +3961,7 @@ ch_ret spring_trap( CHAR_DATA * ch, OBJ_DATA * obj )
          break;
       case TRAP_TYPE_ELECTRIC_SHOCK:
       case TRAP_TYPE_BLADE:
-         retcode = damage( ch, ch, dam, TYPE_UNDEFINED );
+         retcode = damage( ch, ch, dam, TYPE_UNDEFINED, HIT_BODY, FALSE );
    }
    return retcode;
 }
@@ -5952,7 +5952,7 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
    str = get_curr_str( victim );
    dex = get_curr_dex( victim );
 
-   hit_data = populate_hitdata( );
+   hit_data = init_hitdata( );
 
    for( obj = victim->first_carrying; obj; obj = obj->next_content )
    {
@@ -5960,20 +5960,20 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
       {
          if( obj->weight > 0 )
          {
-            amount = weight_ratio_str( str, obj->weight )
+            amount = weight_ratio_str( str, obj->weight );
             for( counter = 0; counter < amount; counter++ )
             {
-               hit_data->locations[max_locations] = obj->wear_loc;
+               hit_data->locations[hit_data->max_locations] = obj->wear_loc;
                hit_data->hit_locs++;
                hit_data->max_locations++;
             }
          }
          else if( obj->weight < 0 )
          {
-            amount = weight_ratio_dex( dex, obj->weight )
+            amount = weight_ratio_dex( dex, obj->weight );
             for( counter = 0; counter < amount; counter++ )
             {
-               hit_data->locations[max_locations] = ( obj->wear_loc + MAX_WEAR );
+               hit_data->locations[hit_data->max_locations] = ( obj->wear_loc + MAX_WEAR );
                hit_data->miss_locs++;
                hit_data->max_locations++;
             }
@@ -5983,4 +5983,17 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
    return hit_data;
 }
 
+bool is_physical( EXT_BV *damtype )
+{
+   if( xIS_SET( *damtype, DAM_PIERCE ) || xIS_SET( *damtype, DAM_SLASH ) || xIS_SET( *damtype, DAM_BLUNT ) )
+      return TRUE;
+   return FALSE;
+}
 
+bool is_magical( EXT_BV *damtype )
+{
+   if( xIS_SET( *damtype, DAM_WIND ) || xIS_SET( *damtype, DAM_EARTH ) || xIS_SET( *damtype, DAM_FIRE ) || xIS_SET( *damtype, DAM_ICE )
+      || xIS_SET( *damtype, DAM_WATER ) || xIS_SET( *damtype, DAM_LIGHTNING ) || xIS_SET( *damtype, DAM_LIGHT ) || xIS_SET( *damtype, DAM_DARK ) )
+      return TRUE;
+   return FALSE;
+}
