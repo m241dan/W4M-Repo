@@ -2969,8 +2969,10 @@ bool is_conflict( ROOM_INDEX_DATA *in_room )
       {
          if( pRoomIndex == in_room )
             continue;
+         if( pRoomIndex->coordset == FALSE )
+            continue;
          if( pRoomIndex->coord[X] == in_room->coord[X] && pRoomIndex->coord[Y] == in_room->coord[Y]
-             && pRoomIndex->coord[Z] == in_room->coord[Z] && pRoomIndex->vnum != in_room->vnum )
+             && pRoomIndex->coord[Z] == in_room->coord[Z] && pRoomIndex->vnum != in_room->vnum  )
          {
             bug( "Room: %d's coordinate address in conflict with %d's.", in_room->vnum, pRoomIndex->vnum );
             in_room->coordset = FALSE;

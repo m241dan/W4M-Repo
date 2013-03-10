@@ -2024,7 +2024,6 @@ typedef enum
    PLR_AUTOGOLD, PLR_AUTOMAP, PLR_AFK, PLR_INVISPROMPT, PLR_COMPASS
 } player_flags;
 
-/* Bits for pc_data->flags. */
 #define PCFLAG_R1                  BV00
 #define PCFLAG_DEADLY              BV01
 #define PCFLAG_UNAUTHED		   BV02
