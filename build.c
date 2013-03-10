@@ -5115,7 +5115,6 @@ void do_redit( CHAR_DATA* ch, const char* argument)
          ch->in_room->area->realm->zero_zero_zero = 0;
          pager_printf( ch, "Removing the Center of this Realm, be very careful, next goto will set the center.\r\n&RBest to unset the whole thing if you are actually moving the center.&w\r\n" );
       }
-      
       ch->in_room->coordset = FALSE;
       pager_printf( ch, "Done.\r\n" );
       return;
@@ -5154,6 +5153,7 @@ void do_redit( CHAR_DATA* ch, const char* argument)
    if( !str_cmp( arg, "exangle" ) )
    {
       int adir;
+      EXIT_DATA *from_exit;
 
       argument = one_argument( argument, arg2 );
       argument = one_argument( argument, arg3 );
@@ -5230,6 +5230,13 @@ void do_redit( CHAR_DATA* ch, const char* argument)
             }
             break;
       }
+      if( (  new_exit = get_exit( xit->to_room, rev_dir[edir] ) ) == NULL );
+      {
+         bug( "Careful, no exit comin back in this direction. If not intentional, please use bexit to make one." );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
+      new_exit->angle = rev_dir[adir];
       send_to_char( "Ok.\r\n", ch );
       return;
    }
