@@ -6795,12 +6795,12 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
    fprintf( fpout, "Actflags   %s~\n", ext_flag_string( &pMobIndex->act, act_flags ) );
    if( !xIS_EMPTY( pMobIndex->affected_by ) )
       fprintf( fpout, "Affected   %s~\n", ext_flag_string( &pMobIndex->affected_by, a_flags ) );
-   fprintf( fpout, "Stats1     %d %d %d %d %d %ld\n", pMobIndex->alignment, pMobIndex->level, pMobIndex->mobthac0,
-            pMobIndex->ac, pMobIndex->gold, pMobIndex->experience );
+   fprintf( fpout, "Stats1     %d %d %d %d %d %d %ld\n", pMobIndex->alignment, pMobIndex->level, pMobIndex->mobthac0,
+            pMobIndex->ac, pMobIndex->magic_defense, pMobIndex->gold, pMobIndex->experience );
    fprintf( fpout, "Stats2     %d %d %d\n", pMobIndex->hitnodice, pMobIndex->hitsizedice, pMobIndex->hitplus );
    fprintf( fpout, "Stats3     %d %d %d\n", pMobIndex->damnodice, pMobIndex->damsizedice, pMobIndex->damplus );
-   fprintf( fpout, "Stats4     %d %d %d %d\n",
-            pMobIndex->height, pMobIndex->weight, pMobIndex->numattacks, pMobIndex->attack );
+   fprintf( fpout, "Stats4     %d %d %d %d %d\n",
+            pMobIndex->height, pMobIndex->weight, pMobIndex->numattacks, pMobIndex->attack, pMobIndex->magic_attack );
    fprintf( fpout, "Attribs    %d %d %d %d %d %d %d\n",
             pMobIndex->perm_str,
             pMobIndex->perm_int,

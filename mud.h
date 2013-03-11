@@ -2155,6 +2155,7 @@ struct mob_index_data
    short alignment;
    short mobthac0;   /* Unused */
    short ac;
+   short magic_defense;
    short hitnodice;
    short hitsizedice;
    short hitplus;
@@ -2179,6 +2180,7 @@ struct mob_index_data
    short race;
    short Class;
    short attack;
+   short magic_attack;
    short perm_str;
    short perm_int;
    short perm_wis;
@@ -2324,6 +2326,7 @@ struct char_data
    short baresizedie;
    short mobthac0;
    short attack;
+   short magic_attack;
    short hitplus;
    short damplus;
    short position;
@@ -2332,6 +2335,7 @@ struct char_data
    short height;
    short weight;
    short armor;
+   short magic_defense;
    short wimpy;
    int deaf;
    short perm_str;
@@ -4745,7 +4749,7 @@ OBJ_DATA *raw_kill( CHAR_DATA * ch, CHAR_DATA * victim );
 bool in_arena args( ( CHAR_DATA * ch ) );
 bool can_astral args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart );
-int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype );
+int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype );
 int get_fist_weight( CHAR_DATA * ch );
 int get_wear_loc_weight( CHAR_DATA * ch, int hit_wear );
 int calc_weight_mod( CHAR_DATA * ch, CHAR_DATA * victim, int hit_wear, int dam, bool crit );

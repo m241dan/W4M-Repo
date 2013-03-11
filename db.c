@@ -7491,18 +7491,19 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             if( !str_cmp( word, "Stats1" ) )
             {
                char *ln = fread_line( fp );
-               int x1, x2, x3, x4, x5;
-               long x6;
+               int x1, x2, x3, x4, x5, x6;
+               long x7;
 
-               x1 = x2 = x3 = x4 = x5 = x6 = 0;
-               sscanf( ln, "%d %d %d %d %d %ld", &x1, &x2, &x3, &x4, &x5, &x6 );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = 0;
+               sscanf( ln, "%d %d %d %d %d %d %ld", &x1, &x2, &x3, &x4, &x5, &x6, &x7 );
 
                pMobIndex->alignment = x1;
                pMobIndex->level = x2;
                pMobIndex->mobthac0 = x3;
                pMobIndex->ac = x4;
-               pMobIndex->gold = x5;
-               pMobIndex->experience = x6;
+               pMobIndex->magic_defense = x5;
+               pMobIndex->gold = x6;
+               pMobIndex->experience = x7;
 
                break;
             }
@@ -7538,15 +7539,16 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             if( !str_cmp( word, "Stats4" ) )
             {
                char *ln = fread_line( fp );
-               int x1, x2, x3, x4;
+               int x1, x2, x3, x4, x5;
 
-               x1 = x2 = x3 = x4 = 0;
-               sscanf( ln, "%d %d %d %d", &x1, &x2, &x3, &x4);
+               x1 = x2 = x3 = x4 = x5 = 0;
+               sscanf( ln, "%d %d %d %d %d", &x1, &x2, &x3, &x4, &x5);
 
                pMobIndex->height = x1;
                pMobIndex->weight = x2;
                pMobIndex->numattacks = x3;
                pMobIndex->attack = x4;
+               pMobIndex->magic_attack = x5;
 
                break;
             }

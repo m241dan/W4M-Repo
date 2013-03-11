@@ -233,7 +233,7 @@ void do_score( CHAR_DATA* ch, const char* argument )
    else
       snprintf( buf, MAX_STRING_LENGTH, "%s", "that of an avatar" );
    if( ch->level > 24 )
-      pager_printf( ch, "WIS  : %2.2d(%2.2d)      Armor: %4.4d, %s\r\n",
+      pager_printf( ch, "WIS  : %2.2d(%2.2d)    Defense: %4.4d, %s\r\n",
                     get_curr_wis( ch ), ch->perm_wis, GET_AC( ch ), buf );
    else
       pager_printf( ch, "WIS  : %2.2d(%2.2d)      Armor: %s \r\n", get_curr_wis( ch ), ch->perm_wis, buf );

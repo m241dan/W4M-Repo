@@ -410,9 +410,11 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "Favor	       %d\n", ch->pcdata->favor );
    fprintf( fp, "Glory        %d\n", ch->pcdata->quest_curr );
    fprintf( fp, "MGlory       %d\n", ch->pcdata->quest_accum );
-   fprintf( fp, "Attack      %d\n", ch->attack );
+   fprintf( fp, "Attack       %d\n", ch->attack );
+   fprintf( fp, "MagicAttack  %d\n", ch->magic_attack );
    fprintf( fp, "Range        %d\n", ch->range );
    fprintf( fp, "Armor        %d\n", ch->armor );
+   fprintf( fp, "MagicDefense %d\n", ch->magic_defense );
    if( ch->wimpy )
       fprintf( fp, "Wimpy        %d\n", ch->wimpy );
    if( ch->deaf )
@@ -1472,6 +1474,8 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'M':
+            KEY( "MagicAttack", ch->magic_attack, fread_number( fp ) );
+            KEY( "MagicDefense", ch->magic_defense, fread_number( fp ) );
             if( !str_cmp( word, "MaxColors" ) )
             {
                int temp = fread_number( fp );

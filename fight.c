@@ -845,7 +845,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 {
    OBJ_DATA *wield, *vic_eq;
    HIT_DATA *hit_data;
-   EXT_BV *damtype;
+   EXT_BV damtype;
 
    int dam, prof_bonus, prof_gsn = -1;
    int max_range, hit_wear, subcount, strvcon, wpnroll, speroll, intvwis;
@@ -903,13 +903,19 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       if( wield && wield->item_type == ITEM_WEAPON )
       {
          dt += wield->value[3];
-         damtype = &wield->damtype;
+         damtype = wield->damtype;
       }
       else
-         damtype = &ch->damtype;
+         damtype = ch->damtype;
    }
    else
-      damtype = &skill_table[dt]->damtype;
+   {
+      damtype = skill_table[dt]->damtype;
+      if( xIS_SET( damtype, DAM_INHERITED ) && used_weapon )
+         xSET_BITS( damtype, used_weapon->damtype );
+      else if( xIS_SET( damtype, DAM_INHERITED ) && !used_weapon )
+         xSET_BITS( damtype, ch->damtype );
+   }
 
    if( dt >= TYPE_HIT || skill_table[dt]->type == SKILL_SKILL )
       physical = TRUE;
@@ -927,7 +933,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
          //Miss -Davenge
          damage( ch, victim, 0, dt, hit_wear, FALSE );
          tail_chain( );
-         damtype = NULL;
          DISPOSE( hit_data );
          return rNONE;
       }
@@ -951,7 +956,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
             //Miss -Davenge
             damage( ch, victim, 0, dt, hit_wear, FALSE );
             tail_chain( );
-            damtype = NULL;
             DISPOSE( hit_data );
             return rNONE;
          }
@@ -1060,7 +1064,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       dam = 1;
 
    DISPOSE( hit_data );
-   damtype = NULL;
 
    if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit ) ) != rNONE )
       return retcode;
@@ -3171,8 +3174,12 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
    EXT_BV *damtype;
    char damtype_message[MAX_INPUT_LENGTH];
 
-   if( dt >= TYPE_HIT && used_weapon )
+   if( ( dt >= TYPE_HIT || xIS_SET( skill_table[dt]->damtype, DAM_INHERITED ) ) && used_weapon )
       damtype = &used_weapon->damtype;
+   else if( ( dt == TYPE_HIT || xIS_SET( skill_table[dt]->damtype, DAM_INHERITED ) ) && !used_weapon )
+      damtype = &ch->damtype;
+   else if( dt < TYPE_HIT && !xIS_SET( skill_table[dt]->damtype, DAM_INHERITED ) )
+      damtype = &skill_table[dt]->damtype;
 }
 
 #ifndef dam_message
@@ -3714,7 +3721,7 @@ bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart )
    return TRUE;
 }
 
-int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV *damtype )
+int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype )
 {
    double mod, mod_pen, mod_res;
    int counter, split_dam;
