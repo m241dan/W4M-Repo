@@ -675,40 +675,6 @@ void boot_db( bool fCopyOver )
       fpList = NULL;
    }
 
-   /*
-    * Read in all the realm files.
-    * -Davenge
-    */
-   {
-      FILE *fpList;
-
-      log_string( "Reading in realm files..." );
-      if( !( fpList = fopen( REALM_LIST, "r" ) ) )
-      {
-         perror( REALM_LIST );
-         shutdown_mud( "Unable to open realm list" );
-         exit( 1 );
-      }
-
-      for( ;; )
-      {
-         if( feof( fpList ) )
-         {
-            bug( "%s: EOF encountered reading area list - no $ found at end of file.", __FUNCTION__ );
-            break;
-         }
-         mudstrlcpy( strRealm, fread_word( fpList ), MAX_INPUT_LENGTH );
-         if( strRealm[0] == '$' )
-            break;
-
-         load_realm_file( NULL, strRealm );
-      }
-      fclose( fpList );
-      fpList = NULL;
-   }
-
-
-
 #ifdef PLANES
    log_string( "Making sure rooms are planed..." );
    check_planes( NULL );
@@ -743,6 +709,38 @@ void boot_db( bool fCopyOver )
 
    log_string( "Loading buildlist" );
    load_buildlist(  );
+
+   /*
+    * Read in all the realm files.
+    * -Davenge
+    */
+   {   
+      FILE *fpList;
+         
+      log_string( "Reading in realm files..." );
+      if( !( fpList = fopen( REALM_LIST, "r" ) ) )
+      {
+         perror( REALM_LIST );
+         shutdown_mud( "Unable to open realm list" );
+         exit( 1 );
+      }   
+            
+      for( ;; )   
+      {   
+         if( feof( fpList ) )
+         {
+            bug( "%s: EOF encountered reading area list - no $ found at end of file.", __FUNCTION__ );
+            break;
+         }
+         mudstrlcpy( strRealm, fread_word( fpList ), MAX_INPUT_LENGTH );
+         if( strRealm[0] == '$' )
+            break;  
+    
+         load_realm_file( NULL, strRealm );
+      }
+      fclose( fpList );
+      fpList = NULL;
+   }  
 
    log_string( "Loading boards" );
    load_boards(  );
@@ -7694,6 +7692,23 @@ void fread_fuss_areadata( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'R':
+            if( !str_cmp( word, "Realm" ) )
+            {
+               REALM_DATA *realm;
+               char *realmfilename;
+
+               realmfilename = fread_string_nohash( fp );
+
+               if( first_realm )
+               {
+                  for( realm = first_realm; realm; realm = realm->next )
+                     if( !str_cmp( realm->rfilename, realmfilename ) )
+                        LINK( tarea, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
+               }
+               else
+                  DISPOSE( realmfilename );
+               break;
+            }
             if( !str_cmp( word, "Ranges" ) )
             {
                int x1, x2, x3, x4;
@@ -7773,8 +7788,10 @@ void fread_fuss_realm( REALM_DATA * realm, FILE * fp )
    AREA_DATA *area;
 
    if( !realm )
+   {
       CREATE( realm, REALM_DATA, 1 );
-   LINK( realm, first_realm, last_realm, next, prev );
+      LINK( realm, first_realm, last_realm, next, prev );
+   }
 
    realm->rfilename = str_dup( strRealm ); 
    realm->name = fread_string_nohash( fp );
@@ -7787,6 +7804,17 @@ void fread_fuss_realm( REALM_DATA * realm, FILE * fp )
       word = fread_word( fp );
       if( word[0] == '$' )
          break;
+      for( area = first_build; area; area = area->next )
+      {
+         log_string( area->filename );
+         if( !str_cmp( area->filename, word ) )
+         {
+            LINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
+            area->realmed = TRUE;
+            area->realm = realm;
+         }
+      }
+
       for( area = first_area; area; area = area->next )
          if( !str_cmp( area->filename, word ) )
          {
@@ -8169,6 +8197,7 @@ void load_buildlist( void )
 
             SET_BIT( pArea->flags, AFLAG_PROTOTYPE );
             LINK( pArea, first_build, last_build, next, prev );
+            log_string( pArea->filename );
             fprintf( stderr, "%-14s: Rooms: %5d - %-5d Objs: %5d - %-5d "
                      "Mobs: %5d - %-5d\n",
                      pArea->filename,

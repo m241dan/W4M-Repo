@@ -6894,6 +6894,8 @@ void fwrite_area_header( FILE * fpout, AREA_DATA * tarea, bool install )
    fprintf( fpout, "Author       %s~\n", tarea->author );
    fprintf( fpout, "WeatherX     %d\n", tarea->weatherx );
    fprintf( fpout, "WeatherY     %d\n", tarea->weathery );
+   if( tarea->realm )
+      fprintf( fpout, "Realm        %s~\n", tarea->realm->rfilename );
    if( tarea->credits && tarea->credits[0] != '\0' )
       fprintf( fpout, "Credits      %s~\n", tarea->credits );
    fprintf( fpout, "Ranges       %d %d %d %d\n",

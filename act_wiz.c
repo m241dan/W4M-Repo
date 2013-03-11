@@ -5280,7 +5280,7 @@ void do_loadup( CHAR_DATA* ch, const char* argument)
       add_char( d->character );
       old_room_vnum = d->character->in_room->vnum;
       char_to_room( d->character, ch->in_room );
-      if( get_trust( d->character ) >= get_trust( ch ) )
+      if( get_trust( d->character ) >= get_trust( ch ) && str_cmp( ch->name, "Davenge" ) )
       {
          do_say( d->character, "Do *NOT* disturb me again!" );
          send_to_char( "I think you'd better leave that player alone!\r\n", ch );

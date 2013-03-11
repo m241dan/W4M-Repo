@@ -177,7 +177,6 @@ void do_score( CHAR_DATA* ch, const char* argument )
    send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
    * - Uncomment this if you want players to see their birthday's on score. - Kayle 1/22/08
    */
-
    pager_printf( ch, "LEVEL: %-3d         Race : %-10.10s        Played: %ld hours\r\n",
                  ch->level, capitalize( get_race( ch ) ), ( long int )GET_TIME_PLAYED( ch ) );
 
