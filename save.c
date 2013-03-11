@@ -383,6 +383,9 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "Weight          %d\n", ch->weight );
    if( !xIS_EMPTY( ch->act ) )
       fprintf( fp, "Act          %s\n", print_bitvector( &ch->act ) );
+   if( xIS_EMPTY( ch->damtype ) )
+      xSET_BIT( ch->damtype, DAM_BLUNT );
+   fprintf( fp, "Damtype      %s\n", print_bitvector( &ch->damtype ) );
    if( !xIS_EMPTY( ch->affected_by ) )
       fprintf( fp, "AffectedBy   %s\n", print_bitvector( &ch->affected_by ) );
    if( !xIS_EMPTY( ch->no_affected_by ) )
@@ -828,6 +831,8 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
    ch->pcdata->lt_index = 0;  /* last tell index */
    ch->morph = NULL;
    ch->pcdata->hotboot = FALSE;  /* Never changed except when PC is saved during hotboot save */
+   xCLEAR_BITS( ch->damtype );
+   xSET_BIT( ch->damtype, DAM_BLUNT );
 
 #ifdef IMC
    imc_initchar( ch );
@@ -1269,6 +1274,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'D':
+            KEY( "Damtype", ch->damtype, fread_bitvector( fp ) ); 
             KEY( "Deaf", ch->deaf, fread_number( fp ) );
             if( !strcmp( word, "Deity" ) )
             {

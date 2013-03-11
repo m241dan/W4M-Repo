@@ -26,7 +26,7 @@ OBJ_DATA *used_weapon;  /* Used to figure out which weapon later */
 /*
  * Local functions.
  */
-void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, OBJ_DATA * obj );
+void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit );
 void group_gain( CHAR_DATA * ch, CHAR_DATA * victim );
 int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim );
 int align_compute( CHAR_DATA * gch, CHAR_DATA * victim );
@@ -848,7 +848,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    EXT_BV *damtype;
 
    int dam, prof_bonus, prof_gsn = -1;
-   int max_range, hit_wear, subcount;
+   int max_range, hit_wear, subcount, strvcon, wpnroll, speroll, intvwis;
    int subtable[21];
    ch_ret retcode = rNONE;
    bool crit, physical;
@@ -901,8 +901,12 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    {
       dt = TYPE_HIT;
       if( wield && wield->item_type == ITEM_WEAPON )
+      {
          dt += wield->value[3];
-      damtype = &wield->damtype;
+         damtype = &wield->damtype;
+      }
+      else
+         damtype = &ch->damtype;
    }
    else
       damtype = &skill_table[dt]->damtype;
@@ -923,6 +927,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
          //Miss -Davenge
          damage( ch, victim, 0, dt, hit_wear, FALSE );
          tail_chain( );
+         damtype = NULL;
          DISPOSE( hit_data );
          return rNONE;
       }
@@ -946,6 +951,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
             //Miss -Davenge
             damage( ch, victim, 0, dt, hit_wear, FALSE );
             tail_chain( );
+            damtype = NULL;
             DISPOSE( hit_data );
             return rNONE;
          }
@@ -961,25 +967,30 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
          /*
           * Fixed again by korbillian@mud.tka.com 4000 (Cold Fusion Mud)
           */
-         dam = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
+         wpnroll = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
       else
-         dam = number_range( wield->value[1], wield->value[2] );
-
+         wpnroll = number_range( wield->value[1], wield->value[2] );
       /*
        * STR v. CON calculation, flat addition/subtraction to weapon roll -Davenge
        */
-      dam += get_curr_str( ch ) - get_curr_con( victim );
+      strvcon = get_curr_str( ch ) - get_curr_con( victim );
+      dam = wpnroll + strvcon;
+      if( IS_BETA( ) )
+         ch_printf( ch, "Weapon Roll: %d Stat Roll(pSTR - vCON): %d Init Dam Total: %d\r\n", wpnroll, strvcon, dam );
    }
    else
    {
       /*
        * Need to come up with base damage for spells -Davenge
        */
-      dam = 0;
+      speroll = 0;
       /*
        * Roll int vs. wis for more base damage stuff -Davenge
        */
-      dam += get_curr_int( ch ) - get_curr_wis( victim );
+      intvwis = get_curr_int( ch ) - get_curr_wis( victim );
+      dam = speroll + intvwis;
+      if( IS_BETA( ) )
+         ch_printf( ch, "Spell Roll: %d Stat Roll(pINT - vWIS): %d Init Dam Total: %d\r\n", speroll, intvwis, dam );
    }
 
    if( dam <= 0 )
@@ -990,6 +1001,8 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
     */
 
     crit = get_crit( ch, dt );
+    if( IS_BETA() && crit )
+       send_to_char( "Attack is a critical strike.\r\n", ch );
    /*
     * Wear_loc native bonuses -Davenge
     */
@@ -999,25 +1012,41 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
          dam = (int)( dam * 1.2 );
       if( hit_wear == HIT_ARMS || hit_wear == HIT_HANDS || hit_wear == HIT_LEGS || hit_wear == HIT_FEET )
          dam = (int)( dam * .9 );
+      if( IS_BETA( ) )
+         ch_printf( ch, "Damage after hit_location native bonuses: %d\r\n", dam );
    }
 
    /*
     * Calculate Damage after attack vs. ac -Davenge
     */
    if( physical )
+   {
       dam = attack_ac_mod( ch, victim, dam );
+      if( IS_BETA( ) )
+         ch_printf( ch, "Damage after attack vs. defense: %d\r\n", dam );
+   }
 
    /*
     * Handle Res Pen -Davenge
     */
    dam = res_pen( ch, victim, dam, damtype );
+   if( IS_BETA( ) )
+      ch_printf( ch, "Damage after Resistances and Penetrations calculated: %d\r\n", dam );
    /*
     * Handle Weight of Weapon Vs. Armor Weight -Davenge
     */
    if( physical )
+   {
       dam = calc_weight_mod( ch, victim, hit_wear, dam, crit );
-   else
+      if( IS_BETA( ) )
+         ch_printf( ch, "Damage after Weight difference calculations(And Crit if you crit): %d\r\n", dam );
+   }
+   else if( !physical && crit )
+   {
       dam = (int)( dam * 1.5 ); //Magical Crit
+      if( IS_BETA() )
+         ch_printf( ch, "Damage after magical crit factored in: %d\r\n", dam );
+   }
    /*
     * Calculate Proficiencies -Davenge
     * -Need to figure out where to put this-
@@ -1031,6 +1060,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       dam = 1;
 
    DISPOSE( hit_data );
+   damtype = NULL;
 
    if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit ) ) != rNONE )
       return retcode;
@@ -1691,16 +1721,19 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
        */
       if( IS_AFFECTED( ch, AFF_HIDE ) )
          xREMOVE_BIT( ch->affected_by, AFF_HIDE );
-      if( dt >= TYPE_HIT  )
+      if( dt >= TYPE_HIT || is_physical( &skill_table[dt]->damtype ) )
       {
 
          if( check_parry( ch, victim ) )
             return rNONE;
          if( check_dodge( ch, victim ) )
             return rNONE;
-         if( check_tumble( ch, victim ) )
+         if( check_counter( ch, victim ) )
             return rNONE;
+
       }
+      if( check_phase( ch, victim ) )
+         return rNONE;
 
       /*
        * Check control panel settings and modify damage
@@ -1724,7 +1757,7 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
    }
 
    if( ch != victim )
-      dam_message( ch, victim, dam, dt );
+      new_dam_message( ch, victim, dam, dt, hit_wear, crit );
 
    /*
     * Hurt the victim.
@@ -3130,192 +3163,22 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
 }
 
 /*
- * Revamped by Thoric to be more realistic
- * Added code to produce different messages based on weapon type - FB
- * Added better bug message so you can track down the bad dt's -Shaddai
+ * Revamped to support Davenge's ranged fight system -Davenge
  */
-void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, OBJ_DATA * obj )
+
+void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, int crit )
 {
-   char buf1[256], buf2[256], buf3[256];
-   const char *vs;
-   const char *vp;
-   const char *attack;
-   char punct;
-   int dampc;
-   struct skill_type *skill = NULL;
-   bool gcflag = FALSE;
-   bool gvflag = FALSE;
-   int d_index, w_index;
-   ROOM_INDEX_DATA *was_in_room;
+   EXT_BV *damtype;
+   char damtype_message[MAX_INPUT_LENGTH];
 
-   if( !dam )
-      dampc = 0;
-   else
-      dampc = ( ( dam * 1000 ) / victim->max_hit ) + ( 50 - ( ( victim->hit * 50 ) / victim->max_hit ) );
-
-   if( ch->in_room != victim->in_room )
-   {
-      was_in_room = ch->in_room;
-      char_from_room( ch );
-      char_to_room( ch, victim->in_room );
-   }
-   else
-      was_in_room = NULL;
-
-   /*
-    * Get the weapon index 
-    */
-   if( dt > 0 && dt < ( unsigned int )num_skills )
-   {
-      w_index = 0;
-   }
-   else if( dt >= TYPE_HIT && dt < TYPE_HIT + sizeof( attack_table ) / sizeof( attack_table[0] ) )
-   {
-      w_index = dt - TYPE_HIT;
-   }
-   else
-   {
-      bug( "Dam_message: bad dt %d from %s in %d.", dt, ch->name, ch->in_room->vnum );
-      dt = TYPE_HIT;
-      w_index = 0;
-   }
-
-   /*
-    * get the damage index 
-    */
-   if( dam == 0 )
-      d_index = 0;
-   else if( dampc < 0 )
-      d_index = 1;
-   else if( dampc <= 100 )
-      d_index = 1 + dampc / 10;
-   else if( dampc <= 200 )
-      d_index = 11 + ( dampc - 100 ) / 20;
-   else if( dampc <= 900 )
-      d_index = 16 + ( dampc - 200 ) / 100;
-   else
-      d_index = 23;
-
-   /*
-    * Lookup the damage message 
-    */
-   vs = s_message_table[w_index][d_index];
-   vp = p_message_table[w_index][d_index];
-
-   punct = ( dampc <= 30 ) ? '.' : '!';
-
-   if( dam == 0 && ( !IS_NPC( ch ) && ( IS_SET( ch->pcdata->flags, PCFLAG_GAG ) ) ) )
-      gcflag = TRUE;
-
-   if( dam == 0 && ( !IS_NPC( victim ) && ( IS_SET( victim->pcdata->flags, PCFLAG_GAG ) ) ) )
-      gvflag = TRUE;
-
-   if( dt >= 0 && dt < ( unsigned int )num_skills )
-      skill = skill_table[dt];
-   if( dt == TYPE_HIT )
-   {
-      snprintf( buf1, 256, "$n %s $N%c", vp, punct );
-      snprintf( buf2, 256, "You %s $N%c", vs, punct );
-      snprintf( buf3, 256, "$n %s you%c", vp, punct );
-   }
-   else if( dt > TYPE_HIT && is_wielding_poisoned( ch ) )
-   {
-      if( dt < TYPE_HIT + sizeof( attack_table ) / sizeof( attack_table[0] ) )
-         attack = attack_table[dt - TYPE_HIT];
-      else
-      {
-         bug( "Dam_message: bad dt %d from %s in %d.", dt, ch->name, ch->in_room->vnum );
-         dt = TYPE_HIT;
-         attack = attack_table[0];
-      }
-
-      snprintf( buf1, 256, "$n's poisoned %s %s $N%c", attack, vp, punct );
-      snprintf( buf2, 256, "Your poisoned %s %s $N%c", attack, vp, punct );
-      snprintf( buf3, 256, "$n's poisoned %s %s you%c", attack, vp, punct );
-   }
-   else
-   {
-      if( skill )
-      {
-         attack = skill->noun_damage;
-         if( dam == 0 )
-         {
-            bool found = FALSE;
-
-            if( skill->miss_char && skill->miss_char[0] != '\0' )
-            {
-               act( AT_HIT, skill->miss_char, ch, NULL, victim, TO_CHAR );
-               found = TRUE;
-            }
-            if( skill->miss_vict && skill->miss_vict[0] != '\0' )
-            {
-               act( AT_HITME, skill->miss_vict, ch, NULL, victim, TO_VICT );
-               found = TRUE;
-            }
-            if( skill->miss_room && skill->miss_room[0] != '\0' )
-            {
-               if( str_cmp( skill->miss_room, "supress" ) )
-                  act( AT_ACTION, skill->miss_room, ch, NULL, victim, TO_NOTVICT );
-               found = TRUE;
-            }
-            if( found ) /* miss message already sent */
-            {
-               if( was_in_room )
-               {
-                  char_from_room( ch );
-                  char_to_room( ch, was_in_room );
-               }
-               return;
-            }
-         }
-         else
-         {
-            if( skill->hit_char && skill->hit_char[0] != '\0' )
-               act( AT_HIT, skill->hit_char, ch, NULL, victim, TO_CHAR );
-            if( skill->hit_vict && skill->hit_vict[0] != '\0' )
-               act( AT_HITME, skill->hit_vict, ch, NULL, victim, TO_VICT );
-            if( skill->hit_room && skill->hit_room[0] != '\0' )
-               act( AT_ACTION, skill->hit_room, ch, NULL, victim, TO_NOTVICT );
-         }
-      }
-      else if( dt >= TYPE_HIT && dt < TYPE_HIT + sizeof( attack_table ) / sizeof( attack_table[0] ) )
-      {
-         if( obj )
-            attack = obj->short_descr;
-         else
-            attack = attack_table[dt - TYPE_HIT];
-      }
-      else
-      {
-         bug( "Dam_message: bad dt %d from %s in %d.", dt, ch->name, ch->in_room->vnum );
-         dt = TYPE_HIT;
-         attack = attack_table[0];
-      }
-
-      snprintf( buf1, 256, "$n's %s %s $N%c", attack, vp, punct );
-      snprintf( buf2, 256, "Your %s %s $N%c", attack, vp, punct );
-      snprintf( buf3, 256, "$n's %s %s you%c", attack, vp, punct );
-   }
-
-
-   act( AT_ACTION, buf1, ch, NULL, victim, TO_NOTVICT );
-   if( !gcflag )
-      act( AT_HIT, buf2, ch, NULL, victim, TO_CHAR );
-   if( !gvflag )
-      act( AT_HITME, buf3, ch, NULL, victim, TO_VICT );
-
-   if( was_in_room )
-   {
-      char_from_room( ch );
-      char_to_room( ch, was_in_room );
-   }
-   return;
+   if( dt >= TYPE_HIT && used_weapon )
+      damtype = &used_weapon->damtype;
 }
 
 #ifndef dam_message
 void dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
 {
-   new_dam_message( ch, victim, dam, dt );
+   new_dam_message( ch, victim, dam, dt, HIT_BODY, FALSE );
 }
 #endif
 

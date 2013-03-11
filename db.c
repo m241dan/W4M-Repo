@@ -2708,7 +2708,6 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    mob->affected_by = pMobIndex->affected_by;
    mob->alignment = pMobIndex->alignment;
    mob->sex = pMobIndex->sex;
-
    /*
     * Bug fix from mailing list by stu (sprice@ihug.co.nz)
     * was:  if ( !pMobIndex->ac )
@@ -2763,6 +2762,7 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    mob->speaks = pMobIndex->speaks;
    mob->speaking = pMobIndex->speaking;
    mob->range = pMobIndex->range;
+   mob->damtype = pMobIndex->damtype;
 
    /*
     * Perhaps add this to the index later --Shaddai
@@ -7200,6 +7200,7 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'D':
+            KEY( "Damtype", pMobIndex->damtype, fread_bitvector( fp ) );
             if( !str_cmp( word, "Defenses" ) )
             {
                const char *defenses = fread_flagstring( fp );

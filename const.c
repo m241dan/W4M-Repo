@@ -320,6 +320,12 @@ const char *const damage_table[DAM_INHERITED+1] = {
    "light", "dark", "(null)", "inherited"
 };
 
+const char *const damage_message[MAX_DAMTYPE] = {
+   "chaotic", "magical", "physical", "stab", "slash", "hit",
+   "sharpened", "toughened", "fiery", "cold", "liquid", "electrified",
+   "holy", "unholy"
+};
+
 const char *s_blade_messages[24] = {
    "miss", "barely scratch", "scratch", "nick", "cut", "hit", "tear",
    "rip", "gash", "lacerate", "hack", "maul", "rend", "decimate",

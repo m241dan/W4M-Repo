@@ -6816,6 +6816,9 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
          fprintf( fpout, " %d", pMobIndex->penetration[count] );
       fprintf( fpout, "\n" );
    }
+   if( !xIS_EMPTY( pMobIndex->damtype ) )
+      xSET_BIT( pMobIndex->damtype, DAM_BLUNT );
+   fprintf( fpout, "Damtype    %s\n", print_bitvector( &pMobIndex->damtype ) );
 
    fprintf( fpout, "Saves      %d %d %d %d %d\n",
             pMobIndex->saving_poison_death,

@@ -923,7 +923,7 @@ typedef enum
  * TO types for act.
  */
 typedef enum
-{ TO_ROOM, TO_NOTVICT, TO_VICT, TO_CHAR, TO_CANSEE } to_types;
+{ TO_ROOM, TO_NOTVICT, TO_VICT, TO_CHAR, TO_NOTCHAR, TO_CANSEE } to_types;
 
 #define INIT_WEAPON_CONDITION    12
 #define MAX_ITEM_IMPACT		 30
@@ -2194,6 +2194,7 @@ struct mob_index_data
    int range;
    short penetration[MAX_DAMTYPE];
    short resistance[MAX_DAMTYPE];
+   EXT_BV damtype;
 };
 
 struct hunt_hate_fear
@@ -2310,6 +2311,7 @@ struct char_data
    int susceptible;
    EXT_BV attacks;
    EXT_BV defenses;
+   EXT_BV damtype;
    int speaks;
    int speaking;
    short saving_poison_death;
@@ -2464,7 +2466,18 @@ struct pc_data
    short month;
    short year;
    int timezone;
+   EXT_BV fight_chatter;
 };
+
+typedef enum
+{
+   AUTOMSG_YOU, AUTOMSG_ENEMY, AUTOMSG_PARTY, AUTOMSG_OTHER,
+   DAM_YOU, DAM_PARTY, DAM_ENEMY, DAM_OTHER,
+   MISSDAM_YOU, MISSDAM_PARTY, MISSDAM_ENEMY, MISSDAM_OTHER,
+   START_CHANNEL_YOU, START_CHANNEL_PARTY, START_CHANNEL_ENEMY, START_CHANNEL_OTHER,
+   FINISH_CHANNEL_YOU, FINISH_CHANNEL_PARTY, FINISH_CHANNEL_ENEMY, FINISH_CHANNEL_OTHER
+} chatter_types;
+
 
 /*
  * Liquids.
@@ -3388,7 +3401,7 @@ do								\
 #define IS_GOOD(ch)		((ch)->alignment >= 350)
 #define IS_EVIL(ch)		((ch)->alignment <= -350)
 #define IS_NEUTRAL(ch)		(!IS_GOOD(ch) && !IS_EVIL(ch))
-#define IS_BETA( )              (sys.beta == TRUE)
+#define IS_BETA( )              (sysdata.beta == TRUE)
 
 #define IS_AWAKE(ch)		((ch)->position > POS_SLEEPING)
 #define GET_AC(ch)		((ch)->armor				    \
@@ -3609,6 +3622,7 @@ extern const struct liq_type liq_table[LIQ_MAX];
 extern const char *const attack_table[18];
 extern const char *const weapon_table[MAX_WEAPON];
 extern const char *const damage_table[DAM_INHERITED+1];
+extern const char *const damage_message[MAX_DAMTYPE];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];
