@@ -3937,8 +3937,6 @@ ch_ret spring_trap( CHAR_DATA * ch, OBJ_DATA * obj )
           * hmm... why not use spell_poison() here? 
           */
          retcode = obj_cast_spell( gsn_poison, lev, ch, ch, NULL );
-         if( retcode == rNONE )
-            retcode = damage( ch, ch, dam, TYPE_UNDEFINED, HIT_BODY, FALSE );
          break;
       case TRAP_TYPE_POISON_GAS:
          retcode = obj_cast_spell( gsn_poison, lev, ch, ch, NULL );
@@ -3961,7 +3959,7 @@ ch_ret spring_trap( CHAR_DATA * ch, OBJ_DATA * obj )
          break;
       case TRAP_TYPE_ELECTRIC_SHOCK:
       case TRAP_TYPE_BLADE:
-         retcode = damage( ch, ch, dam, TYPE_UNDEFINED, HIT_BODY, FALSE );
+         break;
    }
    return retcode;
 }

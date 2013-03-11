@@ -26,7 +26,7 @@ OBJ_DATA *used_weapon;  /* Used to figure out which weapon later */
 /*
  * Local functions.
  */
-void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit );
+void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit, EXT_BV damtype );
 void group_gain( CHAR_DATA * ch, CHAR_DATA * victim );
 int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim );
 int align_compute( CHAR_DATA * gch, CHAR_DATA * victim );
@@ -931,7 +931,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       if( hit_wear == MISS_GENERAL )
       {
          //Miss -Davenge
-         damage( ch, victim, 0, dt, hit_wear, FALSE );
+         damage( ch, victim, 0, dt, hit_wear, FALSE, damtype );
          tail_chain( );
          DISPOSE( hit_data );
          return rNONE;
@@ -954,7 +954,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
          if( did_it_hit == -1 )
          {
             //Miss -Davenge
-            damage( ch, victim, 0, dt, hit_wear, FALSE );
+            damage( ch, victim, 0, dt, hit_wear, FALSE, damtype );
             tail_chain( );
             DISPOSE( hit_data );
             return rNONE;
@@ -1029,7 +1029,12 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       if( IS_BETA( ) )
          ch_printf( ch, "Damage after attack vs. defense: %d\r\n", dam );
    }
-
+   else
+   {
+      dam = mattack_mdefense_mod( ch, victim, dam );
+      if( IS_BETA( ) )
+         ch_printf( ch, "Damage after magic attack vs. magic defense: %d\r\n", dam );
+   }
    /*
     * Handle Res Pen -Davenge
     */
@@ -1064,8 +1069,8 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       dam = 1;
 
    DISPOSE( hit_data );
-
-   if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit ) ) != rNONE )
+   log_string( victim->name );
+   if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit, damtype ) ) != rNONE )
       return retcode;
    if( char_died( ch ) )
       return rCHAR_DIED;
@@ -1477,15 +1482,18 @@ short ris_damage( CHAR_DATA * ch, short dam, int ris )
    return ( dam * modifier ) / 10;
 }
 
-ch_ret damage( CHAR_DATA * ch, CHAR_DATA *victim, int dam, int dt )
+ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
 {
-   return damage( ch, victim, dam, dt, HIT_BODY, FALSE );
+   EXT_BV damtype;
+   xSET_BITS( damtype, ch->damtype );
+
+   return damage( ch, victim, dam, dt, HIT_BODY, FALSE, damtype );
 }
 
 /*
  * Inflict damage from a hit.   This is one damn big function.
  */
-ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear, bool crit )
+ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear, bool crit, EXT_BV damtype )
 {
    char log_buf[MAX_STRING_LENGTH];
    char filename[256];
@@ -1555,6 +1563,8 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     */
    if( xIS_SET( victim->in_room->room_flags, ROOM_SAFE ) )
       dam = 0;
+
+   log_string( victim->name );
 
    if( dam && npcvict && ch != victim )
    {
@@ -1731,12 +1741,12 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
             return rNONE;
          if( check_dodge( ch, victim ) )
             return rNONE;
-         if( check_counter( ch, victim ) )
-            return rNONE;
+//         if( check_counter( ch, victim ) )
+  //          return rNONE;
 
       }
-      if( check_phase( ch, victim ) )
-         return rNONE;
+    //  if( check_phase( ch, victim ) )
+      //   return rNONE;
 
       /*
        * Check control panel settings and modify damage
@@ -1760,7 +1770,7 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
    }
 
    if( ch != victim )
-      new_dam_message( ch, victim, dam, dt, hit_wear, crit );
+      new_dam_message( ch, victim, dam, dt, hit_wear, crit, damtype );
 
    /*
     * Hurt the victim.
@@ -3169,25 +3179,73 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
  * Revamped to support Davenge's ranged fight system -Davenge
  */
 
-void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, int crit )
+void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit, EXT_BV damtype )
 {
-   EXT_BV *damtype;
+   CHAR_DATA *rch;
    char damtype_message[MAX_INPUT_LENGTH];
+   int counter;
+   /*
+    * let's get our messages based on damage types out of the way -Davenge
+    * Magical first -Davenge
+    */
+   for( counter = 0; counter < MAX_DAMTYPE; counter++ )
+   {
+      if( xIS_SET( damtype, counter ) )
+      {
+         if( counter >= DAM_PIERCE && counter <= DAM_BLUNT )
+            sprintf( damtype_message, "%s %s ", damtype_message, damage_message[counter] );
+         else
+            sprintf( damtype_message, "%s %s ", damage_message[counter], damtype_message );
+      }
+   }
 
-   if( ( dt >= TYPE_HIT || xIS_SET( skill_table[dt]->damtype, DAM_INHERITED ) ) && used_weapon )
-      damtype = &used_weapon->damtype;
-   else if( ( dt == TYPE_HIT || xIS_SET( skill_table[dt]->damtype, DAM_INHERITED ) ) && !used_weapon )
-      damtype = &ch->damtype;
-   else if( dt < TYPE_HIT && !xIS_SET( skill_table[dt]->damtype, DAM_INHERITED ) )
-      damtype = &skill_table[dt]->damtype;
+   /*
+    * Doing it by DTs
+    */
+   if( dt >= TYPE_HIT && hit_wear >= 0 )
+   {
+      if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
+         ch_printf( ch, "Your %s strikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, w_flags[hit_wear], dam );
+      if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
+         ch_printf( ch, "%s's %s strikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, w_flags[hit_wear], dam );
+      for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
+      {
+         if( rch == victim || rch == ch )
+            continue;
+         if( IS_NPC( rch ) )
+            continue;
+         if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) )
+            continue;
+         if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHER_DOES ) )
+            continue;
+         if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) )
+            continue;
+         if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHER_TAKES ) )
+            continue;
+         ch_printf( rch, "%s's %s strikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
+      }
+      if( ch->in_room != victim->in_room )
+      {
+         for( rch = victim->in_room->first_person; rch; rch = rch->next_in_room )
+         {
+            if( rch == victim || rch == ch )
+               continue;
+            if( IS_NPC( rch ) )
+               continue;
+            if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) )
+               continue;
+            if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHER_DOES ) )
+               continue;
+            if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) )
+               continue;
+            if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHER_TAKES ) )
+               continue;
+            ch_printf( rch, "%s's %s strikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
+         }
+      }
+   }
+   return;
 }
-
-#ifndef dam_message
-void dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
-{
-   new_dam_message( ch, victim, dam, dt, HIT_BODY, FALSE );
-}
-#endif
 
 void do_target( CHAR_DATA *ch, const char *argument )
 {
@@ -3729,7 +3787,7 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype )
    int progress = 0;
 
    for( counter = 0; counter < MAX_DAMTYPE; counter++ )
-      if( xIS_SET( *damtype, counter ) )
+      if( xIS_SET( damtype, counter ) )
          num_damtype++;
 
    if( num_damtype <= 0 )
@@ -3743,7 +3801,7 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype )
 
    for( counter = DAM_PIERCE; counter < MAX_DAMTYPE; counter++ )
    {
-      if( xIS_SET( *damtype, counter ) )
+      if( xIS_SET( damtype, counter ) )
       {
          mod_pen = ch->penetration[DAM_ALL];
          mod_res = victim->resistance[DAM_ALL];
@@ -3874,13 +3932,34 @@ int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
     * Basically make 1 attack equal to 10 armor for 1% damage increase/redux
     * -Davenge
     */
-   atkac_mod = 100 + ( GET_ATTACK( ch ) - abs(( GET_AC( victim )) / 10 ) );
+   atkac_mod = 100 + ( GET_ATTACK( ch ) - ( GET_AC( victim ) / 10 ) );
 
    /*
     * Apply the mod after turning it into an appropriate percentage capping at
     * %5 to 95% increase respectively -Davenge
     */
    dam = (int)( dam * ( (double)URANGE( 5, atkac_mod, 195 ) / 100 ) );
+
+   return dam;
+}
+
+int mattack_mdefense_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
+{
+   int matkmdef_mod;
+
+   /*
+    * Basically make 1 magic attack increase damage by 1.5% and 
+    * 10 magic defense decrease magic damage by 1%
+    */
+
+   matkmdef_mod = 100 + ( ( GET_MAGICATTACK( ch ) * 1.5 ) - ( GET_MAGICDEFENSE( victim ) / 10 ) );
+
+   /*
+    * Apply the mod after turning it into an approriate percentage capping at
+    * 5% and 250% increse resepctively -Davenge
+    */
+
+   dam = (int)( dam * ( (double)URANGE(5, matkmdef_mod, 250 ) / 100 ) );
 
    return dam;
 }

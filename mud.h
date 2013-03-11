@@ -2476,8 +2476,8 @@ struct pc_data
 typedef enum
 {
    AUTOMSG_YOU, AUTOMSG_ENEMY, AUTOMSG_PARTY, AUTOMSG_OTHER,
-   DAM_YOU, DAM_PARTY, DAM_ENEMY, DAM_OTHER,
-   MISSDAM_YOU, MISSDAM_PARTY, MISSDAM_ENEMY, MISSDAM_OTHER,
+   DAM_YOU_DO, DAM_YOU_TAKE, DAM_PARTY_DOES, DAM_PARTY_TAKES, DAM_OTHER_DOES, DAM_OTHER_TAKES,
+   DAM_YOU_MISS, DAM_MISSES_YOU, DAM_PARTY_MISSES, DAM_MISSES_PARTY, DAM_OTHER_MISS, DAM_MISSES_OTHER,
    START_CHANNEL_YOU, START_CHANNEL_PARTY, START_CHANNEL_ENEMY, START_CHANNEL_OTHER,
    FINISH_CHANNEL_YOU, FINISH_CHANNEL_PARTY, FINISH_CHANNEL_ENEMY, FINISH_CHANNEL_OTHER
 } chatter_types;
@@ -3408,21 +3408,14 @@ do								\
 #define IS_BETA( )              (sysdata.beta == TRUE)
 
 #define IS_AWAKE(ch)		((ch)->position > POS_SLEEPING)
-#define GET_AC(ch)		((ch)->armor				    \
-				    + ( IS_AWAKE(ch)			    \
-				    ? dex_app[get_curr_dex(ch)].defensive   \
-				    : 0 )				    \
-				    + VAMP_AC(ch))
-#define GET_HITROLL(ch)		((ch)->hitroll				    \
-				    +str_app[get_curr_str(ch)].tohit	    \
-				    +(2-(abs((ch)->mental_state)/10)))
+#define GET_AC(ch)		((ch)->armor)
+#define GET_MAGICDEFENSE(ch)    ((ch)->magic_defense)
+#define GET_HITROLL(ch)		((ch)->hitroll)
+
 
 /* Thanks to Chriss Baeke for noticing damplus was unused */
-#define GET_ATTACK(ch)		((ch)->attack                              \
-				    +(ch)->damplus			    \
-				    +str_app[get_curr_str(ch)].todam	    \
-				    +(((ch)->mental_state > 5		    \
-				    &&(ch)->mental_state < 15) ? 1 : 0) )
+#define GET_ATTACK(ch)		((ch)->attack)
+#define GET_MAGICATTACK(ch)     ((ch)->magic_attack)
 
 #define IS_OUTSIDE(ch)		(!xIS_SET((ch)->in_room->room_flags, ROOM_INDOORS) \
                             && !xIS_SET((ch)->in_room->room_flags, ROOM_TUNNEL))
@@ -3560,7 +3553,6 @@ do								\
                                 : "someone" )
 
 #define log_string(txt)		( log_string_plus( (txt), LOG_NORMAL, LEVEL_LOG ) )
-#define dam_message(ch, victim, dam, dt)	( new_dam_message((ch), (victim), (dam), (dt), NULL) )
 
 /*
  *  Defines for the command flags. --Shaddai
@@ -4723,7 +4715,7 @@ ch_ret multi_hit args( ( CHAR_DATA * ch, TARGET_DATA * target, int dt ) );
 ch_ret projectile_hit args( ( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ_DATA * projectile, short dist ) );
 short ris_damage args( ( CHAR_DATA * ch, short dam, int ris ) );
 ch_ret damage args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt ) );
-ch_ret damage args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear, bool crit ) );
+ch_ret damage args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear, bool crit, EXT_BV damtype ) );
 void update_pos args( ( CHAR_DATA * victim ) );
 void set_fighting args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 void stop_fighting args( ( CHAR_DATA * ch, bool fBoth ) );
@@ -4754,8 +4746,8 @@ int get_fist_weight( CHAR_DATA * ch );
 int get_wear_loc_weight( CHAR_DATA * ch, int hit_wear );
 int calc_weight_mod( CHAR_DATA * ch, CHAR_DATA * victim, int hit_wear, int dam, bool crit );
 int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam );
+int mattack_mdefense_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam );
 bool get_crit( CHAR_DATA *ch, int dt );
- 
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );
