@@ -8436,8 +8436,12 @@ void save_sysdata( SYSTEM_DATA sys )
    }
    else
    {
+      int beta = 0;
+      if( sys.beta )
+         beta = 1;
       fprintf( fp, "#SYSTEM\n" );
       fprintf( fp, "MudName	     %s~\n", sys.mud_name );
+      fprintf( fp, "Beta           %d\n", beta );
       fprintf( fp, "Highplayers    %d\n", sys.alltimemax );
       fprintf( fp, "Highplayertime %s~\n", sys.time_of_max );
       fprintf( fp, "CheckImmHost   %d\n", sys.check_imm_host );
@@ -8522,6 +8526,14 @@ void fread_sysdata( SYSTEM_DATA * sys, FILE * fp )
             KEY( "BanSiteLevel", sys->ban_site_level, fread_number( fp ) );
             KEY( "BanClassLevel", sys->ban_class_level, fread_number( fp ) );
             KEY( "BanRaceLevel", sys->ban_race_level, fread_number( fp ) );
+            if( !str_cmp( word, "Beta" ) )
+            {
+               if( fread_number( fp ) == 1 )
+                  sys->beta = TRUE;
+               else
+                  sys->beta = FALSE;
+               break;
+            }
             break;
 
          case 'C':

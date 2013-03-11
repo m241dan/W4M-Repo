@@ -3111,4 +3111,91 @@ void update_room_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, i
 
    return;
 }
+/*
+void check_coords( ROOM_INDEX_DATA *in_room, ROOM_INDEX_DATA *from_room, int direction )
+{
+   EXIT_DATA *pexit;
+   int coord, coord2, inc_coord, inc_coord2;
+   int coord_angle_interest;
+   const char xyz[3] = { 'X', 'Y', 'Z' };
+   coord2 = -1;
 
+   if( !in_room->coordset || !from_room->coordset )
+      return;
+
+   switch( dir )
+   {
+      case DIR_NORTH:
+      case DIR_SOUTH:
+         coord = Y;
+         break;
+      case DIR_WEST:
+      case DIR_EAST:
+         coord = X;
+         break;
+      case DIR_UP:
+      case DIR_DOWN:
+         coord = Z;
+         break;
+      case DIR_NORTHEAST:
+      case DIR_NORTHWEST:
+      case DIR_SOUTHWEST:
+      case DIR_SOUTHEAST:
+         coord = Y;
+         coord2 = X;
+         break;
+   }
+   switch( dir )
+   {
+      case DIR_NORTH:
+      case DIR_EAST:
+      case DIR_UP;
+         inc_coord = 1;
+         break;
+      case DIR_SOUTH:
+      case DIR_WEST:
+      case DIR_DOWN:
+         inc_coord = -1;
+         break;
+      case DIR_NORTHEAST:
+         inc_coord = 1;
+         inc_coord2 = 1;
+         break;
+      case DIR_NORTHWEST:
+         inc_coord = 1;
+         inc_coord2 = -1;
+         break;
+      case DIR_SOUTHEAST:
+         inc_coord = -1;
+         inc_coord2 = 1;
+         break;
+      case DIR_SOUTHWEST:
+         inc_coord = -1;
+         inc_coord = -1;
+         break;
+   }
+   if( in_room->coord[coord] != ( from_room->coord[coord] + inc_coord ) )
+   {
+      bug( "Room: %d from room: %d does not have the proper %s coordinate.", in_room->vnum, from_room->vnum, xyz[coord] );
+      return;
+   }
+   if( coord2 > -1 && in_room->coord[coord2] != ( from_room->coord[coord2] + inc_coord2 ) )
+   {
+      bug( "Room : %d from room: %d does not have the proper %s coordinate.", in_room->vnum, from_room->vnum, xyz[coord2] );
+      return;
+   }
+   if( ( coord == X || coord == Y ) && in_room->coord[Z] != from_room->coord[Z] )
+   {
+      if( ( pexit = get_exit( from_room, dir ) ) == NULL )
+      {
+         bug( "Somehow lost the exit in the other room we were coming from, this should be impossible." );
+         return;
+      }
+      if( pexit->angle < 0 )
+      {
+         bug( "Incr
+      int change = in_room->coord[Z] - from_room->coord[Z];
+      if( pexit->angle > -1 &&( change != 1 || change != -1 ))
+   }
+}
+*/

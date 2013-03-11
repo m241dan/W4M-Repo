@@ -5230,13 +5230,13 @@ void do_redit( CHAR_DATA* ch, const char* argument)
             }
             break;
       }
-      if( (  new_exit = get_exit( xit->to_room, rev_dir[edir] ) ) == NULL );
+      if( (  from_exit = get_exit( xit->to_room, rev_dir[edir] ) ) == NULL );
       {
-         bug( "Careful, no exit comin back in this direction. If not intentional, please use bexit to make one." );
+         bug( "Careful, no exit comin back in this direction for exangle to angle back in. If not intentional, please use bexit to make one." );
          send_to_char( "Ok.\r\n", ch );
          return;
       }
-      new_exit->angle = rev_dir[adir];
+      from_exit->angle = rev_dir[adir];
       send_to_char( "Ok.\r\n", ch );
       return;
    }

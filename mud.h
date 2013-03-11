@@ -2850,6 +2850,7 @@ struct system_data
    int hoursunset;
    int hournightbegin;
    int hourmidnight;
+   bool beta; //Is the mud in Beta? If so, may have extra messages for testing! -Davenge
 };
 
 struct plane_data
@@ -3387,6 +3388,7 @@ do								\
 #define IS_GOOD(ch)		((ch)->alignment >= 350)
 #define IS_EVIL(ch)		((ch)->alignment <= -350)
 #define IS_NEUTRAL(ch)		(!IS_GOOD(ch) && !IS_EVIL(ch))
+#define IS_BETA( )              (sys.beta == TRUE)
 
 #define IS_AWAKE(ch)		((ch)->position > POS_SLEEPING)
 #define GET_AC(ch)		((ch)->armor				    \
@@ -3777,6 +3779,7 @@ extern struct act_prog_data *mob_act_list;
  * Command functions.
  * Defined in act_*.c (mostly).
  */
+DECLARE_DO_FUN( do_beta );
 DECLARE_DO_FUN( do_findexit );
 DECLARE_DO_FUN( do_rdig );
 DECLARE_DO_FUN( do_rgrid );

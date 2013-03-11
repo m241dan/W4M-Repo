@@ -5997,3 +5997,20 @@ bool is_magical( EXT_BV *damtype )
       return TRUE;
    return FALSE;
 }
+
+void do_beta( CHAR_DATA *ch, const char *argument )
+{
+   char arg[MAX_STRING_LENGTH];
+   if( sysdata.beta )
+   {
+      sprintf( arg, "%s has taken the mud out of beta mode.\r\n", ch->name );
+      sysdata.beta = FALSE;
+   }
+   else
+   {
+      sprintf( arg, "%s has put the mud in beta mode.\r\n", ch->name );
+      sysdata.beta = TRUE;
+   }
+   do_echo( ch, arg );
+   return;
+}
