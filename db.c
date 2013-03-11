@@ -7703,7 +7703,11 @@ void fread_fuss_areadata( FILE * fp, AREA_DATA * tarea )
                {
                   for( realm = first_realm; realm; realm = realm->next )
                      if( !str_cmp( realm->rfilename, realmfilename ) )
+                     {
                         LINK( tarea, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
+                        tarea->realm = realm;
+                        tarea->realmed = TRUE;
+                     }
                }
                else
                   DISPOSE( realmfilename );

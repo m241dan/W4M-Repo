@@ -5117,6 +5117,9 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       }
       
       ch->in_room->coordset = FALSE;
+      ch->in_room->coord[X] = 0;
+      ch->in_room->coord[Y] = 0;
+      ch->in_room->coord[Z] = 0;
       pager_printf( ch, "Done.\r\n" );
       return;
    }
