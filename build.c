@@ -3633,9 +3633,9 @@ void do_oset( CHAR_DATA* ch, const char* argument)
          send_to_char( "Non-weapons cannot have damage types.\r\n", ch );
          return;
       }
-      if( ( value = get_damtype( arg3 ) ) == -1 )
+      if( ( value = get_damtype( arg3 ) ) == -1 || ( value >= DAM_ALL && value <= DAM_PHYSICAL ) )
       {
-         send_to_char( "&RInvalid damage type.&w\r\n&PValid Choices: &wall, &Cmagic, &cphysical, pierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
+         send_to_char( "&RInvalid damage type.&w\r\n&PValid Choices: &wpierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
          return;
       }
       xTOGGLE_BIT( obj->damtype, value );
@@ -5115,7 +5115,6 @@ void do_redit( CHAR_DATA* ch, const char* argument)
          ch->in_room->area->realm->zero_zero_zero = 0;
          pager_printf( ch, "Removing the Center of this Realm, be very careful, next goto will set the center.\r\n&RBest to unset the whole thing if you are actually moving the center.&w\r\n" );
       }
-      
       ch->in_room->coordset = FALSE;
       ch->in_room->coord[X] = 0;
       ch->in_room->coord[Y] = 0;
@@ -5157,6 +5156,7 @@ void do_redit( CHAR_DATA* ch, const char* argument)
    if( !str_cmp( arg, "exangle" ) )
    {
       int adir;
+      EXIT_DATA *from_exit;
 
       argument = one_argument( argument, arg2 );
       argument = one_argument( argument, arg3 );
@@ -5233,6 +5233,13 @@ void do_redit( CHAR_DATA* ch, const char* argument)
             }
             break;
       }
+      if( (  from_exit = get_exit( xit->to_room, rev_dir[edir] ) ) == NULL );
+      {
+         bug( "Careful, no exit comin back in this direction for exangle to angle back in. If not intentional, please use bexit to make one." );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
+      from_exit->angle = rev_dir[adir];
       send_to_char( "Ok.\r\n", ch );
       return;
    }
@@ -6791,12 +6798,12 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
    fprintf( fpout, "Actflags   %s~\n", ext_flag_string( &pMobIndex->act, act_flags ) );
    if( !xIS_EMPTY( pMobIndex->affected_by ) )
       fprintf( fpout, "Affected   %s~\n", ext_flag_string( &pMobIndex->affected_by, a_flags ) );
-   fprintf( fpout, "Stats1     %d %d %d %d %d %ld\n", pMobIndex->alignment, pMobIndex->level, pMobIndex->mobthac0,
-            pMobIndex->ac, pMobIndex->gold, pMobIndex->experience );
+   fprintf( fpout, "Stats1     %d %d %d %d %d %d %ld\n", pMobIndex->alignment, pMobIndex->level, pMobIndex->mobthac0,
+            pMobIndex->ac, pMobIndex->magic_defense, pMobIndex->gold, pMobIndex->experience );
    fprintf( fpout, "Stats2     %d %d %d\n", pMobIndex->hitnodice, pMobIndex->hitsizedice, pMobIndex->hitplus );
    fprintf( fpout, "Stats3     %d %d %d\n", pMobIndex->damnodice, pMobIndex->damsizedice, pMobIndex->damplus );
-   fprintf( fpout, "Stats4     %d %d %d %d\n",
-            pMobIndex->height, pMobIndex->weight, pMobIndex->numattacks, pMobIndex->attack );
+   fprintf( fpout, "Stats4     %d %d %d %d %d\n",
+            pMobIndex->height, pMobIndex->weight, pMobIndex->numattacks, pMobIndex->attack, pMobIndex->magic_attack );
    fprintf( fpout, "Attribs    %d %d %d %d %d %d %d\n",
             pMobIndex->perm_str,
             pMobIndex->perm_int,
@@ -6812,6 +6819,9 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
          fprintf( fpout, " %d", pMobIndex->penetration[count] );
       fprintf( fpout, "\n" );
    }
+   if( !xIS_EMPTY( pMobIndex->damtype ) )
+      xSET_BIT( pMobIndex->damtype, DAM_BLUNT );
+   fprintf( fpout, "Damtype    %s\n", print_bitvector( &pMobIndex->damtype ) );
 
    fprintf( fpout, "Saves      %d %d %d %d %d\n",
             pMobIndex->saving_poison_death,

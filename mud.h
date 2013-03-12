@@ -164,6 +164,7 @@ typedef struct target_data TARGET_DATA;
 typedef struct realm_data REALM_DATA;
 typedef struct queue_timers QTIMER;
 typedef struct cooldown_data CD_DATA;
+typedef struct hit_data HIT_DATA;
 /*
  * Function types.
  */
@@ -922,7 +923,7 @@ typedef enum
  * TO types for act.
  */
 typedef enum
-{ TO_ROOM, TO_NOTVICT, TO_VICT, TO_CHAR, TO_CANSEE } to_types;
+{ TO_ROOM, TO_NOTVICT, TO_VICT, TO_CHAR, TO_NOTCHAR, TO_CANSEE } to_types;
 
 #define INIT_WEAPON_CONDITION    12
 #define MAX_ITEM_IMPACT		 30
@@ -1959,6 +1960,24 @@ typedef enum
    MAX_WEAR
 } wear_locations;
 
+extern const int   body_part_weight[WEAR_WAIST+1];
+
+#define MISS_BODY    (WEAR_BODY  * -1)
+#define MISS_HEAD    (WEAR_HEAD  * -1)
+#define MISS_LEGS    (WEAR_HEAD  * -1)
+#define MISS_FEET    (WEAR_FEET  * -1)
+#define MISS_HANDS   (WEAR_HANDS * -1)
+#define MISS_ARMS    (WEAR_ARMS  * -1)
+#define MISS_WAIST   (WEAR_WAIST * -1)
+#define MISS_GENERAL (MAX_WEAR   * -1)
+#define HIT_BODY     WEAR_BODY
+#define HIT_HEAD     WEAR_HEAD
+#define HIT_LEGS     WEAR_LEGS
+#define HIT_FEET     WEAR_FEET
+#define HIT_HANDS    WEAR_HANDS
+#define HIT_ARMS     WEAR_ARMS
+#define HIT_WAIST    WEAR_WAIST
+
 /* Board Types */
 typedef enum
 { BOARD_NOTE, BOARD_MAIL } board_types;
@@ -2005,7 +2024,6 @@ typedef enum
    PLR_AUTOGOLD, PLR_AUTOMAP, PLR_AFK, PLR_INVISPROMPT, PLR_COMPASS
 } player_flags;
 
-/* Bits for pc_data->flags. */
 #define PCFLAG_R1                  BV00
 #define PCFLAG_DEADLY              BV01
 #define PCFLAG_UNAUTHED		   BV02
@@ -2137,6 +2155,7 @@ struct mob_index_data
    short alignment;
    short mobthac0;   /* Unused */
    short ac;
+   short magic_defense;
    short hitnodice;
    short hitsizedice;
    short hitplus;
@@ -2161,6 +2180,7 @@ struct mob_index_data
    short race;
    short Class;
    short attack;
+   short magic_attack;
    short perm_str;
    short perm_int;
    short perm_wis;
@@ -2176,6 +2196,7 @@ struct mob_index_data
    int range;
    short penetration[MAX_DAMTYPE];
    short resistance[MAX_DAMTYPE];
+   EXT_BV damtype;
 };
 
 struct hunt_hate_fear
@@ -2292,6 +2313,7 @@ struct char_data
    int susceptible;
    EXT_BV attacks;
    EXT_BV defenses;
+   EXT_BV damtype;
    int speaks;
    int speaking;
    short saving_poison_death;
@@ -2304,6 +2326,7 @@ struct char_data
    short baresizedie;
    short mobthac0;
    short attack;
+   short magic_attack;
    short hitplus;
    short damplus;
    short position;
@@ -2312,6 +2335,7 @@ struct char_data
    short height;
    short weight;
    short armor;
+   short magic_defense;
    short wimpy;
    int deaf;
    short perm_str;
@@ -2446,7 +2470,18 @@ struct pc_data
    short month;
    short year;
    int timezone;
+   EXT_BV fight_chatter;
 };
+
+typedef enum
+{
+   DAM_YOU_DO, DAM_YOU_TAKE, DAM_YOU_EVADE,
+   DAM_ENEMY_DOES, DAM_ENEMY_TAKES, DAM_ENEMY_EVADES,
+   DAM_PARTY_DOES, DAM_PARTY_TAKES, DAM_PARTY_EVADES,
+   DAM_OTHERS_DO, DAM_OTHERS_TAKE, DAM_OTHERS_EVADE,
+   MAX_COMBAT_FILTERS
+} chatter_types;
+
 
 /*
  * Liquids.
@@ -2649,6 +2684,19 @@ struct cooldown_data
 };
 
 /*
+ * Structure to hold data on victim -Davenge
+ */
+
+struct hit_data
+{
+   int locations[1000];
+   int max_locations;
+   int miss_locs;
+   int hit_locs;
+
+};
+
+/*
  * Creating a timer that is queued and runs every pulse of the CPU
  * Basically, this is giving us more accuracy in our ability to generate
  * and reduce cooldowns without dragging too much on the processing % 
@@ -2819,6 +2867,7 @@ struct system_data
    int hoursunset;
    int hournightbegin;
    int hourmidnight;
+   bool beta; //Is the mud in Beta? If so, may have extra messages for testing! -Davenge
 };
 
 struct plane_data
@@ -3356,23 +3405,17 @@ do								\
 #define IS_GOOD(ch)		((ch)->alignment >= 350)
 #define IS_EVIL(ch)		((ch)->alignment <= -350)
 #define IS_NEUTRAL(ch)		(!IS_GOOD(ch) && !IS_EVIL(ch))
+#define IS_BETA( )              (sysdata.beta == TRUE)
 
 #define IS_AWAKE(ch)		((ch)->position > POS_SLEEPING)
-#define GET_AC(ch)		((ch)->armor				    \
-				    + ( IS_AWAKE(ch)			    \
-				    ? dex_app[get_curr_dex(ch)].defensive   \
-				    : 0 )				    \
-				    + VAMP_AC(ch))
-#define GET_HITROLL(ch)		((ch)->hitroll				    \
-				    +str_app[get_curr_str(ch)].tohit	    \
-				    +(2-(abs((ch)->mental_state)/10)))
+#define GET_AC(ch)		((ch)->armor)
+#define GET_MAGICDEFENSE(ch)    ((ch)->magic_defense)
+#define GET_HITROLL(ch)		((ch)->hitroll)
+
 
 /* Thanks to Chriss Baeke for noticing damplus was unused */
-#define GET_ATTACK(ch)		((ch)->attack                              \
-				    +(ch)->damplus			    \
-				    +str_app[get_curr_str(ch)].todam	    \
-				    +(((ch)->mental_state > 5		    \
-				    &&(ch)->mental_state < 15) ? 1 : 0) )
+#define GET_ATTACK(ch)		((ch)->attack)
+#define GET_MAGICATTACK(ch)     ((ch)->magic_attack)
 
 #define IS_OUTSIDE(ch)		(!xIS_SET((ch)->in_room->room_flags, ROOM_INDOORS) \
                             && !xIS_SET((ch)->in_room->room_flags, ROOM_TUNNEL))
@@ -3510,7 +3553,6 @@ do								\
                                 : "someone" )
 
 #define log_string(txt)		( log_string_plus( (txt), LOG_NORMAL, LEVEL_LOG ) )
-#define dam_message(ch, victim, dam, dt)	( new_dam_message((ch), (victim), (dam), (dt), NULL) )
 
 /*
  *  Defines for the command flags. --Shaddai
@@ -3576,6 +3618,8 @@ extern const struct liq_type liq_table[LIQ_MAX];
 extern const char *const attack_table[18];
 extern const char *const weapon_table[MAX_WEAPON];
 extern const char *const damage_table[DAM_INHERITED+1];
+extern const char *const damage_message[MAX_DAMTYPE];
+extern const char *const combat_filters[MAX_COMBAT_FILTERS];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];
@@ -3746,6 +3790,7 @@ extern struct act_prog_data *mob_act_list;
  * Command functions.
  * Defined in act_*.c (mostly).
  */
+DECLARE_DO_FUN( do_beta );
 DECLARE_DO_FUN( do_findexit );
 DECLARE_DO_FUN( do_rdig );
 DECLARE_DO_FUN( do_rgrid );
@@ -4671,6 +4716,7 @@ ch_ret multi_hit args( ( CHAR_DATA * ch, TARGET_DATA * target, int dt ) );
 ch_ret projectile_hit args( ( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ_DATA * projectile, short dist ) );
 short ris_damage args( ( CHAR_DATA * ch, short dam, int ris ) );
 ch_ret damage args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt ) );
+ch_ret damage args( ( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear, bool crit, EXT_BV damtype ) );
 void update_pos args( ( CHAR_DATA * victim ) );
 void set_fighting args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 void stop_fighting args( ( CHAR_DATA * ch, bool fBoth ) );
@@ -4696,6 +4742,13 @@ OBJ_DATA *raw_kill( CHAR_DATA * ch, CHAR_DATA * victim );
 bool in_arena args( ( CHAR_DATA * ch ) );
 bool can_astral args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart );
+int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype );
+int get_fist_weight( CHAR_DATA * ch );
+int get_wear_loc_weight( CHAR_DATA * ch, int hit_wear );
+int calc_weight_mod( CHAR_DATA * ch, CHAR_DATA * victim, int hit_wear, int dam, bool crit );
+int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam );
+int mattack_mdefense_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam );
+bool get_crit( CHAR_DATA *ch, int dt );
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );
@@ -4952,7 +5005,12 @@ void extract_cooldown args( ( CHAR_DATA * ch, CD_DATA * cdat ) );
 double get_skill_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 void set_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 bool is_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
-
+HIT_DATA *generate_hit_data( CHAR_DATA * victim );
+HIT_DATA *init_hitdata( void );
+int weight_ratio_dex( int dex, int weight );
+int weight_ratio_str( int str, int weight );
+bool is_physical( EXT_BV *damtype );
+bool is_magical( EXT_BV *damtype );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

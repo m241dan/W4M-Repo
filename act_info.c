@@ -3993,6 +3993,13 @@ void do_channels( CHAR_DATA* ch, const char* argument)
          ch_printf_color( ch, "%s", !IS_SET( ch->deaf, CHANNEL_COUNCIL ) ? " &G+COUNCIL" : " &g-council" );
 
       /*
+       * Chat Channels
+       */
+      ch_printf_color( ch, "\r\n\r\n &gCombat Filters:&w\r\n" );
+      int counter;
+      for( counter = 0; counter < MAX_COMBAT_FILTERS; counter++ )
+         ch_printf_color( ch, "%2d.&g[&G%s&g] %s&w\r\n", counter, !xIS_SET( ch->pcdata->fight_chatter, counter ) ? "X" : " ", combat_filters[counter] );
+      /*
        * Immortal channels 
        */
       if( IS_IMMORTAL( ch ) )
@@ -4030,12 +4037,19 @@ void do_channels( CHAR_DATA* ch, const char* argument)
          fClear = TRUE;
       else if( arg[0] == '-' )
          fClear = FALSE;
-      else
+      else if( !is_number( arg ) )
       {
          send_to_char( "Channels -channel or +channel?\r\n", ch );
          return;
       }
-
+      if( is_number( arg ) )
+      {
+         bit = atoi( arg );
+         if( bit >= DAM_YOU_DO && bit < MAX_COMBAT_FILTERS )
+         xTOGGLE_BIT( ch->pcdata->fight_chatter, bit );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
       if( !str_cmp( arg + 1, "auction" ) && get_trust( ch ) > 2 && !NOT_AUTHED( ch ) )
          bit = CHANNEL_AUCTION;
       else if( !str_cmp( arg + 1, "traffic" ) )

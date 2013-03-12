@@ -2706,7 +2706,6 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    mob->affected_by = pMobIndex->affected_by;
    mob->alignment = pMobIndex->alignment;
    mob->sex = pMobIndex->sex;
-
    /*
     * Bug fix from mailing list by stu (sprice@ihug.co.nz)
     * was:  if ( !pMobIndex->ac )
@@ -2761,7 +2760,9 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    mob->speaks = pMobIndex->speaks;
    mob->speaking = pMobIndex->speaking;
    mob->range = pMobIndex->range;
-
+   mob->damtype = pMobIndex->damtype;
+   if( xIS_EMPTY( mob->damtype ) )
+      xSET_BIT( mob->damtype, DAM_BLUNT );
    /*
     * Perhaps add this to the index later --Shaddai
     */
@@ -7198,6 +7199,7 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'D':
+            KEY( "Damtype", pMobIndex->damtype, fread_bitvector( fp ) );
             if( !str_cmp( word, "Defenses" ) )
             {
                const char *defenses = fread_flagstring( fp );
@@ -7488,18 +7490,19 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             if( !str_cmp( word, "Stats1" ) )
             {
                char *ln = fread_line( fp );
-               int x1, x2, x3, x4, x5;
-               long x6;
+               int x1, x2, x3, x4, x5, x6;
+               long x7;
 
-               x1 = x2 = x3 = x4 = x5 = x6 = 0;
-               sscanf( ln, "%d %d %d %d %d %ld", &x1, &x2, &x3, &x4, &x5, &x6 );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = 0;
+               sscanf( ln, "%d %d %d %d %d %d %ld", &x1, &x2, &x3, &x4, &x5, &x6, &x7 );
 
                pMobIndex->alignment = x1;
                pMobIndex->level = x2;
                pMobIndex->mobthac0 = x3;
                pMobIndex->ac = x4;
-               pMobIndex->gold = x5;
-               pMobIndex->experience = x6;
+               pMobIndex->magic_defense = x5;
+               pMobIndex->gold = x6;
+               pMobIndex->experience = x7;
 
                break;
             }
@@ -7535,15 +7538,16 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             if( !str_cmp( word, "Stats4" ) )
             {
                char *ln = fread_line( fp );
-               int x1, x2, x3, x4;
+               int x1, x2, x3, x4, x5;
 
-               x1 = x2 = x3 = x4 = 0;
-               sscanf( ln, "%d %d %d %d", &x1, &x2, &x3, &x4);
+               x1 = x2 = x3 = x4 = x5 = 0;
+               sscanf( ln, "%d %d %d %d %d", &x1, &x2, &x3, &x4, &x5);
 
                pMobIndex->height = x1;
                pMobIndex->weight = x2;
                pMobIndex->numattacks = x3;
                pMobIndex->attack = x4;
+               pMobIndex->magic_attack = x5;
 
                break;
             }
@@ -8469,8 +8473,12 @@ void save_sysdata( SYSTEM_DATA sys )
    }
    else
    {
+      int beta = 0;
+      if( sys.beta )
+         beta = 1;
       fprintf( fp, "#SYSTEM\n" );
       fprintf( fp, "MudName	     %s~\n", sys.mud_name );
+      fprintf( fp, "Beta           %d\n", beta );
       fprintf( fp, "Highplayers    %d\n", sys.alltimemax );
       fprintf( fp, "Highplayertime %s~\n", sys.time_of_max );
       fprintf( fp, "CheckImmHost   %d\n", sys.check_imm_host );
@@ -8555,6 +8563,14 @@ void fread_sysdata( SYSTEM_DATA * sys, FILE * fp )
             KEY( "BanSiteLevel", sys->ban_site_level, fread_number( fp ) );
             KEY( "BanClassLevel", sys->ban_class_level, fread_number( fp ) );
             KEY( "BanRaceLevel", sys->ban_race_level, fread_number( fp ) );
+            if( !str_cmp( word, "Beta" ) )
+            {
+               if( fread_number( fp ) == 1 )
+                  sys->beta = TRUE;
+               else
+                  sys->beta = FALSE;
+               break;
+            }
             break;
 
          case 'C':

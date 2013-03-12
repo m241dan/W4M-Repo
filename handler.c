@@ -3937,8 +3937,6 @@ ch_ret spring_trap( CHAR_DATA * ch, OBJ_DATA * obj )
           * hmm... why not use spell_poison() here? 
           */
          retcode = obj_cast_spell( gsn_poison, lev, ch, ch, NULL );
-         if( retcode == rNONE )
-            retcode = damage( ch, ch, dam, TYPE_UNDEFINED );
          break;
       case TRAP_TYPE_POISON_GAS:
          retcode = obj_cast_spell( gsn_poison, lev, ch, ch, NULL );
@@ -3961,7 +3959,7 @@ ch_ret spring_trap( CHAR_DATA * ch, OBJ_DATA * obj )
          break;
       case TRAP_TYPE_ELECTRIC_SHOCK:
       case TRAP_TYPE_BLADE:
-         retcode = damage( ch, ch, dam, TYPE_UNDEFINED );
+         break;
    }
    return retcode;
 }
@@ -5361,22 +5359,20 @@ int get_max_range( CHAR_DATA * ch )
 
 TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
 {
-   TARGET_DATA *target;
    CHAR_DATA *rch;
    CHAR_DATA *victim;
-   ROOM_INDEX_DATA *was_in_room;
-   ROOM_INDEX_DATA *to_room;
+   ROOM_INDEX_DATA *in_room;
    EXIT_DATA *pexit;
    short dist;
    char arg[MAX_INPUT_LENGTH];
    int number, count;
+   bool found;
 
-   was_in_room = ch->in_room;
+   found = FALSE;
 
+   in_room = ch->in_room;
    number = number_argument( argument, arg );
    count = 0;
-
-   victim = NULL;
 
    if( dir == -1 )
       dir = find_first_step( ch->in_room, (get_char_world( ch, argument))->in_room, 10 );
@@ -5384,10 +5380,13 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
    if( dir == BFS_ALREADY_THERE )
    {
       victim = get_char_room( ch, argument );
-      return make_new_target( victim, 0, -1 );
+      if( victim != NULL && can_see( ch, victim ) )
+         return make_new_target( victim, 0, -1 );
+      else
+         return NULL;
    }
 
-   if( ( pexit = get_exit( ch->in_room, dir ) ) == NULL || IS_SET( pexit->exit_info, EX_SECRET ) )
+   if( ( pexit = get_exit( in_room, dir ) ) == NULL || IS_SET( pexit->exit_info, EX_SECRET ) )
       return NULL;
 
    for( dist = 1; ; dist++ )
@@ -5397,48 +5396,33 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
       if( IS_SET( pexit->exit_info, EX_CLOSED ) )
          break;
 
-      to_room = NULL;
+      in_room = pexit->to_room;
 
-      if( pexit->distance > 1 )
-         to_room = generate_exit( ch->in_room, &pexit );
-
-      if( to_room == NULL )
-         to_room = pexit->to_room;
-
-      char_from_room( ch );
-      char_to_room( ch, to_room );
-
-      for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
+      for( rch = in_room->first_person; rch; rch = rch->next_in_room )
          if( can_see( ch, rch ) && nifty_is_name( arg, rch->name ) )
          {
             if( number == 0 && !IS_NPC( rch ) )
             {
                victim = rch;
+               found = TRUE;
                break;
             }
             else if( ++count == number )
             {
-               victim =  rch;
+               victim = rch;
+               found = TRUE;
                break;
             }
-            victim = NULL;
          }
 
-      if( victim != NULL )
+      if( found )
       {
-            char_from_room( ch );
-            char_to_room( ch, was_in_room );
-            CREATE( target, TARGET_DATA, 1 );
-            target->victim = victim;
-            target->dir = dir;
-            target->range = dist;
-            return target;
+         log_string( victim->name );
+         return make_new_target( victim, dist, dir );
       }
-      if( ( pexit = get_exit( ch->in_room, dir ) ) == NULL )
+      if( ( pexit = get_exit( in_room, dir ) ) == NULL )
          break;
    }
-   char_from_room( ch );
-   char_to_room( ch, was_in_room );
    return NULL;
 }
 
@@ -5744,11 +5728,15 @@ TARGET_DATA *make_new_target( CHAR_DATA *victim, int range, int dir )
 {
    TARGET_DATA *target;
 
+   if( victim == NULL )
+   {
+      bug( "Make new target called with bad victim" );
+      return NULL;
+   }
    CREATE( target, TARGET_DATA, 1 );
    target->victim = victim;
    target->range = range;
    target->dir = dir;
-
    return target;
 }
 
@@ -5901,5 +5889,115 @@ void set_on_cooldown( CHAR_DATA *ch, int gsn )
    cdat->sn = gsn;
    cdat->time_remaining = cooldown;
    LINK( cdat, ch->first_cooldown, ch->last_cooldown, next, prev );
+   return;
+}
+
+int weight_ratio_str( int str, int weight )
+{
+   int x;
+
+   x = weight / ( str / 10 ) ;
+
+   return URANGE( 1, x, 10 );
+}
+int weight_ratio_dex( int dex, int weight )
+{
+   int x;
+
+   x = dex / abs(weight);
+
+   return URANGE( 1, x, 10 );
+}
+HIT_DATA *init_hitdata( void )
+{
+   HIT_DATA *hit_data;
+
+   CREATE( hit_data, HIT_DATA, 1 );
+   hit_data->max_locations = 10;
+   hit_data->hit_locs = 9;
+   hit_data->miss_locs = 1;
+   hit_data->locations[0] = HIT_HEAD;
+   hit_data->locations[1] = HIT_BODY;
+   hit_data->locations[2] = HIT_BODY;
+   hit_data->locations[3] = HIT_WAIST;
+   hit_data->locations[4] = HIT_WAIST;
+   hit_data->locations[5] = HIT_ARMS;
+   hit_data->locations[6] = HIT_HANDS;
+   hit_data->locations[7] = HIT_LEGS;
+   hit_data->locations[8] = HIT_FEET;
+   hit_data->locations[9] = MISS_GENERAL;
+
+   return hit_data;
+}
+
+HIT_DATA *generate_hit_data( CHAR_DATA *victim )
+{
+   OBJ_DATA *obj;
+   HIT_DATA *hit_data;
+   int str, dex, amount, counter;
+
+   str = get_curr_str( victim );
+   dex = get_curr_dex( victim );
+
+   hit_data = init_hitdata( );
+
+   for( obj = victim->first_carrying; obj; obj = obj->next_content )
+   {
+      if( ( obj->wear_loc >= WEAR_BODY && obj->wear_loc <= WEAR_ARMS ) || obj->wear_loc == WEAR_WAIST )
+      {
+         if( obj->weight > 0 )
+         {
+            amount = weight_ratio_str( str, obj->weight );
+            for( counter = 0; counter < amount; counter++ )
+            {
+               hit_data->locations[hit_data->max_locations] = obj->wear_loc;
+               hit_data->hit_locs++;
+               hit_data->max_locations++;
+            }
+         }
+         else if( obj->weight < 0 )
+         {
+            amount = weight_ratio_dex( dex, obj->weight );
+            for( counter = 0; counter < amount; counter++ )
+            {
+               hit_data->locations[hit_data->max_locations] = ( obj->wear_loc + MAX_WEAR );
+               hit_data->miss_locs++;
+               hit_data->max_locations++;
+            }
+         }
+      }
+   }
+   return hit_data;
+}
+
+bool is_physical( EXT_BV *damtype )
+{
+   if( xIS_SET( *damtype, DAM_PIERCE ) || xIS_SET( *damtype, DAM_SLASH ) || xIS_SET( *damtype, DAM_BLUNT ) )
+      return TRUE;
+   return FALSE;
+}
+
+bool is_magical( EXT_BV *damtype )
+{
+   if( xIS_SET( *damtype, DAM_WIND ) || xIS_SET( *damtype, DAM_EARTH ) || xIS_SET( *damtype, DAM_FIRE ) || xIS_SET( *damtype, DAM_ICE )
+      || xIS_SET( *damtype, DAM_WATER ) || xIS_SET( *damtype, DAM_LIGHTNING ) || xIS_SET( *damtype, DAM_LIGHT ) || xIS_SET( *damtype, DAM_DARK ) )
+      return TRUE;
+   return FALSE;
+}
+
+void do_beta( CHAR_DATA *ch, const char *argument )
+{
+   char arg[MAX_STRING_LENGTH];
+   if( sysdata.beta )
+   {
+      sprintf( arg, "%s has taken the mud out of beta mode.\r\n", ch->name );
+      sysdata.beta = FALSE;
+   }
+   else
+   {
+      sprintf( arg, "%s has put the mud in beta mode.\r\n", ch->name );
+      sysdata.beta = TRUE;
+   }
+   do_echo( ch, arg );
    return;
 }

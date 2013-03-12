@@ -26,7 +26,7 @@ OBJ_DATA *used_weapon;  /* Used to figure out which weapon later */
 /*
  * Local functions.
  */
-void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, OBJ_DATA * obj );
+void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit, EXT_BV damtype );
 void group_gain( CHAR_DATA * ch, CHAR_DATA * victim );
 int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim );
 int align_compute( CHAR_DATA * gch, CHAR_DATA * victim );
@@ -200,7 +200,6 @@ void start_hating( CHAR_DATA * ch, CHAR_DATA * victim )
 {
    if( ch->hating )
       stop_hating( ch );
-
    CREATE( ch->hating, HHF_DATA, 1 );
    ch->hating->name = QUICKLINK( victim->name );
    ch->hating->who = victim;
@@ -843,12 +842,16 @@ short off_shld_lvl( CHAR_DATA * ch, CHAR_DATA * victim )
  */
 ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 {
-   OBJ_DATA *wield;
-   int victim_ac, thac0_00, thac0_32, plusris, dam, diceroll, prof_bonus, prof_gsn = -1;
-   int max_range;
-   ch_ret retcode = rNONE;
-   static bool dual_flip = FALSE;
+   OBJ_DATA *wield, *vic_eq;
+   HIT_DATA *hit_data;
+   EXT_BV damtype;
 
+   int dam, prof_bonus, prof_gsn = -1;
+   int max_range, hit_wear, subcount, strvcon, wpnroll, speroll, intvwis;
+   int subtable[21];
+   ch_ret retcode = rNONE;
+   bool crit, physical;
+   static bool dual_flip = FALSE;
    /*
     * Can't beat a dead char!
     * Guard against weird room-leavings.
@@ -863,7 +866,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
     * Figure out the weapon doing the damage         -Thoric
     * Dual wield support -- switch weapons each attack
     */
-   if( ( wield = get_eq_char( ch, WEAR_DUAL_WIELD ) ) != NULL )
+   if( ( wield = get_eq_char( ch, WEAR_DUAL_WIELD ) ) != NULL && dt == TYPE_UNDEFINED )
    {
       if( dual_flip == FALSE )
       {
@@ -896,210 +899,175 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    {
       dt = TYPE_HIT;
       if( wield && wield->item_type == ITEM_WEAPON )
+      {
          dt += wield->value[3];
-   }
-
-   /*
-    * Calculate to-hit-armor-class-0 versus armor.
-    */
-   if( IS_NPC( ch ) )
-   {
-      thac0_00 = ch->mobthac0;
-      thac0_32 = 0;
+         damtype = wield->damtype;
+      }
+      else
+         damtype = ch->damtype;
    }
    else
    {
-      thac0_00 = class_table[ch->Class]->thac0_00;
-      thac0_32 = class_table[ch->Class]->thac0_32;
+      damtype = skill_table[dt]->damtype;
+      if( xIS_SET( damtype, DAM_INHERITED ) && used_weapon )
+         xSET_BITS( damtype, used_weapon->damtype );
+      else if( xIS_SET( damtype, DAM_INHERITED ) && !used_weapon )
+         xSET_BITS( damtype, ch->damtype );
    }
-   victim_ac = UMAX( -19, ( int )( GET_AC( victim ) / 10 ) );
 
-   /*
-    * if you can't see what's coming... 
-    */
-   if( wield && !can_see_obj( victim, wield ) )
-      victim_ac += 1;
-   if( !can_see( ch, victim ) )
-      victim_ac -= 4;
+   if( dt >= TYPE_HIT || skill_table[dt]->type == SKILL_SKILL )
+      physical = TRUE;
 
-   /*
-    * "learning" between combatants.  Takes the intelligence difference,
-    * and multiplies by the times killed to make up a learning bonus
-    * given to whoever is more intelligent     -Thoric
-    * (basically the more intelligent one "learns" the other's fighting style)
-    */
-   if( ch->fighting && ch->fighting->who == victim )
+   if( physical )
    {
-      short times = ch->fighting->timeskilled;
+      hit_data = generate_hit_data( victim );
 
-      if( times )
+      hit_wear = hit_data->locations[number_range( 0, ( hit_data->max_locations - 1 ) )];
+
+      vic_eq = get_eq_char( victim, abs(hit_wear) );
+
+      if( hit_wear == MISS_GENERAL )
       {
-         short intdiff = get_curr_int( ch ) - get_curr_int( victim );
+         //Miss -Davenge
+         damage( ch, victim, 0, dt, hit_wear, FALSE, damtype );
+         tail_chain( );
+         DISPOSE( hit_data );
+         return rNONE;
+      }
+      if( hit_wear < 0 && wield->weight < 0 )
+      {
+         int counter, did_it_hit;
 
-         if( intdiff != 0 )
-            victim_ac += ( intdiff * times ) / 10;
+         subcount = weight_ratio_dex( get_curr_dex( ch ), wield->weight );
+
+         for( counter = 0; counter < subcount; counter++ )
+            subtable[counter] = 1;
+
+         subcount += weight_ratio_dex( get_curr_dex( victim ), vic_eq->weight );
+
+         for( ; counter < subcount; counter++ )
+            subtable[counter] = -1;
+
+         did_it_hit = number_range( 0, ( subcount -1 ) );
+         if( did_it_hit == -1 )
+         {
+            //Miss -Davenge
+            damage( ch, victim, 0, dt, hit_wear, FALSE, damtype );
+            tail_chain( );
+            DISPOSE( hit_data );
+            return rNONE;
+         }
       }
    }
-
-   /*
-    * Weapon proficiency bonus 
-    */
-   victim_ac += prof_bonus;
-
-   /*
-    * The moment of excitement!
-    */
-   while( ( diceroll = number_bits( 5 ) ) >= 20 )
-      ;
-
-   if( diceroll == 0 || ( diceroll != 19 && diceroll < victim_ac ) )
-   {
-      /*
-       * Miss. 
-       */
-      if( prof_gsn != -1 )
-         learn_from_failure( ch, prof_gsn );
-      damage( ch, victim, 0, dt );
-      tail_chain(  );
-      return rNONE;
-   }
-
    /*
     * Hit.
     * Calc damage.
     */
-
-   if( !wield )   /* bare hand dice formula fixed by Thoric */
-      /*
-       * Fixed again by korbillian@mud.tka.com 4000 (Cold Fusion Mud) 
-       */
-      dam = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
-   else
-      dam = number_range( wield->value[1], wield->value[2] );
-
-   /*
-    * Bonuses.
-    */
-   dam += GET_ATTACK( ch );
-
-   if( prof_bonus )
-      dam += prof_bonus / 4;
-
-   if( !IS_NPC( ch ) && ch->pcdata->learned[gsn_enhanced_damage] > 0 )
+   if( physical )
    {
-      dam += ( int )( dam * LEARNED( ch, gsn_enhanced_damage ) / 120 );
-      learn_from_success( ch, gsn_enhanced_damage );
+      if( !wield )   /* bare hand dice formula fixed by Thoric */
+         /*
+          * Fixed again by korbillian@mud.tka.com 4000 (Cold Fusion Mud)
+          */
+         wpnroll = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
+      else
+         wpnroll = number_range( wield->value[1], wield->value[2] );
+      /*
+       * STR v. CON calculation, flat addition/subtraction to weapon roll -Davenge
+       */
+      strvcon = get_curr_str( ch ) - get_curr_con( victim );
+      dam = wpnroll + strvcon;
+      if( IS_BETA( ) )
+         ch_printf( ch, "Weapon Roll: %d Stat Roll(pSTR - vCON): %d Init Dam Total: %d\r\n", wpnroll, strvcon, dam );
    }
-
-   if( !IS_AWAKE( victim ) )
-      dam *= 2;
-   if( dt == gsn_backstab )
-      dam *= ( 2 + URANGE( 2, ch->level - ( victim->level / 4 ), 30 ) / 8 );
-
-   if( dt == gsn_circle )
-      dam *= ( 2 + URANGE( 2, ch->level - ( victim->level / 4 ), 30 ) / 16 );
+   else
+   {
+      /*
+       * Need to come up with base damage for spells -Davenge
+       */
+      speroll = 0;
+      /*
+       * Roll int vs. wis for more base damage stuff -Davenge
+       */
+      intvwis = get_curr_int( ch ) - get_curr_wis( victim );
+      dam = speroll + intvwis;
+      if( IS_BETA( ) )
+         ch_printf( ch, "Spell Roll: %d Stat Roll(pINT - vWIS): %d Init Dam Total: %d\r\n", speroll, intvwis, dam );
+   }
 
    if( dam <= 0 )
       dam = 1;
 
-   plusris = 0;
+   /*
+    * Did we crit? -Davenge
+    */
 
-   if( wield )
+    crit = get_crit( ch, dt );
+    if( IS_BETA() && crit )
+       send_to_char( "Attack is a critical strike.\r\n", ch );
+   /*
+    * Wear_loc native bonuses -Davenge
+    */
+   if( physical )
    {
-      if( IS_OBJ_STAT( wield, ITEM_MAGIC ) )
-         dam = ris_damage( victim, dam, RIS_MAGIC );
-      else
-         dam = ris_damage( victim, dam, RIS_NONMAGIC );
+      if( hit_wear == HIT_HEAD )
+         dam = (int)( dam * 1.2 );
+      if( hit_wear == HIT_ARMS || hit_wear == HIT_HANDS || hit_wear == HIT_LEGS || hit_wear == HIT_FEET )
+         dam = (int)( dam * .9 );
+      if( IS_BETA( ) )
+         ch_printf( ch, "Damage after hit_location native bonuses: %d\r\n", dam );
+   }
 
+   /*
+    * Calculate Damage after attack vs. ac -Davenge
+    */
+   if( physical )
+   {
+      dam = attack_ac_mod( ch, victim, dam );
+      if( IS_BETA( ) )
+         ch_printf( ch, "Damage after attack vs. defense: %d\r\n", dam );
    }
    else
-      dam = ris_damage( victim, dam, RIS_NONMAGIC );
-
+   {
+      dam = mattack_mdefense_mod( ch, victim, dam );
+      if( IS_BETA( ) )
+         ch_printf( ch, "Damage after magic attack vs. magic defense: %d\r\n", dam );
+   }
    /*
-    * check for RIS_PLUSx                -Thoric 
+    * Handle Res Pen -Davenge
     */
-   if( dam )
-   {
-      int x, res, imm, sus, mod;
-
-      if( plusris )
-         plusris = RIS_PLUS1 << UMIN( plusris, 7 );
-
-      /*
-       * initialize values to handle a zero plusris 
-       */
-      imm = res = -1;
-      sus = 1;
-
-      /*
-       * find high ris 
-       */
-      for( x = RIS_PLUS1; x <= RIS_PLUS6; x <<= 1 )
-      {
-         if( IS_SET( victim->immune, x ) )
-            imm = x;
-         if( IS_SET( victim->resistant, x ) )
-            res = x;
-         if( IS_SET( victim->susceptible, x ) )
-            sus = x;
-      }
-      mod = 10;
-      if( imm >= plusris )
-         mod -= 10;
-      if( res >= plusris )
-         mod -= 2;
-      if( sus <= plusris )
-         mod += 2;
-
-      /*
-       * check if immune 
-       */
-      if( mod <= 0 )
-         dam = -1;
-      if( mod != 10 )
-         dam = ( dam * mod ) / 10;
-   }
-
-   if( prof_gsn != -1 )
-   {
-      if( dam > 0 )
-         learn_from_success( ch, prof_gsn );
-      else
-         learn_from_failure( ch, prof_gsn );
-   }
-
+   dam = res_pen( ch, victim, dam, damtype );
+   if( IS_BETA( ) )
+      ch_printf( ch, "Damage after Resistances and Penetrations calculated: %d\r\n", dam );
    /*
-    * immune to damage 
+    * Handle Weight of Weapon Vs. Armor Weight -Davenge
     */
-   if( dam == -1 )
+   if( physical )
    {
-      if( dt >= 0 && dt < num_skills )
-      {
-         SKILLTYPE *skill = skill_table[dt];
-         bool found = FALSE;
-
-         if( skill->imm_char && skill->imm_char[0] != '\0' )
-         {
-            act( AT_HIT, skill->imm_char, ch, NULL, victim, TO_CHAR );
-            found = TRUE;
-         }
-         if( skill->imm_vict && skill->imm_vict[0] != '\0' )
-         {
-            act( AT_HITME, skill->imm_vict, ch, NULL, victim, TO_VICT );
-            found = TRUE;
-         }
-         if( skill->imm_room && skill->imm_room[0] != '\0' )
-         {
-            act( AT_ACTION, skill->imm_room, ch, NULL, victim, TO_NOTVICT );
-            found = TRUE;
-         }
-         if( found )
-            return rNONE;
-      }
-      dam = 0;
+      dam = calc_weight_mod( ch, victim, hit_wear, dam, crit );
+      if( IS_BETA( ) )
+         ch_printf( ch, "Damage after Weight difference calculations(And Crit if you crit): %d\r\n", dam );
    }
+   else if( !physical && crit )
+   {
+      dam = (int)( dam * 1.5 ); //Magical Crit
+      if( IS_BETA() )
+         ch_printf( ch, "Damage after magical crit factored in: %d\r\n", dam );
+   }
+   /*
+    * Calculate Proficiencies -Davenge
+    * -Need to figure out where to put this-
+    */
 
-   if( ( retcode = damage( ch, victim, dam, dt ) ) != rNONE )
+
+   if( !IS_AWAKE( victim ) )
+      dam *= 2;
+
+   if( dam <= 0 )
+      dam = 1;
+
+   DISPOSE( hit_data );
+   if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit, damtype ) ) != rNONE )
       return retcode;
    if( char_died( ch ) )
       return rCHAR_DIED;
@@ -1283,7 +1251,7 @@ ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ
             obj_from_char( projectile );
          obj_to_room( projectile, victim->in_room );
       }
-      damage( ch, victim, 0, dt );
+//      damage( ch, victim, 0, dt );
       tail_chain(  );
       return rNONE;
    }
@@ -1421,10 +1389,10 @@ ch_ret projectile_hit( CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * wield, OBJ
       }
       dam = 0;
    }
-   if( ( retcode = damage( ch, victim, dam, dt ) ) != rNONE )
+//   if( ( retcode = damage( ch, victim, dam, dt ) ) != rNONE )
    {
       extract_obj( projectile );
-      return retcode;
+      return rNONE;
    }
    if( char_died( ch ) )
    {
@@ -1511,18 +1479,23 @@ short ris_damage( CHAR_DATA * ch, short dam, int ris )
    return ( dam * modifier ) / 10;
 }
 
+ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
+{
+   EXT_BV damtype;
+   xSET_BITS( damtype, ch->damtype );
+
+   return damage( ch, victim, dam, dt, HIT_BODY, FALSE, damtype );
+}
+
 /*
  * Inflict damage from a hit.   This is one damn big function.
  */
-ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
+ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear, bool crit, EXT_BV damtype )
 {
    char log_buf[MAX_STRING_LENGTH];
    char filename[256];
-   short dameq;
    bool npcvict;
    bool loot;
-   int xp_gain;
-   OBJ_DATA *damobj;
    ch_ret retcode;
    short dampmod;
    CHAR_DATA *gch /*, *lch */ ;
@@ -1756,36 +1729,19 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
        */
       if( IS_AFFECTED( ch, AFF_HIDE ) )
          xREMOVE_BIT( ch->affected_by, AFF_HIDE );
-      /*
-       * Damage modifiers.
-       */
-      if( IS_AFFECTED( victim, AFF_SANCTUARY ) )
-         dam /= 2;
-
-      if( IS_AFFECTED( victim, AFF_PROTECT ) && IS_EVIL( ch ) )
-         dam -= ( int )( dam / 4 );
-
-      if( dam < 0 )
-         dam = 0;
-
-      /*
-       * Check for disarm, trip, parry, dodge and tumble.
-       */
-      if( dt >= TYPE_HIT  )
+      if( dt >= TYPE_HIT || is_physical( &skill_table[dt]->damtype ) )
       {
-         if( IS_NPC( ch ) && xIS_SET( ch->defenses, DFND_DISARM ) && ch->level > 9 && number_percent(  ) < ch->level / 3 ) /* Was 2 try this --Shaddai */
-            disarm( ch, victim );
-
-         if( IS_NPC( ch ) && xIS_SET( ch->attacks, ATCK_TRIP ) && ch->level > 5 && number_percent(  ) < ch->level / 2 )
-            trip( ch, victim );
 
          if( check_parry( ch, victim ) )
             return rNONE;
          if( check_dodge( ch, victim ) )
             return rNONE;
-         if( check_tumble( ch, victim ) )
-            return rNONE;
+//         if( check_counter( ch, victim ) )
+  //          return rNONE;
+
       }
+    //  if( check_phase( ch, victim ) )
+      //   return rNONE;
 
       /*
        * Check control panel settings and modify damage
@@ -1808,52 +1764,14 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
          dam = ( dam * dampmod ) / 100;
    }
 
-   /*
-    * Code to handle equipment getting damaged, and also support  -Thoric
-    * bonuses/penalties for having or not having equipment where hit
-    */
-   if( dam > 10 && dt != TYPE_UNDEFINED )
-   {
-      /*
-       * get a random body eq part 
-       */
-      dameq = number_range( WEAR_LIGHT, WEAR_ANKLE_R );
-      damobj = get_eq_char( victim, dameq );
-      if( damobj )
-      {
-         if( dam > get_obj_resistance( damobj ) && number_bits( 1 ) == 0 )
-         {
-            set_cur_obj( damobj );
-            damage_obj( damobj );
-         }
-         dam -= 5;   /* add a bonus for having something to block the blow */
-      }
-      else
-         dam += 5;   /* add penalty for bare skin! */
-   }
-
    if( ch != victim )
-      dam_message( ch, victim, dam, dt );
+      new_dam_message( ch, victim, dam, dt, hit_wear, crit, damtype );
 
    /*
     * Hurt the victim.
     * Inform the victim of his new state.
     */
    victim->hit -= dam;
-
-   /*
-    * Get experience based on % of damage done       -Thoric
-    */
-   if( dam && ch != victim && !IS_NPC( ch ) && ch->fighting && ch->fighting->xp )
-   {
-      if( ch->fighting->who == victim )
-         xp_gain = ( int )( ch->fighting->xp * dam ) / victim->max_hit;
-      else
-         xp_gain = ( int )( xp_compute( ch, victim ) * 0.85 * dam ) / victim->max_hit;
-      if( dt == gsn_backstab || dt == gsn_circle )
-         xp_gain = 0;
-      gain_exp( ch, xp_gain );
-   }
 
    if( !IS_NPC( victim ) && victim->level >= LEVEL_IMMORTAL && victim->hit < 1 )
       victim->hit = 1;
@@ -1917,26 +1835,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
          }
          act( AT_DEAD, "$n is DEAD!!", victim, 0, 0, TO_ROOM );
          act( AT_DEAD, "You have been KILLED!!\r\n", victim, 0, 0, TO_CHAR );
-         break;
-
-      default:
-         /*
-          * Victim mentalstate affected, not attacker -- oops ;)
-          * Thanks to gfinello@mail.karmanet.it for finding this bug
-          */
-         if( dam > victim->max_hit / 4 )
-         {
-            act( AT_HURT, "That really did HURT!", victim, 0, 0, TO_CHAR );
-            if( number_bits( 3 ) == 0 )
-               worsen_mental_state( victim, 1 );
-         }
-         if( victim->hit < victim->max_hit / 4 )
-
-         {
-            act( AT_DANGER, "You wish that your wounds would stop BLEEDING so much!", victim, 0, 0, TO_CHAR );
-            if( number_bits( 2 ) == 0 )
-               worsen_mental_state( victim, 1 );
-         }
          break;
    }
 
@@ -3273,194 +3171,91 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
 }
 
 /*
- * Revamped by Thoric to be more realistic
- * Added code to produce different messages based on weapon type - FB
- * Added better bug message so you can track down the bad dt's -Shaddai
+ * Revamped to support Davenge's ranged fight system -Davenge
  */
-void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, OBJ_DATA * obj )
+
+void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit, EXT_BV damtype )
 {
-   char buf1[256], buf2[256], buf3[256];
-   const char *vs;
-   const char *vp;
-   const char *attack;
-   char punct;
-   int dampc;
-   struct skill_type *skill = NULL;
-   bool gcflag = FALSE;
-   bool gvflag = FALSE;
-   int d_index, w_index;
-   ROOM_INDEX_DATA *was_in_room;
-
-   if( !dam )
-      dampc = 0;
-   else
-      dampc = ( ( dam * 1000 ) / victim->max_hit ) + ( 50 - ( ( victim->hit * 50 ) / victim->max_hit ) );
-
-   if( ch->in_room != victim->in_room )
-   {
-      was_in_room = ch->in_room;
-      char_from_room( ch );
-      char_to_room( ch, victim->in_room );
-   }
-   else
-      was_in_room = NULL;
-
+   CHAR_DATA *rch;
+   char damtype_message[MAX_INPUT_LENGTH];
+   int counter;
+   damtype_message[0] = '\0';
    /*
-    * Get the weapon index 
+    * let's get our messages based on damage types out of the way -Davenge
+    * Magical first, Assuming we didn't miss -Davenge
     */
-   if( dt > 0 && dt < ( unsigned int )num_skills )
+   for( counter = 0; counter < MAX_DAMTYPE; counter++ )
    {
-      w_index = 0;
+      if( counter == DAM_PIERCE || counter == DAM_SLASH || counter == DAM_BLUNT )
+         continue;
+      if( xIS_SET( damtype, counter ) )
+         mudstrlcat( damtype_message, damage_message[counter], MAX_INPUT_LENGTH );
    }
-   else if( dt >= TYPE_HIT && dt < TYPE_HIT + sizeof( attack_table ) / sizeof( attack_table[0] ) )
-   {
-      w_index = dt - TYPE_HIT;
-   }
-   else
-   {
-      bug( "Dam_message: bad dt %d from %s in %d.", dt, ch->name, ch->in_room->vnum );
-      dt = TYPE_HIT;
-      w_index = 0;
-   }
-
+   // next phyiscal
+   for( counter = DAM_PIERCE; counter < DAM_WIND; counter++ )
+      if( xIS_SET( damtype, counter ) )
+         mudstrlcat( damtype_message, damage_message[counter], MAX_INPUT_LENGTH );
    /*
-    * get the damage index 
+    * Doing it by DTs
     */
-   if( dam == 0 )
-      d_index = 0;
-   else if( dampc < 0 )
-      d_index = 1;
-   else if( dampc <= 100 )
-      d_index = 1 + dampc / 10;
-   else if( dampc <= 200 )
-      d_index = 11 + ( dampc - 100 ) / 20;
-   else if( dampc <= 900 )
-      d_index = 16 + ( dampc - 200 ) / 100;
-   else
-      d_index = 23;
-
-   /*
-    * Lookup the damage message 
-    */
-   vs = s_message_table[w_index][d_index];
-   vp = p_message_table[w_index][d_index];
-
-   punct = ( dampc <= 30 ) ? '.' : '!';
-
-   if( dam == 0 && ( !IS_NPC( ch ) && ( IS_SET( ch->pcdata->flags, PCFLAG_GAG ) ) ) )
-      gcflag = TRUE;
-
-   if( dam == 0 && ( !IS_NPC( victim ) && ( IS_SET( victim->pcdata->flags, PCFLAG_GAG ) ) ) )
-      gvflag = TRUE;
-
-   if( dt >= 0 && dt < ( unsigned int )num_skills )
-      skill = skill_table[dt];
-   if( dt == TYPE_HIT )
+   if( dt >= TYPE_HIT && hit_wear >= 0 )
    {
-      snprintf( buf1, 256, "$n %s $N%c", vp, punct );
-      snprintf( buf2, 256, "You %s $N%c", vs, punct );
-      snprintf( buf3, 256, "$n %s you%c", vp, punct );
-   }
-   else if( dt > TYPE_HIT && is_wielding_poisoned( ch ) )
-   {
-      if( dt < TYPE_HIT + sizeof( attack_table ) / sizeof( attack_table[0] ) )
-         attack = attack_table[dt - TYPE_HIT];
-      else
+      /*
+       * Handle the doer and the taker -Davenge
+       */
+      if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
+         ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, w_flags[hit_wear], dam );
+      if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
+         ch_printf( ch, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, w_flags[hit_wear], dam );
+      /*
+       * Now everyone in the room who might care about the ch -Davenge
+       */
+      for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
       {
-         bug( "Dam_message: bad dt %d from %s in %d.", dt, ch->name, ch->in_room->vnum );
-         dt = TYPE_HIT;
-         attack = attack_table[0];
+         if( rch == victim || rch == ch )
+            continue;
+         if( IS_NPC( rch ) )
+            continue;
+         if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
+            continue;
+         if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
+            continue;
+         if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) ) //Same Party As Victim, don't see damage hey take
+            continue;
+         if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_TAKE ) ) //Not in sameparty as bvictim, don't see damage he takes
+            continue;
+         if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
+            continue;
+         if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes
+            continue;
+         ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
       }
-
-      snprintf( buf1, 256, "$n's poisoned %s %s $N%c", attack, vp, punct );
-      snprintf( buf2, 256, "Your poisoned %s %s $N%c", attack, vp, punct );
-      snprintf( buf3, 256, "$n's poisoned %s %s you%c", attack, vp, punct );
-   }
-   else
-   {
-      if( skill )
+      if( ch->in_room != victim->in_room )
       {
-         attack = skill->noun_damage;
-         if( dam == 0 )
+         for( rch = victim->in_room->first_person; rch; rch = rch->next_in_room )
          {
-            bool found = FALSE;
-
-            if( skill->miss_char && skill->miss_char[0] != '\0' )
-            {
-               act( AT_HIT, skill->miss_char, ch, NULL, victim, TO_CHAR );
-               found = TRUE;
-            }
-            if( skill->miss_vict && skill->miss_vict[0] != '\0' )
-            {
-               act( AT_HITME, skill->miss_vict, ch, NULL, victim, TO_VICT );
-               found = TRUE;
-            }
-            if( skill->miss_room && skill->miss_room[0] != '\0' )
-            {
-               if( str_cmp( skill->miss_room, "supress" ) )
-                  act( AT_ACTION, skill->miss_room, ch, NULL, victim, TO_NOTVICT );
-               found = TRUE;
-            }
-            if( found ) /* miss message already sent */
-            {
-               if( was_in_room )
-               {
-                  char_from_room( ch );
-                  char_to_room( ch, was_in_room );
-               }
-               return;
-            }
-         }
-         else
-         {
-            if( skill->hit_char && skill->hit_char[0] != '\0' )
-               act( AT_HIT, skill->hit_char, ch, NULL, victim, TO_CHAR );
-            if( skill->hit_vict && skill->hit_vict[0] != '\0' )
-               act( AT_HITME, skill->hit_vict, ch, NULL, victim, TO_VICT );
-            if( skill->hit_room && skill->hit_room[0] != '\0' )
-               act( AT_ACTION, skill->hit_room, ch, NULL, victim, TO_NOTVICT );
+            if( rch == victim || rch == ch )
+               continue;
+            if( IS_NPC( rch ) )
+            continue;
+            if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
+               continue;
+            if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
+               continue;
+            if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) ) //Same Party As Victim, don't see damage hey take
+               continue;
+            if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_TAKE ) ) //Not in sameparty as bvictim, don't see damage he takes
+               continue;
+            if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
+               continue;
+            if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes 
+               continue;
+            ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
          }
       }
-      else if( dt >= TYPE_HIT && dt < TYPE_HIT + sizeof( attack_table ) / sizeof( attack_table[0] ) )
-      {
-         if( obj )
-            attack = obj->short_descr;
-         else
-            attack = attack_table[dt - TYPE_HIT];
-      }
-      else
-      {
-         bug( "Dam_message: bad dt %d from %s in %d.", dt, ch->name, ch->in_room->vnum );
-         dt = TYPE_HIT;
-         attack = attack_table[0];
-      }
-
-      snprintf( buf1, 256, "$n's %s %s $N%c", attack, vp, punct );
-      snprintf( buf2, 256, "Your %s %s $N%c", attack, vp, punct );
-      snprintf( buf3, 256, "$n's %s %s you%c", attack, vp, punct );
-   }
-
-
-   act( AT_ACTION, buf1, ch, NULL, victim, TO_NOTVICT );
-   if( !gcflag )
-      act( AT_HIT, buf2, ch, NULL, victim, TO_CHAR );
-   if( !gvflag )
-      act( AT_HITME, buf3, ch, NULL, victim, TO_VICT );
-
-   if( was_in_room )
-   {
-      char_from_room( ch );
-      char_to_room( ch, was_in_room );
    }
    return;
 }
-
-#ifndef dam_message
-void dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt )
-{
-   new_dam_message( ch, victim, dam, dt );
-}
-#endif
 
 void do_target( CHAR_DATA *ch, const char *argument )
 {
@@ -3482,7 +3277,7 @@ void do_target( CHAR_DATA *ch, const char *argument )
       return;
    }
 
-   if( argument[0] == '\0' && ( victim = get_char_room( ch, arg ) ) == NULL )
+   if( ( victim = get_char_room( ch, arg ) ) == NULL && argument[0] == '\0' )
    {
       send_to_char( "That person is not in the room, try specifying the direction they are in.\r\n", ch );
       return;
@@ -3493,7 +3288,7 @@ void do_target( CHAR_DATA *ch, const char *argument )
    else
       target = get_target( ch, arg, get_dir( argument ) );
 
-   if( !target )
+   if( target == NULL )
    {
       send_to_char( "That person is not here nor there for targetting.\r\n", ch );
       return;
@@ -3990,6 +3785,234 @@ bool range_check( CHAR_DATA *ch, TARGET_DATA *target, int dt, bool CastStart )
       }
    }
    else if( dt == TYPE_UNDEFINED && range >= get_max_range( ch ) )
+      return FALSE;
+   return TRUE;
+}
+
+int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype )
+{
+   double mod, mod_pen, mod_res;
+   int counter, split_dam;
+   int num_damtype = 0;
+   int progress = 0;
+
+   for( counter = 0; counter < MAX_DAMTYPE; counter++ )
+      if( xIS_SET( damtype, counter ) )
+         num_damtype++;
+
+   if( num_damtype <= 0 )
+   {
+      bug( "res_pen being called with no damtypes" );
+      return dam;
+   }
+
+   split_dam = dam / num_damtype;
+   dam = 0;
+
+   for( counter = DAM_PIERCE; counter < MAX_DAMTYPE; counter++ )
+   {
+      if( xIS_SET( damtype, counter ) )
+      {
+         mod_pen = ch->penetration[DAM_ALL];
+         mod_res = victim->resistance[DAM_ALL];
+
+         if( counter >= DAM_PIERCE && counter <= DAM_BLUNT )
+         {
+            mod_pen += ch->penetration[DAM_PHYSICAL] + ch->penetration[counter];
+            mod_res += victim->resistance[DAM_PHYSICAL] + victim->resistance[counter];
+
+            mod = (100 + URANGE( -95, ( mod_pen - mod_res ), 95 )) / 100;
+            dam += (int)( split_dam * mod );
+         }
+         if( counter >= DAM_WIND && counter <= DAM_DARK )
+         {
+            mod_pen += ch->penetration[DAM_MAGIC] + ch->penetration[counter];
+            mod_res += victim->resistance[DAM_PHYSICAL] + victim->resistance[counter];
+
+            mod = (100 +URANGE( -95, ( mod_pen - mod_res ), 95 )) / 100;
+            dam += (int)( split_dam * mod );
+         }
+         if( ++progress == num_damtype )
+            break;
+      }
+   }
+   return dam; 
+}
+
+int get_fist_weight( CHAR_DATA * ch )
+{
+   OBJ_DATA *obj;
+   int fist_weight;
+
+   /*
+    * Base body part weight, the hand -Davenge 
+    */
+   fist_weight = body_part_weight[WEAR_HANDS];
+
+   /*
+    * Add weight of any gloves -Davenge
+    */
+   if( ( obj = get_eq_char( ch, WEAR_HANDS ) ) != NULL )  
+      fist_weight += obj->weight;
+
+   /*
+    * Add the weight of a weapon -Davenge
+    */
+   if( used_weapon )
+      fist_weight += used_weapon->weight;
+
+   /*
+    * Augment points to heavy_handed -Davenge
+    *
+    * Not in yet, will add with augment system
+    */
+   return fist_weight;
+}
+
+int get_wear_loc_weight( CHAR_DATA * ch, int hit_wear )
+{
+   OBJ_DATA *obj;
+   int loc_weight;
+
+   /*
+    * Base bofdy part weight -Davenge
+    */
+
+   loc_weight = body_part_weight[hit_wear];
+
+   /*
+    * If armored at that location -Davenge
+    */
+   if( ( obj = get_eq_char( ch, hit_wear ) ) != NULL )
+      loc_weight += obj->weight;
+
+   /*
+    * Augment points spent on a body_part -Davenge
+    *
+    * Not in yet, will add with augment system
+    */
+    return loc_weight;
+}
+
+int calc_weight_mod( CHAR_DATA *ch, CHAR_DATA *victim, int hit_wear, int dam, bool crit )
+{
+   int armor_weight, weapon_weight;
+   double mod;
+
+   /*
+    * Get the weights of each -Davenge
+    */
+
+   armor_weight = get_wear_loc_weight( victim, hit_wear );
+   weapon_weight = get_fist_weight( ch );
+
+   /*
+    * Do math, basically floor at 95% damage reduction/increase to the damage
+    * -Davenge
+    */
+   mod = (double)URANGE( (int)( armor_weight * .05), (armor_weight + ( armor_weight - weapon_weight )), (int)( armor_weight * 1.95 ));
+
+   /*
+    * convert out mod into proper percentage -Davenge
+    */
+   mod = mod / armor_weight;
+
+   /*
+    * If we crit, and we are already doing extra damage, add to it
+    * If we crit and we are getting penalized, just make no mod -Davenge
+    */
+   if( crit && mod > 1 )
+      mod += .25;
+   else if( crit && mod < 1 )
+      return dam;
+   /*
+    * Multiply the dam passed by our mod
+    * -Davenge
+    */
+   dam = (int)( dam * mod );
+
+   return dam;
+}
+
+int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
+{
+   int atkac_mod;
+
+   /*
+    * Basically make 1 attack equal to 10 armor for 1% damage increase/redux
+    * -Davenge
+    */
+   atkac_mod = 100 + ( GET_ATTACK( ch ) - ( GET_AC( victim ) / 10 ) );
+
+   /*
+    * Apply the mod after turning it into an appropriate percentage capping at
+    * %5 to 95% increase respectively -Davenge
+    */
+   dam = (int)( dam * ( (double)URANGE( 5, atkac_mod, 195 ) / 100 ) );
+
+   return dam;
+}
+
+int mattack_mdefense_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
+{
+   int matkmdef_mod;
+
+   /*
+    * Basically make 1 magic attack increase damage by 1.5% and 
+    * 10 magic defense decrease magic damage by 1%
+    */
+
+   matkmdef_mod = 100 + ( ( GET_MAGICATTACK( ch ) * 1.5 ) - ( GET_MAGICDEFENSE( victim ) / 10 ) );
+
+   /*
+    * Apply the mod after turning it into an approriate percentage capping at
+    * 5% and 250% increse resepctively -Davenge
+    */
+
+   dam = (int)( dam * ( (double)URANGE(5, matkmdef_mod, 250 ) / 100 ) );
+
+   return dam;
+}
+
+bool get_crit( CHAR_DATA *ch, int dt )
+{
+   double chance;
+   int counter;
+
+   chance = 0;
+
+   if( dt >= TYPE_HIT || ( dt < TYPE_HIT && skill_table[dt]->type == SKILL_SKILL ) )
+   {
+      for( counter = 0; counter < get_curr_dex( ch ); counter++ )
+      {
+         if( counter >= 0 && counter <= 15 )
+            chance += .4;
+         if( counter > 15 && counter <= 30 )
+            chance += .25;
+         if( counter > 30 && counter <= 50 )
+            chance += .1;
+         if( counter > 50 )
+            chance += .05;
+      }
+      chance = URANGE( 0, (int)chance, 50 );
+   }
+   else if( skill_table[dt]->type == SKILL_SPELL )
+   {
+      for( counter = 0; counter < get_curr_pas( ch ); counter++ )
+      {
+         if( counter >= 0 && counter <= 15 )
+            chance += .65;
+         if( counter > 15 && counter <= 30 )
+            chance += .45;
+         if( counter > 30 && counter <= 50 )
+            chance += .20;
+         if( counter > 50 )
+            chance += .08;
+      }
+      chance = URANGE( 0, (int) chance, 75 );
+   }
+
+   if( number_percent( ) > chance )
       return FALSE;
    return TRUE;
 }

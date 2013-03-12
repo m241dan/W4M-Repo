@@ -46,6 +46,15 @@ const char *const npc_class[MAX_NPC_CLASS] = {
 const double base_class_lag[MAX_CLASS] = {
    4, 4, 4, 3, 3, 3, 2.5, 2.5, 2.5
 };
+
+/*
+ * only relavant body parts are added -Davenge
+ */
+
+const int body_part_weight[WEAR_WAIST+1] = {
+   0, 0, 0, 0, 0, 10, 7, 8, 4, 2, 6, 0, 0, 10
+};
+
 /*
  * Attribute bonus tables.
  */
@@ -309,6 +318,27 @@ const char *const damage_table[DAM_INHERITED+1] = {
    "all", "magic", "physical", "pierce", "slash", "blunt",
    "wind", "earth", "fire", "ice", "water", "lightning",
    "light", "dark", "(null)", "inherited"
+};
+
+const char *const damage_message[MAX_DAMTYPE] = {
+   "&RC&ghaotic ", "&Bm&bagical ", "&Op&rhysical ", "stab &w", "slash &w", "hit &w",
+   "&Gsharpened ", "&Otoughened ", "&Rfiery ", "&bcold ", "&Bliquid ", "&Yelectrified ",
+   "&Wholy ", "&zunholy "
+};
+
+const char *const combat_filters[MAX_COMBAT_FILTERS] = {
+   "See Damage you do",
+   "See Damage you take",
+   "See Damage you evade",
+   "See Damage your enemy does",
+   "See Damage your enemy takes",
+   "See Damage your enemy evades",
+   "See Damage your party does",
+   "See Damage your party takes",
+   "See Damage your party evades",
+   "See Damage others do.",
+   "See Damage others take.",
+   "See Damage others evade."
 };
 
 const char *s_blade_messages[24] = {

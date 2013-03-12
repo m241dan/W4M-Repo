@@ -383,6 +383,9 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "Weight          %d\n", ch->weight );
    if( !xIS_EMPTY( ch->act ) )
       fprintf( fp, "Act          %s\n", print_bitvector( &ch->act ) );
+   if( xIS_EMPTY( ch->damtype ) )
+      xSET_BIT( ch->damtype, DAM_BLUNT );
+   fprintf( fp, "Damtype      %s\n", print_bitvector( &ch->damtype ) );
    if( !xIS_EMPTY( ch->affected_by ) )
       fprintf( fp, "AffectedBy   %s\n", print_bitvector( &ch->affected_by ) );
    if( !xIS_EMPTY( ch->no_affected_by ) )
@@ -407,9 +410,11 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "Favor	       %d\n", ch->pcdata->favor );
    fprintf( fp, "Glory        %d\n", ch->pcdata->quest_curr );
    fprintf( fp, "MGlory       %d\n", ch->pcdata->quest_accum );
-   fprintf( fp, "Attack      %d\n", ch->attack );
+   fprintf( fp, "Attack       %d\n", ch->attack );
+   fprintf( fp, "MagicAttack  %d\n", ch->magic_attack );
    fprintf( fp, "Range        %d\n", ch->range );
    fprintf( fp, "Armor        %d\n", ch->armor );
+   fprintf( fp, "MagicDefense %d\n", ch->magic_defense );
    if( ch->wimpy )
       fprintf( fp, "Wimpy        %d\n", ch->wimpy );
    if( ch->deaf )
@@ -454,6 +459,8 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
       fprintf( fp, "FPrompt	     %s~\n", ch->pcdata->fprompt );
    if( ch->pcdata->pagerlen != 24 )
       fprintf( fp, "Pagerlen     %d\n", ch->pcdata->pagerlen );
+   if( !xIS_EMPTY( ch->pcdata->fight_chatter ) )
+      fprintf( fp, "FightChatter %s", print_bitvector( &ch->pcdata->fight_chatter ) );
 
    /*
     * If ch is ignoring players then store those players 
@@ -828,6 +835,8 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
    ch->pcdata->lt_index = 0;  /* last tell index */
    ch->morph = NULL;
    ch->pcdata->hotboot = FALSE;  /* Never changed except when PC is saved during hotboot save */
+   xCLEAR_BITS( ch->damtype );
+   xSET_BIT( ch->damtype, DAM_BLUNT );
 
 #ifdef IMC
    imc_initchar( ch );
@@ -1269,6 +1278,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'D':
+            KEY( "Damtype", ch->damtype, fread_bitvector( fp ) ); 
             KEY( "Deaf", ch->deaf, fread_number( fp ) );
             if( !strcmp( word, "Deity" ) )
             {
@@ -1303,6 +1313,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                fMatch = TRUE;
                break;
             }
+            KEY( "FightChatter", ch->pcdata->fight_chatter, fread_bitvector( fp ) );
             KEY( "Flags", ch->pcdata->flags, fread_number( fp ) );
             KEY( "FPrompt", ch->pcdata->fprompt, fread_string( fp ) );
             break;
@@ -1466,6 +1477,8 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'M':
+            KEY( "MagicAttack", ch->magic_attack, fread_number( fp ) );
+            KEY( "MagicDefense", ch->magic_defense, fread_number( fp ) );
             if( !str_cmp( word, "MaxColors" ) )
             {
                int temp = fread_number( fp );
