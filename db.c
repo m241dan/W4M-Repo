@@ -2763,7 +2763,8 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    mob->speaking = pMobIndex->speaking;
    mob->range = pMobIndex->range;
    mob->damtype = pMobIndex->damtype;
-
+   if( xIS_EMPTY( mob->damtype ) )
+      xSET_BIT( mob->damtype, DAM_BLUNT );
    /*
     * Perhaps add this to the index later --Shaddai
     */

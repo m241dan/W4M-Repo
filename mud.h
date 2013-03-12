@@ -2475,11 +2475,11 @@ struct pc_data
 
 typedef enum
 {
-   AUTOMSG_YOU, AUTOMSG_ENEMY, AUTOMSG_PARTY, AUTOMSG_OTHER,
-   DAM_YOU_DO, DAM_YOU_TAKE, DAM_PARTY_DOES, DAM_PARTY_TAKES, DAM_OTHER_DOES, DAM_OTHER_TAKES,
-   DAM_YOU_MISS, DAM_MISSES_YOU, DAM_PARTY_MISSES, DAM_MISSES_PARTY, DAM_OTHER_MISS, DAM_MISSES_OTHER,
-   START_CHANNEL_YOU, START_CHANNEL_PARTY, START_CHANNEL_ENEMY, START_CHANNEL_OTHER,
-   FINISH_CHANNEL_YOU, FINISH_CHANNEL_PARTY, FINISH_CHANNEL_ENEMY, FINISH_CHANNEL_OTHER
+   DAM_YOU_DO, DAM_YOU_TAKE, DAM_YOU_EVADE,
+   DAM_ENEMY_DOES, DAM_ENEMY_TAKES, DAM_ENEMY_EVADES,
+   DAM_PARTY_DOES, DAM_PARTY_TAKES, DAM_PARTY_EVADES,
+   DAM_OTHERS_DO, DAM_OTHERS_TAKE, DAM_OTHERS_EVADE,
+   MAX_COMBAT_FILTERS
 } chatter_types;
 
 
@@ -2689,7 +2689,7 @@ struct cooldown_data
 
 struct hit_data
 {
-   int locations[];
+   int locations[1000];
    int max_locations;
    int miss_locs;
    int hit_locs;
@@ -3619,6 +3619,7 @@ extern const char *const attack_table[18];
 extern const char *const weapon_table[MAX_WEAPON];
 extern const char *const damage_table[DAM_INHERITED+1];
 extern const char *const damage_message[MAX_DAMTYPE];
+extern const char *const combat_filters[MAX_COMBAT_FILTERS];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];

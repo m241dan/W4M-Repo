@@ -459,6 +459,8 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
       fprintf( fp, "FPrompt	     %s~\n", ch->pcdata->fprompt );
    if( ch->pcdata->pagerlen != 24 )
       fprintf( fp, "Pagerlen     %d\n", ch->pcdata->pagerlen );
+   if( !xIS_EMPTY( ch->pcdata->fight_chatter ) )
+      fprintf( fp, "FightChatter %s", print_bitvector( &ch->pcdata->fight_chatter ) );
 
    /*
     * If ch is ignoring players then store those players 
@@ -1311,6 +1313,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                fMatch = TRUE;
                break;
             }
+            KEY( "FightChatter", ch->pcdata->fight_chatter, fread_bitvector( fp ) );
             KEY( "Flags", ch->pcdata->flags, fread_number( fp ) );
             KEY( "FPrompt", ch->pcdata->fprompt, fread_string( fp ) );
             break;

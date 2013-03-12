@@ -321,9 +321,24 @@ const char *const damage_table[DAM_INHERITED+1] = {
 };
 
 const char *const damage_message[MAX_DAMTYPE] = {
-   "&RC&ghaotic&w", "&Bm&bagical&W", "&Op&rhysical&w", "stab", "slash", "hit",
-   "&Gsharpened&w", "&Otoughened&w", "&Rfiery&w", "&bcold&w", "&Bliquid&w", "&Yelectrified&w",
-   "&Wholy&w", "&zunholy&w"
+   "&RC&ghaotic ", "&Bm&bagical ", "&Op&rhysical ", "stab &w", "slash &w", "hit &w",
+   "&Gsharpened ", "&Otoughened ", "&Rfiery ", "&bcold ", "&Bliquid ", "&Yelectrified ",
+   "&Wholy ", "&zunholy "
+};
+
+const char *const combat_filters[MAX_COMBAT_FILTERS] = {
+   "See Damage you do",
+   "See Damage you take",
+   "See Damage you evade",
+   "See Damage your enemy does",
+   "See Damage your enemy takes",
+   "See Damage your enemy evades",
+   "See Damage your party does",
+   "See Damage your party takes",
+   "See Damage your party evades",
+   "See Damage others do.",
+   "See Damage others take.",
+   "See Damage others evade."
 };
 
 const char *s_blade_messages[24] = {

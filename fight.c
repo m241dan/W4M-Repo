@@ -200,7 +200,6 @@ void start_hating( CHAR_DATA * ch, CHAR_DATA * victim )
 {
    if( ch->hating )
       stop_hating( ch );
-
    CREATE( ch->hating, HHF_DATA, 1 );
    ch->hating->name = QUICKLINK( victim->name );
    ch->hating->who = victim;
@@ -853,7 +852,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    ch_ret retcode = rNONE;
    bool crit, physical;
    static bool dual_flip = FALSE;
-
    /*
     * Can't beat a dead char!
     * Guard against weird room-leavings.
@@ -1069,7 +1067,6 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       dam = 1;
 
    DISPOSE( hit_data );
-   log_string( victim->name );
    if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit, damtype ) ) != rNONE )
       return retcode;
    if( char_died( ch ) )
@@ -1563,8 +1560,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     */
    if( xIS_SET( victim->in_room->room_flags, ROOM_SAFE ) )
       dam = 0;
-
-   log_string( victim->name );
 
    if( dam && npcvict && ch != victim )
    {
@@ -3184,45 +3179,56 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
    CHAR_DATA *rch;
    char damtype_message[MAX_INPUT_LENGTH];
    int counter;
+   damtype_message[0] = '\0';
    /*
     * let's get our messages based on damage types out of the way -Davenge
-    * Magical first -Davenge
+    * Magical first, Assuming we didn't miss -Davenge
     */
    for( counter = 0; counter < MAX_DAMTYPE; counter++ )
    {
+      if( counter == DAM_PIERCE || counter == DAM_SLASH || counter == DAM_BLUNT )
+         continue;
       if( xIS_SET( damtype, counter ) )
-      {
-         if( counter >= DAM_PIERCE && counter <= DAM_BLUNT )
-            sprintf( damtype_message, "%s %s ", damtype_message, damage_message[counter] );
-         else
-            sprintf( damtype_message, "%s %s ", damage_message[counter], damtype_message );
-      }
+         mudstrlcat( damtype_message, damage_message[counter], MAX_INPUT_LENGTH );
    }
-
+   // next phyiscal
+   for( counter = DAM_PIERCE; counter < DAM_WIND; counter++ )
+      if( xIS_SET( damtype, counter ) )
+         mudstrlcat( damtype_message, damage_message[counter], MAX_INPUT_LENGTH );
    /*
     * Doing it by DTs
     */
    if( dt >= TYPE_HIT && hit_wear >= 0 )
    {
+      /*
+       * Handle the doer and the taker -Davenge
+       */
       if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
-         ch_printf( ch, "Your %s strikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, w_flags[hit_wear], dam );
+         ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, w_flags[hit_wear], dam );
       if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
-         ch_printf( ch, "%s's %s strikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, w_flags[hit_wear], dam );
+         ch_printf( ch, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, w_flags[hit_wear], dam );
+      /*
+       * Now everyone in the room who might care about the ch -Davenge
+       */
       for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
       {
          if( rch == victim || rch == ch )
             continue;
          if( IS_NPC( rch ) )
             continue;
-         if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) )
+         if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
             continue;
-         if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHER_DOES ) )
+         if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
             continue;
-         if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) )
+         if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) ) //Same Party As Victim, don't see damage hey take
             continue;
-         if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHER_TAKES ) )
+         if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_TAKE ) ) //Not in sameparty as bvictim, don't see damage he takes
             continue;
-         ch_printf( rch, "%s's %s strikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
+         if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
+            continue;
+         if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes
+            continue;
+         ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
       }
       if( ch->in_room != victim->in_room )
       {
@@ -3231,16 +3237,20 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
             if( rch == victim || rch == ch )
                continue;
             if( IS_NPC( rch ) )
+            continue;
+            if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
                continue;
-            if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) )
+            if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
                continue;
-            if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHER_DOES ) )
+            if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) ) //Same Party As Victim, don't see damage hey take
                continue;
-            if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) )
+            if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_TAKE ) ) //Not in sameparty as bvictim, don't see damage he takes
                continue;
-            if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHER_TAKES ) )
+            if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
                continue;
-            ch_printf( rch, "%s's %s strikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
+            if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes 
+               continue;
+            ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
          }
       }
    }
@@ -3267,7 +3277,7 @@ void do_target( CHAR_DATA *ch, const char *argument )
       return;
    }
 
-   if( argument[0] == '\0' && ( victim = get_char_room( ch, arg ) ) == NULL )
+   if( ( victim = get_char_room( ch, arg ) ) == NULL && argument[0] == '\0' )
    {
       send_to_char( "That person is not in the room, try specifying the direction they are in.\r\n", ch );
       return;
@@ -3278,7 +3288,7 @@ void do_target( CHAR_DATA *ch, const char *argument )
    else
       target = get_target( ch, arg, get_dir( argument ) );
 
-   if( !target )
+   if( target == NULL )
    {
       send_to_char( "That person is not here nor there for targetting.\r\n", ch );
       return;
@@ -3968,6 +3978,8 @@ bool get_crit( CHAR_DATA *ch, int dt )
 {
    double chance;
    int counter;
+
+   chance = 0;
 
    if( dt >= TYPE_HIT || ( dt < TYPE_HIT && skill_table[dt]->type == SKILL_SKILL ) )
    {

@@ -5359,22 +5359,20 @@ int get_max_range( CHAR_DATA * ch )
 
 TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
 {
-   TARGET_DATA *target;
    CHAR_DATA *rch;
    CHAR_DATA *victim;
-   ROOM_INDEX_DATA *was_in_room;
-   ROOM_INDEX_DATA *to_room;
+   ROOM_INDEX_DATA *in_room;
    EXIT_DATA *pexit;
    short dist;
    char arg[MAX_INPUT_LENGTH];
    int number, count;
+   bool found;
 
-   was_in_room = ch->in_room;
+   found = FALSE;
 
+   in_room = ch->in_room;
    number = number_argument( argument, arg );
    count = 0;
-
-   victim = NULL;
 
    if( dir == -1 )
       dir = find_first_step( ch->in_room, (get_char_world( ch, argument))->in_room, 10 );
@@ -5382,10 +5380,13 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
    if( dir == BFS_ALREADY_THERE )
    {
       victim = get_char_room( ch, argument );
-      return make_new_target( victim, 0, -1 );
+      if( victim != NULL && can_see( ch, victim ) )
+         return make_new_target( victim, 0, -1 );
+      else
+         return NULL;
    }
 
-   if( ( pexit = get_exit( ch->in_room, dir ) ) == NULL || IS_SET( pexit->exit_info, EX_SECRET ) )
+   if( ( pexit = get_exit( in_room, dir ) ) == NULL || IS_SET( pexit->exit_info, EX_SECRET ) )
       return NULL;
 
    for( dist = 1; ; dist++ )
@@ -5395,48 +5396,33 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
       if( IS_SET( pexit->exit_info, EX_CLOSED ) )
          break;
 
-      to_room = NULL;
+      in_room = pexit->to_room;
 
-      if( pexit->distance > 1 )
-         to_room = generate_exit( ch->in_room, &pexit );
-
-      if( to_room == NULL )
-         to_room = pexit->to_room;
-
-      char_from_room( ch );
-      char_to_room( ch, to_room );
-
-      for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
+      for( rch = in_room->first_person; rch; rch = rch->next_in_room )
          if( can_see( ch, rch ) && nifty_is_name( arg, rch->name ) )
          {
             if( number == 0 && !IS_NPC( rch ) )
             {
                victim = rch;
+               found = TRUE;
                break;
             }
             else if( ++count == number )
             {
-               victim =  rch;
+               victim = rch;
+               found = TRUE;
                break;
             }
-            victim = NULL;
          }
 
-      if( victim != NULL )
+      if( found )
       {
-            char_from_room( ch );
-            char_to_room( ch, was_in_room );
-            CREATE( target, TARGET_DATA, 1 );
-            target->victim = victim;
-            target->dir = dir;
-            target->range = dist;
-            return target;
+         log_string( victim->name );
+         return make_new_target( victim, dist, dir );
       }
-      if( ( pexit = get_exit( ch->in_room, dir ) ) == NULL )
+      if( ( pexit = get_exit( in_room, dir ) ) == NULL )
          break;
    }
-   char_from_room( ch );
-   char_to_room( ch, was_in_room );
    return NULL;
 }
 
@@ -5742,11 +5728,15 @@ TARGET_DATA *make_new_target( CHAR_DATA *victim, int range, int dir )
 {
    TARGET_DATA *target;
 
+   if( victim == NULL )
+   {
+      bug( "Make new target called with bad victim" );
+      return NULL;
+   }
    CREATE( target, TARGET_DATA, 1 );
    target->victim = victim;
    target->range = range;
    target->dir = dir;
-
    return target;
 }
 
@@ -5923,7 +5913,6 @@ HIT_DATA *init_hitdata( void )
    HIT_DATA *hit_data;
 
    CREATE( hit_data, HIT_DATA, 1 );
-
    hit_data->max_locations = 10;
    hit_data->hit_locs = 9;
    hit_data->miss_locs = 1;
