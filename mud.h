@@ -2376,7 +2376,7 @@ struct char_data
    CD_DATA *last_cooldown;
    short resistance[MAX_DAMTYPE];
    short penetration[MAX_DAMTYPE];
-   int next_round;
+   double next_round;
 };
 
 struct target_data
@@ -2723,6 +2723,7 @@ struct queue_timers
 #define COOLDOWN_TIMER      1
 #define AFFECT_TIMER        2
 #define TIMER_TIMER         3
+#define COMBAT_ROUND        4
 
 /*
  * Area definition.
@@ -5016,6 +5017,7 @@ int weight_ratio_str( int str, int weight );
 bool is_physical( EXT_BV *damtype );
 bool is_magical( EXT_BV *damtype );
 int get_haste( CHAR_DATA *ch );
+double get_round( CHAR_DATA *ch );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

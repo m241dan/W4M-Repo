@@ -2581,6 +2581,115 @@ void timers_update(  )
                DISPOSE( timer );
             }
             break;
+         case COMBAT_ROUND:
+            ch->next_round -= .25;
+            if( ch->next_round > 0 )
+               break;
+
+            CHAR_DATA *victim;
+            ch_ret retcode;
+
+            if( ch->stopkill )
+            {
+               ch->stopkill = FALSE;
+               send_to_char( "You may now use the kill command again.\r\n", ch );
+            }
+
+            if( !ch->target || ch->position != POS_FIGHTING )
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+               break;
+            }
+
+            if( IS_AFFECTED( ch, AFF_PARALYSIS ) )
+               break;
+
+            victim = ch->target->victim;
+            retcode = rNONE;
+
+            if( xIS_SET( ch->in_room->room_flags, ROOM_SAFE ) )
+            {
+               log_printf( "violence_update: %s fighting %s in a SAFE room.", ch->name, victim->name );
+               stop_fighting( ch, TRUE );
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+               break;
+            }
+            else if( IS_AWAKE( ch ) )
+               retcode = multi_hit( ch, ch->target, TYPE_UNDEFINED );
+            else
+               stop_fighting( ch, FALSE );
+
+            if( char_died( ch ) )
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+               break;
+            }
+
+            if( retcode == rVICT_OOR )
+            {
+               if( IS_NPC( ch ) ) // Need to do something better here. Can't stop fighting and lose fight data just because out of range
+               {
+                  stop_fighting( ch, FALSE );
+                  start_hunting( ch, ch->target->victim );
+               }
+               else
+                  ch_printf( ch, "%s is too far away to auto-attack them.\r\n", victim->name );
+                  ch->next_round += 1;
+               break;
+            }
+
+            if( retcode == rVICT_LOS )
+            {
+               if( IS_NPC( ch ) )
+               {
+                  stop_fighting( ch, FALSE );
+                  start_hunting( ch, ch->target->victim );
+               }
+               else
+                  ch_printf( ch, "%s is out of your line of sight.\r\n", victim->name );
+                  ch->next_round += 1;
+               break;
+            }
+
+            if( retcode == rCHAR_DIED || ( victim = who_fighting( ch ) ) == NULL )
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+               break;
+            }
+            rprog_rfight_trigger( ch );
+            if( char_died( ch ) || char_died( victim ) )
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+               break;
+            }
+            mprog_hitprcnt_trigger( ch, victim );
+            if( char_died( ch ) || char_died( victim ) )
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+               break;
+            }
+            mprog_fight_trigger( ch, victim );
+            if( char_died( ch ) || char_died( victim ) )
+            {
+               UNLINK( timer, first_qtimer, last_qtimer, next, prev );
+               timer->timer_ch = NULL;
+               DISPOSE( timer );
+               break;
+            }
+            ch->next_round = get_round( ch );
+            break;
       }
    }
 

@@ -239,13 +239,9 @@ void violence_update( void )
 {
    CHAR_DATA *ch;
    CHAR_DATA *lst_ch;
-   CHAR_DATA *victim;
-   CHAR_DATA *rch;
    TRV_WORLD *lcw;
-   TRV_DATA *lcr;
    TIMER *timer, *timer_next;
    ch_ret retcode;
-   int attacktype, cnt;
    static int pulse = 0;
 
    lst_ch = NULL;
@@ -265,12 +261,6 @@ void violence_update( void )
        */
       if( char_died( ch ) )
          continue;
-
-      /*
-       * Experience gained during battle deceases as battle drags on
-       */
-      if( ch->fighting && ( ++ch->fighting->duration % 24 ) == 0 )
-         ch->fighting->xp = ( ( ch->fighting->xp * 9 ) / 10 );
 
       for( timer = ch->first_timer; timer; timer = timer_next )
       {
@@ -307,394 +297,19 @@ void violence_update( void )
       if( char_died( ch ) )
          continue;
 
-      if( ch->stopkill )
-      {
-         ch->stopkill = FALSE;
-         send_to_char( "You may now use the kill command again.\r\n", ch );
-         continue;
-      }
-
-      if( char_died( ch ) )
-         continue;
-
       /*
        * check for exits moving players around 
        */
       if( ( retcode = pullcheck( ch, pulse ) ) == rCHAR_DIED || char_died( ch ) )
          continue;
 
-      /*
-       * Let the battle begin! 
-       */
-      if( !ch->target || IS_AFFECTED( ch, AFF_PARALYSIS ) ||  ch->position != POS_FIGHTING )
-         continue;
-
-      victim = ch->target->victim;
-      retcode = rNONE;
-
-      if( xIS_SET( ch->in_room->room_flags, ROOM_SAFE ) )
+      if( ch->target && ch->position == POS_FIGHTING && !ch->fighting && ch->target->range < get_max_range( ch ) )
       {
-         log_printf( "violence_update: %s fighting %s in a SAFE room.", ch->name, victim->name );
-         stop_fighting( ch, TRUE );
-      }
-      else if( IS_AWAKE( ch ) )
-         retcode = multi_hit( ch, ch->target, TYPE_UNDEFINED );
-      else
-         stop_fighting( ch, FALSE );
-
-      if( char_died( ch ) )
-         continue;
-
-      if( retcode == rVICT_OOR )
-      {
-         if( IS_NPC( ch ) ) // Need to do something better here. Can't stop fighting and lose fight data just because out of range
-         {
-            stop_fighting( ch, FALSE );
-            start_hunting( ch, ch->target->victim );
-         }
-         else
-            ch_printf( ch, "%s is too far away to auto-attack them.\r\n", victim->name );
-         continue;
+         ch_printf( ch, "&R---This is being called---&w\r\n" );
+         ch->next_round = .25;
+         add_queue( ch, COMBAT_ROUND );
       }
 
-      if( retcode == rVICT_LOS )
-      {
-         if( IS_NPC( ch ) )
-         {
-            stop_fighting( ch, FALSE );
-            start_hunting( ch, ch->target->victim );
-         }
-         else
-            ch_printf( ch, "%s is out of your line of sight.\r\n", victim->name );
-         continue;
-      }
-
-      if( retcode == rCHAR_DIED || ( victim = who_fighting( ch ) ) == NULL )
-         continue;
-
-      /*
-       *  Mob triggers
-       *  -- Added some victim death checks, because it IS possible.. -- Alty
-       */
-      rprog_rfight_trigger( ch );
-      if( char_died( ch ) || char_died( victim ) )
-         continue;
-      mprog_hitprcnt_trigger( ch, victim );
-      if( char_died( ch ) || char_died( victim ) )
-         continue;
-      mprog_fight_trigger( ch, victim );
-      if( char_died( ch ) || char_died( victim ) )
-         continue;
-
-      /*
-       * NPC special attack flags            -Thoric
-       */
-      if( IS_NPC( ch ) )
-      {
-         if( !xIS_EMPTY( ch->attacks ) )
-         {
-            attacktype = -1;
-            if( 30 + ( ch->level / 4 ) >= number_percent(  ) )
-            {
-               cnt = 0;
-               for( ;; )
-               {
-                  if( cnt++ > 10 )
-                  {
-                     attacktype = -1;
-                     break;
-                  }
-                  attacktype = number_range( 7, MAX_ATTACK_TYPE - 1 );
-                  if( xIS_SET( ch->attacks, attacktype ) )
-                     break;
-               }
-               switch ( attacktype )
-               {
-                  case ATCK_BASH:
-                     do_bash( ch, "" );
-                     retcode = global_retcode;
-                     break;
-                  case ATCK_STUN:
-                     do_stun( ch, "" );
-                     retcode = global_retcode;
-                     break;
-                  case ATCK_GOUGE:
-                     do_gouge( ch, "" );
-                     retcode = global_retcode;
-                     break;
-                  case ATCK_FEED:
-                     do_feed( ch, "" );
-                     retcode = global_retcode;
-                     break;
-                  case ATCK_DRAIN:
-                     retcode = spell_energy_drain( skill_lookup( "energy drain" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_FIREBREATH:
-                     retcode = spell_fire_breath( skill_lookup( "fire breath" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_FROSTBREATH:
-                     retcode = spell_frost_breath( skill_lookup( "frost breath" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_ACIDBREATH:
-                     retcode = spell_acid_breath( skill_lookup( "acid breath" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_LIGHTNBREATH:
-                     retcode = spell_lightning_breath( skill_lookup( "lightning breath" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_GASBREATH:
-                     retcode = spell_gas_breath( skill_lookup( "gas breath" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_SPIRALBLAST:
-                     retcode = spell_spiral_blast( skill_lookup( "spiral blast" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_POISON:
-                     retcode = spell_poison( gsn_poison, ch->level, ch, victim );
-                     break;
-                  case ATCK_NASTYPOISON:
-                     /*
-                      * retcode = spell_nasty_poison( skill_lookup( "nasty poison" ), ch->level, ch, victim );
-                      */
-                     break;
-                  case ATCK_GAZE:
-                     /*
-                      * retcode = spell_gaze( skill_lookup( "gaze" ), ch->level, ch, victim );
-                      */
-                     break;
-                  case ATCK_BLINDNESS:
-                     retcode = spell_blindness( gsn_blindness, ch->level, ch, victim );
-                     break;
-                  case ATCK_CAUSESERIOUS:
-                     retcode = spell_cause_serious( skill_lookup( "cause serious" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_EARTHQUAKE:
-                     retcode = spell_earthquake( skill_lookup( "earthquake" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_CAUSECRITICAL:
-                     retcode = spell_cause_critical( skill_lookup( "cause critical" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_CURSE:
-                     retcode = spell_curse( skill_lookup( "curse" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_FLAMESTRIKE:
-                     retcode = spell_flamestrike( skill_lookup( "flamestrike" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_HARM:
-                     retcode = spell_harm( skill_lookup( "harm" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_FIREBALL:
-                     retcode = spell_fireball( skill_lookup( "fireball" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_COLORSPRAY:
-                     retcode = spell_colour_spray( skill_lookup( "colour spray" ), ch->level, ch, victim );
-                     break;
-                  case ATCK_WEAKEN:
-                     retcode = spell_weaken( skill_lookup( "weaken" ), ch->level, ch, victim );
-                     break;
-               }
-               if( attacktype != -1 && ( retcode == rCHAR_DIED || char_died( ch ) ) )
-                  continue;
-            }
-         }
-
-         /*
-          * NPC special defense flags          -Thoric
-          */
-         if( !xIS_EMPTY( ch->defenses ) )
-         {
-            attacktype = -1;
-            if( 50 + ( ch->level / 4 ) > number_percent(  ) )
-            {
-               cnt = 0;
-               for( ;; )
-               {
-                  if( cnt++ > 10 )
-                  {
-                     attacktype = -1;
-                     break;
-                  }
-                  attacktype = number_range( 2, MAX_DEFENSE_TYPE - 1 );
-                  if( xIS_SET( ch->defenses, attacktype ) )
-                     break;
-               }
-
-               switch ( attacktype )
-               {
-                  case DFND_CURELIGHT:
-                     /*
-                      * A few quick checks in the cure ones so that a) less spam and
-                      * b) we don't have mobs looking stupider than normal by healing
-                      * themselves when they aren't even being hit (although that
-                      * doesn't happen TOO often 
-                      */
-                     if( ch->hit < ch->max_hit )
-                     {
-                        act( AT_MAGIC, "$n mutters a few incantations...and looks a little better.", ch, NULL, NULL,
-                             TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "cure light" ), ch->level, ch, ch );
-                     }
-                     break;
-                  case DFND_CURESERIOUS:
-                     if( ch->hit < ch->max_hit )
-                     {
-                        act( AT_MAGIC, "$n mutters a few incantations...and looks a bit better.", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "cure serious" ), ch->level, ch, ch );
-                     }
-                     break;
-                  case DFND_CURECRITICAL:
-                     if( ch->hit < ch->max_hit )
-                     {
-                        act( AT_MAGIC, "$n mutters a few incantations...and looks healthier.", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "cure critical" ), ch->level, ch, ch );
-                     }
-                     break;
-                  case DFND_HEAL:
-                     if( ch->hit < ch->max_hit )
-                     {
-                        act( AT_MAGIC, "$n mutters a few incantations...and looks much healthier.", ch, NULL, NULL,
-                             TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "heal" ), ch->level, ch, ch );
-                     }
-                     break;
-                  case DFND_DISPELMAGIC:
-                     if( victim->first_affect )
-                     {
-                        act( AT_MAGIC, "$n utters an incantation...", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_dispel_magic( skill_lookup( "dispel magic" ), ch->level, ch, victim );
-                     }
-                     break;
-                  case DFND_DISPELEVIL:
-                     act( AT_MAGIC, "$n utters an incantation...", ch, NULL, NULL, TO_ROOM );
-                     retcode = spell_dispel_evil( skill_lookup( "dispel evil" ), ch->level, ch, victim );
-                     break;
-                  case DFND_TELEPORT:
-                     retcode = spell_teleport( skill_lookup( "teleport" ), ch->level, ch, ch );
-                     break;
-                  case DFND_SHOCKSHIELD:
-                     if( !IS_AFFECTED( ch, AFF_SHOCKSHIELD ) )
-                     {
-                        act( AT_MAGIC, "$n utters a few incantations...", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "shockshield" ), ch->level, ch, ch );
-                     }
-                     else
-                        retcode = rNONE;
-                     break;
-                  case DFND_VENOMSHIELD:
-                     if( !IS_AFFECTED( ch, AFF_VENOMSHIELD ) )
-                     {
-                        act( AT_MAGIC, "$n utters a few incantations ...", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "venomshield" ), ch->level, ch, ch );
-                     }
-                     else
-                        retcode = rNONE;
-                     break;
-                  case DFND_ACIDMIST:
-                     if( !IS_AFFECTED( ch, AFF_ACIDMIST ) )
-                     {
-                        act( AT_MAGIC, "$n utters a few incantations ...", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "acidmist" ), ch->level, ch, ch );
-                     }
-                     else
-                        retcode = rNONE;
-                     break;
-                  case DFND_FIRESHIELD:
-                     if( !IS_AFFECTED( ch, AFF_FIRESHIELD ) )
-                     {
-                        act( AT_MAGIC, "$n utters a few incantations...", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "fireshield" ), ch->level, ch, ch );
-                     }
-                     else
-                        retcode = rNONE;
-                     break;
-                  case DFND_ICESHIELD:
-                     if( !IS_AFFECTED( ch, AFF_ICESHIELD ) )
-                     {
-                        act( AT_MAGIC, "$n utters a few incantations...", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "iceshield" ), ch->level, ch, ch );
-                     }
-                     else
-                        retcode = rNONE;
-                     break;
-                  case DFND_TRUESIGHT:
-                     if( !IS_AFFECTED( ch, AFF_TRUESIGHT ) )
-                        retcode = spell_smaug( skill_lookup( "true" ), ch->level, ch, ch );
-                     else
-                        retcode = rNONE;
-                     break;
-                  case DFND_SANCTUARY:
-                     if( !IS_AFFECTED( ch, AFF_SANCTUARY ) )
-                     {
-                        act( AT_MAGIC, "$n utters a few incantations...", ch, NULL, NULL, TO_ROOM );
-                        retcode = spell_smaug( skill_lookup( "sanctuary" ), ch->level, ch, ch );
-                     }
-                     else
-                        retcode = rNONE;
-                     break;
-               }
-               if( attacktype != -1 && ( retcode == rCHAR_DIED || char_died( ch ) ) )
-                  continue;
-            }
-         }
-      }
-
-      /*
-       * Fun for the whole family!
-       */
-      lcr = trvch_create( ch, TR_CHAR_ROOM_FORW );
-      for( rch = ch->in_room->first_person; rch; rch = trvch_next( lcr ) )
-      {
-         if( IS_AWAKE( rch ) && !rch->fighting )
-         {
-            /*
-             * PC's auto-assist others in their group.
-             */
-            if( !IS_NPC( ch ) || IS_AFFECTED( ch, AFF_CHARM ) )
-            {
-               if( ( ( !IS_NPC( rch ) && rch->desc )
-                     || IS_AFFECTED( rch, AFF_CHARM ) ) && is_same_group( ch, rch ) && !is_safe( rch, victim, TRUE ) )
-                     multi_hit( rch, victim, TYPE_UNDEFINED );
-
-               continue;
-            }
-
-            /*
-             * NPC's assist NPC's of same type or 12.5% chance regardless.
-             *
-             * Will revisit this later with more PvE style friendly mechanics 
-             * -Davenge
-            if( IS_NPC( rch ) && !IS_AFFECTED( rch, AFF_CHARM ) && !xIS_SET( rch->act, ACT_NOASSIST )
-                && !xIS_SET( rch->act, ACT_PET ) )
-            {
-               if( char_died( ch ) )
-                  break;
-               if( rch->pIndexData == ch->pIndexData || number_bits( 3 ) == 0 )
-               {
-                  CHAR_DATA *vch;
-                  CHAR_DATA *target;
-                  int number;
-
-                  target = NULL;
-                  number = 0;
-                  for( vch = ch->in_room->first_person; vch; vch = vch->next_in_room )
-                  {
-                     if( can_see( rch, vch ) && is_same_group( vch, victim ) && number_range( 0, number ) == 0 )
-                     {
-                        if( vch->mount && vch->mount == rch )
-                           target = NULL;
-                        else
-                        {
-                           target = vch;
-                           number++;
-                        }
-                     }
-                  }
-
-                  if( target )
-                     multi_hit( rch, target, TYPE_UNDEFINED );
-               }
-            } */
-         }
-      }
-      trv_dispose( &lcr );
    }
    trworld_dispose( &lcw );
    return;
@@ -1611,7 +1226,10 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
           * modified for NPC only - Davenge
           */
          if( IS_NPC( victim ) && victim->fighting )
+         {
             victim->position = POS_FIGHTING;
+            add_queue( victim, COMBAT_ROUND );
+         }
 
          /*
           * If victim is charmed, ch might attack victim's master.
@@ -3417,6 +3035,7 @@ void do_kill( CHAR_DATA* ch, const char* argument)
    set_new_target( ch, target );
    check_attacker( ch, target->victim );
    multi_hit( ch, target, TYPE_UNDEFINED );
+   add_queue( ch, COMBAT_ROUND );
    return;
 }
 

@@ -1642,7 +1642,7 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       if( !can_mmodify( ch, victim ) )
          return;
       victim->haste_from_magic = value;
-      if( IS_NPC( victim ) && xIS_SET( vixtim->act, ACT_PROTOTYPE ) )
+      if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
          victim->haste_from_magic = value;
       send_to_char( "Ok.\r\n", ch );
       return;

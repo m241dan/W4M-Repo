@@ -144,9 +144,9 @@ bool DropsBelowThreshold( int initial, int delta, int threshold )
 //Send a message to a player in the area, assuming they are outside, and awake.
 void WeatherMessage( const char *txt, int x, int y )
 {
-   AREA_DATA *pArea;
+   AREA_DATA *pArea = NULL;
    DESCRIPTOR_DATA *d = NULL;
-
+   return;
    for( pArea = first_area; pArea; pArea = pArea->next )
    {
       if( pArea->weatherx == x && pArea->weathery == y )

@@ -5821,16 +5821,29 @@ void add_queue( CHAR_DATA *ch, int type )
 
          LINK( queue, first_qtimer, last_qtimer, next, prev );
          break;
-
+      case COOLDOWN_TIMER:
       case AFFECT_TIMER:
-         if( is_queued( ch, AFFECT_TIMER ) )
+         if( is_queued( ch, type) )
             break;
          CREATE( queue, QTIMER, 1 );
          queue->timer_ch = ch;
          queue->type = type;
          LINK( queue, first_qtimer, last_qtimer, next, prev );
          break;
+      case COMBAT_ROUND:
+         if( is_queued( ch, COMBAT_ROUND ) )
+            break;
+
+         if( ch->next_round <= 0 )
+            ch->next_round = get_round( ch );
+
+         CREATE( queue, QTIMER, 1 );
+         queue->timer_ch = ch;
+         queue->type = type;
+         LINK( queue, first_qtimer, last_qtimer, next, prev );
+         break;
    }
+   return;
 }
 
 bool is_queued( CHAR_DATA *ch, int type )
@@ -6017,4 +6030,31 @@ int get_haste( CHAR_DATA *ch )
    haste_from_magic = UMIN( ch->haste_from_magic, 30 );
 
    return ( haste + haste_from_magic );
+}
+
+double get_round( CHAR_DATA *ch )
+{
+   OBJ_DATA *obj;
+   int counter;
+   double round;
+
+   round = 1.25;
+
+   if( ( obj = get_eq_char( ch, WEAR_WIELD ) ) == NULL || obj->item_type != ITEM_WEAPON )
+      return ( round * ( 1 - ( get_haste( ch ) / 10 ) ) );
+
+   for( counter = 0; counter < obj->weight; counter++ )
+   {
+      if( counter <= 10 )
+         round += .05;
+      if( counter > 10 && counter <= 20 )
+         round += .09;
+      if( counter > 20 && counter <= 40 )
+         round += .13;
+      if( counter > 40 && counter <= 70 )
+         round += .17;
+      if( counter > 70 )
+         round += .25;
+   };
+   return round;
 }
