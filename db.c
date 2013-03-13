@@ -2675,6 +2675,7 @@ void area_update( void )
 CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
 {
    CHAR_DATA *mob;
+   int counter;
    if( !pMobIndex )
    {
       bug( "%s: NULL pMobIndex.", __FUNCTION__ );
@@ -2710,11 +2711,8 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
     * Bug fix from mailing list by stu (sprice@ihug.co.nz)
     * was:  if ( !pMobIndex->ac )
     */
-   if( pMobIndex->ac )
-      mob->armor = pMobIndex->ac;
-   else
-      mob->armor = interpolate( mob->level, 100, -100 );
-
+   mob->armor = pMobIndex->ac;
+   mob->magic_defense = pMobIndex->magic_defense;
    if( !pMobIndex->hitnodice )
       mob->max_hit = mob->level * 8 + number_range( mob->level * mob->level / 4, mob->level * mob->level );
    else
@@ -2741,6 +2739,7 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    mob->perm_cha = pMobIndex->perm_cha;
    mob->perm_pas = pMobIndex->perm_pas;
    mob->attack = pMobIndex->attack;
+   mob->magic_attack = pMobIndex->magic_attack;
    mob->race = pMobIndex->race;
    mob->Class = pMobIndex->Class;
    mob->xflags = pMobIndex->xflags;
@@ -2766,6 +2765,11 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    /*
     * Perhaps add this to the index later --Shaddai
     */
+   for( counter = 0; counter < MAX_DAMTYPE; counter++ )
+   {
+      mob->penetration[counter] = pMobIndex->penetration[counter];
+      mob->resistance[counter] = pMobIndex->resistance[counter];
+   }
    xCLEAR_BITS( mob->no_affected_by );
    mob->no_resistant = 0;
    mob->no_immune = 0;
@@ -7246,6 +7250,10 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
                pMobIndex->sex = sex;
                break;
             }
+            break;
+
+         case 'H':
+            KEY( "Haste", pMobIndex->haste, fread_number( fp ) );
             break;
 
          case 'I':

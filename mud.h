@@ -2181,6 +2181,7 @@ struct mob_index_data
    short Class;
    short attack;
    short magic_attack;
+   short haste;
    short perm_str;
    short perm_int;
    short perm_wis;
@@ -2327,6 +2328,7 @@ struct char_data
    short mobthac0;
    short attack;
    short magic_attack;
+   short haste;
    short hitplus;
    short damplus;
    short position;
@@ -2373,6 +2375,7 @@ struct char_data
    CD_DATA *last_cooldown;
    short resistance[MAX_DAMTYPE];
    short penetration[MAX_DAMTYPE];
+   int next_round;
 };
 
 struct target_data
