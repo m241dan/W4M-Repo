@@ -3588,14 +3588,13 @@ int mattack_mdefense_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
     * 10 magic defense decrease magic damage by 1%
     */
 
-   matkmdef_mod = 100 + ( ( GET_MAGICATTACK( ch ) * 1.5 ) - ( GET_MAGICDEFENSE( victim ) / 10 ) );
+   matkmdef_mod = ( GET_MAGICATTACK( ch ) * 1.5 ) - ( GET_MAGICDEFENSE( victim ) / 10 );
 
    /*
-    * Apply the mod after turning it into an approriate percentage capping at
-    * 5% and 250% increse resepctively -Davenge
+    * Add it to our base magic damage -Davenge
     */
 
-   dam = (int)( dam * ( (double)URANGE(5, matkmdef_mod, 250 ) / 100 ) );
+   dam += matkmdef_mod;
 
    return dam;
 }
@@ -3651,5 +3650,85 @@ int get_attack_from_str( CHAR_DATA * ch )
    attack = 0;
    for( counter = 0; counter < get_curr_str( ch ); counter++ )
    {
+      if( counter <= 50 )
+         attack += 1;
+      if( counter > 50 && counter <= 95 )
+         attack += .75;
+      if( counter > 95 && counter <= 135 )
+         attack += .5;
+      if( counter > 135 )
+         attack += .25;
    }
+
+   return (int)attack;
 }
+
+int get_mattack_from_int( CHAR_DATA * ch )
+{
+   double mattack;
+   int counter;
+
+   mattack = 0;
+   for( counter = 0; counter < get_curr_int( ch ); counter++ )
+   {
+      if( counter <= 65 )
+         mattack += 1;
+      if( counter > 65 && counter <= 115 )
+         mattack += .75;
+      if( counter > 115 && counter <= 150 )
+         mattack += .55;
+      if( counter > 150 )
+         mattack += .35;
+   }
+
+   return (int)mattack;
+}
+
+int get_defense_from_con( CHAR_DATA * ch )
+{
+   double defense;
+   int counter;
+
+   defense = 0;
+   for( counter = 0; counter < get_curr_con( ch ); counter++ )
+   {
+      if( counter <= 45 )
+         defense += 10;
+      if( counter > 45 && counter <= 80 )
+         defense += 8;
+      if( counter >  80 && counter <= 120 )
+         defense += 6.5;
+      if( counter > 120 && counter <= 150 )
+         defense += 4.5;
+      if( counter > 150 && counter <= 175 )
+         defense += 2;
+      if( counter > 175 )
+         defense += 1.5;
+   }
+   return (int)defense;
+}
+
+int get_mdefense_from_wis( CHAR_DATA * ch )
+{
+   double mdefense;
+   int counter;
+
+   mdefense = 0;
+   for( counter = 0; counter < get_curr_wis( ch ); counter++ )
+   {
+      if( counter <= 45 )
+         mdefense += 12;
+      if( counter > 45 && counter <= 80 )
+         mdefense += 10;
+      if( counter >  80 && counter <= 120 )
+         mdefense += 8.5;
+      if( counter > 120 && counter <= 150 )
+         mdefense += 5.5;
+      if( counter > 150 && counter <= 175 )
+         mdefense += 3;
+      if( counter > 175 )
+         mdefense += 1.75;
+   }
+   return (int)mdefense;
+}
+

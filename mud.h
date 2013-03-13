@@ -3413,14 +3413,14 @@ do								\
 #define IS_BETA( )              (sysdata.beta == TRUE)
 
 #define IS_AWAKE(ch)		((ch)->position > POS_SLEEPING)
-#define GET_AC(ch)		((ch)->armor)
-#define GET_MAGICDEFENSE(ch)    ((ch)->magic_defense)
+#define GET_AC(ch)		((ch)->armor + get_defense_from_con((ch)))
+#define GET_MAGICDEFENSE(ch)    ((ch)->magic_defense + get_mdefense_from_wis((ch)))
 #define GET_HITROLL(ch)		((ch)->hitroll)
 
 
 /* Thanks to Chriss Baeke for noticing damplus was unused */
-#define GET_ATTACK(ch)		((ch)->attack)
-#define GET_MAGICATTACK(ch)     ((ch)->magic_attack)
+#define GET_ATTACK(ch)		((ch)->attack + get_attack_from_str((ch)))
+#define GET_MAGICATTACK(ch)     ((ch)->magic_attack + get_mattack_from_int((ch)))
 
 #define IS_OUTSIDE(ch)		(!xIS_SET((ch)->in_room->room_flags, ROOM_INDOORS) \
                             && !xIS_SET((ch)->in_room->room_flags, ROOM_TUNNEL))
@@ -4754,6 +4754,10 @@ int calc_weight_mod( CHAR_DATA * ch, CHAR_DATA * victim, int hit_wear, int dam, 
 int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam, int hit_wear );
 int mattack_mdefense_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam );
 bool get_crit( CHAR_DATA *ch, int dt );
+int get_attack_from_str( CHAR_DATA * ch );
+int get_mattack_from_int( CHAR_DATA *ch );
+int get_defense_from_con( CHAR_DATA *ch );
+int get_mdefense_from_wis( CHAR_DATA *ch );
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );
