@@ -415,6 +415,8 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "Range        %d\n", ch->range );
    fprintf( fp, "Armor        %d\n", ch->armor );
    fprintf( fp, "MagicDefense %d\n", ch->magic_defense );
+   fprintf( fp, "Haste        %d\n", ch->haste );
+   fprintf( fp, "HasFroMag    %d\n", ch->haste_from_magic );
    if( ch->wimpy )
       fprintf( fp, "Wimpy        %d\n", ch->wimpy );
    if( ch->deaf )
@@ -1343,6 +1345,8 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'H':
+            KEY( "HasFroMag", ch->haste_from_magic, fread_number( fp ) );
+            KEY( "Haste", ch->haste, fread_number( fp ) );
             KEY( "Height", ch->height, fread_number( fp ) );
 
             if( !strcmp( word, "Helled" ) )

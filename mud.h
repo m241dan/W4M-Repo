@@ -2329,6 +2329,7 @@ struct char_data
    short attack;
    short magic_attack;
    short haste;
+   short haste_from_magic;
    short hitplus;
    short damplus;
    short position;
