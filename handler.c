@@ -693,18 +693,7 @@ short calculate_age( CHAR_DATA * ch )
  */
 short get_curr_str( CHAR_DATA * ch )
 {
-   short max;
-
-   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_STR )
-      max = 25;
-   else if( class_table[ch->Class]->attr_second == APPLY_STR )
-      max = 22;
-   else if( class_table[ch->Class]->attr_deficient == APPLY_STR )
-      max = 16;
-   else
-      max = 20;
-
-   return URANGE( 3, ch->perm_str + ch->mod_str, max );
+   return ( ch->perm_str + ch->mod_str );
 }
 
 /*
@@ -712,18 +701,7 @@ short get_curr_str( CHAR_DATA * ch )
  */
 short get_curr_int( CHAR_DATA * ch )
 {
-   short max;
-
-   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_INT )
-      max = 25;
-   else if( class_table[ch->Class]->attr_second == APPLY_INT )
-      max = 22;
-   else if( class_table[ch->Class]->attr_deficient == APPLY_INT )
-      max = 16;
-   else
-      max = 20;
-
-   return URANGE( 3, ch->perm_int + ch->mod_int, max );
+   return ( ch->perm_int + ch->mod_int );
 }
 
 /*
@@ -731,18 +709,7 @@ short get_curr_int( CHAR_DATA * ch )
  */
 short get_curr_wis( CHAR_DATA * ch )
 {
-   short max;
-
-   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_WIS )
-      max = 25;
-   else if( class_table[ch->Class]->attr_second == APPLY_WIS )
-      max = 22;
-   else if( class_table[ch->Class]->attr_deficient == APPLY_WIS )
-      max = 16;
-   else
-      max = 20;
-
-   return URANGE( 3, ch->perm_wis + ch->mod_wis, max );
+   return ( ch->perm_wis + ch->mod_wis );
 }
 
 /*
@@ -750,18 +717,7 @@ short get_curr_wis( CHAR_DATA * ch )
  */
 short get_curr_dex( CHAR_DATA * ch )
 {
-   short max;
-
-   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_DEX )
-      max = 25;
-   else if( class_table[ch->Class]->attr_second == APPLY_DEX )
-      max = 22;
-   else if( class_table[ch->Class]->attr_deficient == APPLY_DEX )
-      max = 16;
-   else
-      max = 20;
-
-   return URANGE( 3, ch->perm_dex + ch->mod_dex, max );
+   return ( ch->perm_dex + ch->mod_dex );
 }
 
 /*
@@ -769,18 +725,7 @@ short get_curr_dex( CHAR_DATA * ch )
  */
 short get_curr_con( CHAR_DATA * ch )
 {
-   short max;
-
-   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_CON )
-      max = 25;
-   else if( class_table[ch->Class]->attr_second == APPLY_CON )
-      max = 22;
-   else if( class_table[ch->Class]->attr_deficient == APPLY_CON )
-      max = 16;
-   else
-      max = 20;
-
-   return URANGE( 3, ch->perm_con + ch->mod_con, max );
+   return ( ch->perm_con + ch->mod_con );
 }
 
 /*
@@ -788,18 +733,7 @@ short get_curr_con( CHAR_DATA * ch )
  */
 short get_curr_cha( CHAR_DATA * ch )
 {
-   short max;
-
-   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_CHA )
-      max = 25;
-   else if( class_table[ch->Class]->attr_second == APPLY_CHA )
-      max = 22;
-   else if( class_table[ch->Class]->attr_deficient == APPLY_CHA )
-      max = 16;
-   else
-      max = 20;
-
-   return URANGE( 3, ch->perm_cha + ch->mod_cha, max );
+   return ( ch->perm_cha + ch->mod_cha );
 }
 
 /*
@@ -807,18 +741,7 @@ short get_curr_cha( CHAR_DATA * ch )
  */
 short get_curr_pas( CHAR_DATA * ch )
 {
-   short max;
-
-   if( IS_NPC( ch ) || class_table[ch->Class]->attr_prime == APPLY_PAS )
-      max = 25;
-   else if( class_table[ch->Class]->attr_second == APPLY_PAS )
-      max = 22;
-   else if( class_table[ch->Class]->attr_deficient == APPLY_PAS )
-      max = 16;
-   else
-      max = 20;
-
-   return URANGE( 3, ch->perm_pas + ch->mod_pas, max );
+   return ( ch->perm_pas + ch->mod_pas );
 }
 
 /*

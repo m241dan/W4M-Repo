@@ -3642,3 +3642,14 @@ bool get_crit( CHAR_DATA *ch, int dt )
       return FALSE;
    return TRUE;
 }
+
+int get_attack_from_str( CHAR_DATA * ch )
+{
+   double attack;
+   int counter;
+
+   attack = 0;
+   for( counter = 0; counter < get_curr_str( ch ); counter++ )
+   {
+   }
+}
