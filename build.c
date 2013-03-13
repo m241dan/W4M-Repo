@@ -1255,7 +1255,7 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       send_to_char( "Field being one of:\r\n", ch );
       send_to_char( "  str int wis dex con cha pas sex class\r\n", ch );
       send_to_char( "  gold hp mana move practice align race\r\n", ch );
-      send_to_char( "  attack armor affected level\r\n", ch );
+      send_to_char( "  attack armor affected level haste hsate_from_magic\r\n", ch );
       send_to_char( "  thirst drunk full blood flags range\r\n", ch );
       send_to_char( "  pos defpos part (see BODYPARTS)\r\n", ch );
       send_to_char( "  sav1 sav2 sav4 sav4 sav5 (see SAVINGTHROWS)\r\n", ch );
@@ -1623,6 +1623,28 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       victim->level = value;
       if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
          victim->pIndexData->level = value;
+      return;
+   }
+
+   if( !str_cmp( arg2, "haste" ) )
+   {
+      if( !can_mmodify( ch, victim ) )
+         return;
+      victim->haste = value;
+      if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
+         victim->pIndexData->haste = value;
+      send_to_char( "Ok.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( arg2, "haste_from_magic" ) )
+   {
+      if( !can_mmodify( ch, victim ) )
+         return;
+      victim->haste_from_magic = value;
+      if( IS_NPC( victim ) && xIS_SET( vixtim->act, ACT_PROTOTYPE ) )
+         victim->haste_from_magic = value;
+      send_to_char( "Ok.\r\n", ch );
       return;
    }
 
