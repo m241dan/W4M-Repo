@@ -3038,6 +3038,7 @@ void free_char( CHAR_DATA * ch )
    MPROG_ACT_LIST *mpact, *mpact_next;
    NOTE_DATA *comments, *comments_next;
    VARIABLE_DATA *vd, *vd_next;
+   int x;
 
    if( !ch )
    {
@@ -3082,6 +3083,9 @@ void free_char( CHAR_DATA * ch )
       vd_next = vd->next;
       delete_variable( vd );
    }
+
+   for( x = 0; x < MAX_CLASS; x++ )
+      DISPOSE( ch->class_data[x] );
 
    if( ch->pcdata )
    {

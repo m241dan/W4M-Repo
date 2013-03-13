@@ -128,63 +128,12 @@ void advance_level( CHAR_DATA * ch )
 
 void gain_exp( CHAR_DATA * ch, int gain )
 {
+   return;
+   /* Left off here... 
    double modgain;
 
-   if( IS_NPC( ch ) || ch->level >= LEVEL_AVATAR )
+   if( IS_NPC( ch ) || ch->level > LEVEL_AVATAR )
       return;
-
-   /*
-    * Bonus for deadly lowbies 
-    */
-   modgain = gain;
-   if( modgain > 0 && IS_PKILL( ch ) && ch->level < 17 )
-   {
-      if( ch->level <= 6 )
-      {
-         send_to_char( "The Favor of Gravoc fosters your learning.\r\n", ch );
-         modgain *= 2;
-      }
-      if( ch->level <= 10 && ch->level >= 7 )
-      {
-         send_to_char( "The Hand of Gravoc hastens your learning.\r\n", ch );
-         modgain *= 1.75;
-      }
-      if( ch->level <= 13 && ch->level >= 11 )
-      {
-         send_to_char( "The Cunning of Gravoc succors your learning.\r\n", ch );
-         modgain *= 1.5;
-      }
-      if( ch->level <= 16 && ch->level >= 14 )
-      {
-         send_to_char( "The Patronage of Gravoc reinforces your learning.\r\n", ch );
-         modgain *= 1.25;
-      }
-   }
-
-   /*
-    * per-race experience multipliers 
-    */
-   modgain *= ( race_table[ch->race]->exp_multiplier / 100.0 );
-
-   /*
-    * Deadly exp loss floor is exp floor of level 
-    */
-   if( IS_PKILL( ch ) && modgain < 0 )
-   {
-      if( ch->experience[ch->Class] + modgain < exp_level( ch, ch->level ) )
-      {
-         modgain = exp_level( ch, ch->level ) - ch->experience[ch->Class];
-         send_to_char( "Gravoc's Pandect protects your insight.\r\n", ch );
-      }
-   }
-
-   /*
-    * xp cap to prevent any one event from giving enuf xp to 
-    * gain more than one level - FB 
-    */
-   modgain = UMIN( (int)modgain, exp_level( ch, ch->level + 2 ) - exp_level( ch, ch->level + 1 ) );
-
-   ch->experience[ch->Class] = UMAX( 0, ch->experience[ch->Class] + ( int )modgain );
 
    if( NOT_AUTHED( ch ) && ch->experience[ch->Class] >= exp_level( ch, ch->level + 1 ) )
    {
@@ -201,7 +150,7 @@ void gain_exp( CHAR_DATA * ch, int gain )
          ch->top_level++;
       ch_printf( ch, "You have now obtained experience level %d!\r\n", ch->level );
       advance_level( ch );
-   }
+   } */
 }
 
 /*

@@ -656,13 +656,13 @@ short get_trust( CHAR_DATA * ch )
    if( ch->trust != 0 )
       return ch->trust;
 
-   if( IS_NPC( ch ) && ch->level >= LEVEL_AVATAR )
+   if( IS_NPC( ch ) && ch->top_level >= LEVEL_AVATAR )
       return LEVEL_AVATAR;
 
-   if( ch->level >= LEVEL_NEOPHYTE && IS_RETIRED( ch ) )
+   if( ch->top_level >= LEVEL_NEOPHYTE && IS_RETIRED( ch ) )
       return LEVEL_NEOPHYTE;
 
-   return ch->level;
+   return ch->top_level;
 }
 
 /* One hopes this will do as planned and determine how old a PC is based on the birthdate

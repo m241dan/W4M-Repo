@@ -99,6 +99,7 @@ if ( !str_cmp( word, (literal) ) )     \
 /*
  * Structure types.
  */
+typedef struct class_data CLASS_DATA;
 typedef struct affect_data AFFECT_DATA;
 typedef struct area_data AREA_DATA;
 typedef struct auction_data AUCTION_DATA; /* auction data */
@@ -2282,8 +2283,9 @@ struct char_data
    short Class;
    short race;
    int top_level;
-   short level;
-   int job[MAX_CLASS];
+   int level;
+   long experience[MAX_CLASS];
+   CLASS_DATA *class_data[MAX_CLASS];
    short trust;
    int played;
    time_t logon;
@@ -2299,7 +2301,6 @@ struct char_data
    short practice;
    short numattacks;
    int gold;
-   long experience[MAX_CLASS];
    EXT_BV act;
    EXT_BV affected_by;
    EXT_BV no_affected_by;
@@ -2377,6 +2378,12 @@ struct char_data
    short resistance[MAX_DAMTYPE];
    short penetration[MAX_DAMTYPE];
    double next_round;
+};
+
+struct class_data
+{
+   short level;
+   int experience;
 };
 
 struct target_data
@@ -3625,6 +3632,8 @@ extern const char *const weapon_table[MAX_WEAPON];
 extern const char *const damage_table[DAM_INHERITED+1];
 extern const char *const damage_message[MAX_DAMTYPE];
 extern const char *const combat_filters[MAX_COMBAT_FILTERS];
+
+extern const int exp_to_level[LEVEL_AVATAR+1];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];

@@ -2641,7 +2641,7 @@ void group_gain( CHAR_DATA * ch, CHAR_DATA * victim )
          continue;
       }
 
-      xp = ( int )( xp_compute( gch, victim ) * 0.1765 ) / members;
+      xp = ( int )( xp_compute( gch, victim ) );
       if( !gch->fighting )
          xp /= 2;
       gch->alignment = align_compute( gch, victim );
@@ -2707,85 +2707,36 @@ int align_compute( CHAR_DATA * gch, CHAR_DATA * victim )
 
 
 /*
- * Calculate how much XP gch should gain for killing victim
- * Lots of redesigning for new exp system by Thoric
+ * Revamped XP compute to support Davenge's fight system -Davenge
  */
 int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
 {
-   int align;
-   int xp;
-   int xp_ratio;
-   int gchlev = gch->level;
+   int level_dif;
 
-   xp = ( get_exp_worth( victim ) * URANGE( 0, ( victim->level - gchlev ) + 10, 13 ) ) / 10;
-   align = gch->alignment - victim->alignment;
-
-   /*
-    * bonus for attacking opposite alignment 
-    */
-   if( align > 990 || align < -990 )
-      xp = ( xp * 5 ) >> 2;
-   else
-      /*
-       * penalty for good attacking same alignment 
-       */
-   if( gch->alignment > 300 && align < 250 )
-      xp = ( xp * 3 ) >> 2;
-
-   xp = number_range( ( xp * 3 ) >> 2, ( xp * 5 ) >> 2 );
-
-   /*
-    * get 1/4 exp for players               -Thoric 
-    */
-   if( !IS_NPC( victim ) )
-      xp /= 4;
-   else
-      /*
-       * reduce exp for killing the same mob repeatedly    -Thoric 
-       */
-   if( !IS_NPC( gch ) )
-   {
-      int times = times_killed( gch, victim );
-
-      if( times >= 20 )
-         xp = 0;
-      else if( times )
-      {
-         xp = ( xp * ( 20 - times ) ) / 20;
-         if( times > 15 )
-            xp /= 3;
-         else if( times > 10 )
-            xp >>= 1;
-      }
-   }
-
-   /*
-    * semi-intelligent experienced player vs. novice player xp gain
-    * "bell curve"ish xp mod by Thoric
-    * based on time played vs. level
-    */
-   if( !IS_NPC( gch ) && gchlev > 5 )
-   {
-      xp_ratio = ( int )gch->played / gchlev;
-      if( xp_ratio > 20000 )  /* 5/4 */
-         xp = ( xp * 5 ) >> 2;
-      else if( xp_ratio > 16000 )   /* 3/4 */
-         xp = ( xp * 3 ) >> 2;
-      else if( xp_ratio > 10000 )   /* 1/2 */
-         xp >>= 1;
-      else if( xp_ratio > 5000 ) /* 1/4 */
-         xp >>= 2;
-      else if( xp_ratio > 3500 ) /* 1/8 */
-         xp >>= 3;
-      else if( xp_ratio > 2000 ) /* 1/16 */
-         xp >>= 4;
-   }
-
-   /*
-    * Level based experience gain cap.  Cannot get more experience for
-    * a kill than the amount for your current experience level   -Thoric
-    */
-   return URANGE( 0, xp, exp_level( gch, gchlev + 1 ) - exp_level( gch, gchlev ) );
+   level_dif = victim->level - gch->level;
+   if( level_dif >= 5 )
+      return 200;
+   if( level_dif == 4 )
+      return 180;
+   if( level_dif == 3 )
+      return 160;
+   if( level_dif == 2 )
+      return 140;
+   if( level_dif == 1 )
+      return 120;
+   if( level_dif == 0 )
+      return 100;
+   if( level_dif == -1 )
+      return 80;
+   if( level_dif == -2 )
+      return 60;
+   if( level_dif == -3 )
+      return 40;
+   if( level_dif == -4 )
+      return 20;
+   if( level_dif <= -5 )
+      return 0;
+   return 0; // Just incase -Davenge
 }
 
 /*

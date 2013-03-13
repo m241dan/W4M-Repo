@@ -59,7 +59,9 @@ static OBJ_DATA *rgObjNest[MAX_NEST];
  * Local functions.
  */
 void fwrite_char( CHAR_DATA * ch, FILE * fp );
+void fwrite_class( CHAR_DATA * ch, FILE * fp );
 void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover );
+void fread_class( CHAR_DATA * ch, FILE * fp );
 void write_corpses( CHAR_DATA * ch, char *name, OBJ_DATA * objrem );
 
 #ifdef WIN32   /* NJG */
@@ -318,6 +320,7 @@ void save_char_obj( CHAR_DATA * ch )
    else
    {
       fwrite_char( ch, fp );
+      fwrite_class( ch, fp );
       if( ch->morph )
          fwrite_morph_data( ch, fp );
       if( ch->first_carrying )
@@ -340,6 +343,24 @@ void save_char_obj( CHAR_DATA * ch )
    return;
 }
 
+/*
+ * Write the class data of a char -Davenge
+ */
+
+void fwrite_class( CHAR_DATA *ch, FILE *fp )
+{
+   int class_id;
+
+   fprintf( fp, "#CLASS\n" );
+
+   for( class_id = 0; class_id < MAX_CLASS; class_id++ )
+   {
+      fprintf( fp, "ClassID      %d\n", class_id ); //Just incase -Davenge
+      fprintf( fp, "Level        %d\n", ch->class_data[class_id]->level );
+      fprintf( fp, "Experience   %d\n", ch->class_data[class_id]->experience );
+   }
+   fprintf( fp, "\nEnd\n\n" );
+}
 /*
  * Write the char.
  */
@@ -364,10 +385,6 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "Languages    %d %d\n", ch->speaks, ch->speaking );
    fprintf( fp, "TopLevel     %d\n", ch->top_level );
    fprintf( fp, "Level        %d\n", ch->level  );
-   fprintf( fp, "Job          " );
-   for( count = 0; count < MAX_CLASS; count++ )
-      fprintf( fp, "%d ", ch->job[count] );
-   fprintf( fp, "\n" );
    fprintf( fp, "Played       %d\n", ch->played + ( int )( current_time - ch->logon ) );
    fprintf( fp, "Room         %d\n",
             ( ch->in_room == get_room_index( ROOM_VNUM_LIMBO )
@@ -793,6 +810,12 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
    clear_char( ch );
    loading_char = ch;
 
+   for( x = 0; x < MAX_CLASS; x++ )
+   {
+      CREATE( ch->class_data[x], CLASS_DATA, 1 );
+      ch->class_data[x]->level = 1;
+   }
+
    CREATE( ch->pcdata, PC_DATA, 1 );
    d->character = ch;
    ch->desc = d;
@@ -902,6 +925,8 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
             if( preload )
                break;
          }
+         else if( !strcmp( word, "CLASS" ) )
+            fread_class( ch, fp );
          else if( !strcmp( word, "OBJECT" ) )   /* Objects  */
             fread_obj( ch, fp, OS_CARRY );
          else if( !strcmp( word, "MorphData" ) )   /* Morphs */
@@ -1025,6 +1050,70 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
    update_aris( ch );
    loading_char = NULL;
    return found;
+}
+
+
+/*
+ * Read in a class. -Davenge
+ */
+void fread_class( CHAR_DATA *ch, FILE * fp )
+{
+   const char *word;
+   int class_id = -1;
+   bool fMatch;
+
+   for( ;; )
+   {
+      word = ( feof( fp ) ? "End" : fread_word( fp ) );
+
+      if( word[0] == '\0' )
+      {
+         bug( "%s: EOF encountered reading file!", __FUNCTION__ );
+         word = "End";
+      }
+      fMatch = FALSE;
+
+      switch( UPPER( word[0] ) )
+      {
+         case '*':
+            fMatch = TRUE;
+            fread_to_eol( fp );
+            break;
+         case 'E':
+            if( !strcmp( word, "End" ) )
+               return;
+            if( !strcmp( word, "Experience" ) )
+            {
+               if( class_id == -1 )
+               {
+                  bug( "%s: Reading in Experience before ClassID", __FUNCTION__ );
+                  return;
+               }
+               else
+                  ch->class_data[class_id]->experience = fread_number( fp );
+               fMatch = TRUE;
+               break;
+            }
+            break;
+         case 'C':
+            KEY( "ClassID", class_id, fread_number( fp ) );
+            break;
+         case 'L':
+            if( !strcmp( word, "Level" ) )
+            {
+               if( class_id == -1 )
+               {
+                  bug( "%s: Reading in Level before ClassID", __FUNCTION__ );
+                  return;
+               }
+               else
+                  ch->class_data[class_id]->level = fread_number( fp );
+               fMatch = TRUE;
+               break;
+            }
+            break;
+      }
+   }
 }
 
 /*
@@ -1440,17 +1529,6 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             if( ( fMatch = imc_loadchar( ch, fp, word ) ) )
                break;
 #endif
-            break;
-
-         case 'J':
-            if( !strcmp( word, "Job" ) )
-            {
-               int count;
-               for( count = 0; count < MAX_CLASS; count++ )
-                  ch->job[count] = fread_number( fp );
-               fMatch = TRUE;
-               break;
-            }
             break;
 
          case 'K':

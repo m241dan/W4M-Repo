@@ -305,6 +305,16 @@ void do_score( CHAR_DATA* ch, const char* argument )
    pager_printf( ch, "CHA  : %2.2d(%2.2d)                      \r\n", get_curr_cha( ch ), ch->perm_cha );
    pager_printf( ch, "PAS  : %2.2d(%2.2d)                      \r\n", get_curr_pas( ch ), ch->perm_pas );
    send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
+   send_to_pager( "Class         | Level |    Experience                                      |\r\n", ch );
+   send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
+   for( count = 0; count < MAX_CLASS; count ++ )
+      pager_printf( ch, "%s%-14s|  %2d   | %6ld of %-6d \r\n", count == ch->Class ? "&W" : "&c",
+                    class_table[count]->who_name,
+                    ch->class_data[count]->level,
+                    ch->experience[count],
+                    exp_to_level[ch->class_data[count]->level] ); 
+
+   send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
    pager_printf( ch, "Penetrations     |  Resistances        \r\n" );
    send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
    for( count = 0; count < MAX_DAMTYPE; count++ )
