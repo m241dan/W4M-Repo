@@ -4746,7 +4746,7 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype );
 int get_fist_weight( CHAR_DATA * ch );
 int get_wear_loc_weight( CHAR_DATA * ch, int hit_wear );
 int calc_weight_mod( CHAR_DATA * ch, CHAR_DATA * victim, int hit_wear, int dam, bool crit );
-int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam );
+int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam, int hit_wear );
 int mattack_mdefense_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam );
 bool get_crit( CHAR_DATA *ch, int dt );
 

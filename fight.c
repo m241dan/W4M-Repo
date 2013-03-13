@@ -1023,7 +1023,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
     */
    if( physical )
    {
-      dam = attack_ac_mod( ch, victim, dam );
+      dam = attack_ac_mod( ch, victim, dam, hit_wear );
       if( IS_BETA( ) )
          ch_printf( ch, "Damage after attack vs. defense: %d\r\n", dam );
    }
@@ -3934,22 +3934,29 @@ int calc_weight_mod( CHAR_DATA *ch, CHAR_DATA *victim, int hit_wear, int dam, bo
    return dam;
 }
 
-int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
+int attack_ac_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam, int hit_wear )
 {
-   int atkac_mod;
+   OBJ_DATA *armor;
+   int atkac_mod, loc_ac;
 
    /*
-    * Basically make 1 attack equal to 10 armor for 1% damage increase/redux
-    * -Davenge
+    * Get the AC of armor worn at area -Davenge
     */
-   atkac_mod = 100 + ( GET_ATTACK( ch ) - ( GET_AC( victim ) / 10 ) );
+   if( ( armor = get_eq_char( victim, hit_wear ) ) != NULL )
+      loc_ac = armor->value[0];
+   else
+      loc_ac = 1; //One point of armor for your bare skin! haha -Davenge
 
    /*
-    * Apply the mod after turning it into an appropriate percentage capping at
-    * %5 to 95% increase respectively -Davenge
+    * Subtract a the combination of our global defense / 10 plus our location ac we got above
+    * from the attack to get our mod. -Davenge
     */
-   dam = (int)( dam * ( (double)URANGE( 5, atkac_mod, 195 ) / 100 ) );
+   atkac_mod = GET_ATTACK( ch ) - ( ( GET_AC( victim ) / 10 ) + loc_ac );
 
+   /*
+    * Add it to our base damage -Davenge
+    */
+   dam += atkac_mod;
    return dam;
 }
 
