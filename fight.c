@@ -3910,7 +3910,7 @@ int calc_weight_mod( CHAR_DATA *ch, CHAR_DATA *victim, int hit_wear, int dam, bo
     * Do math, basically floor at 95% damage reduction/increase to the damage
     * -Davenge
     */
-   mod = (double)URANGE( (int)( armor_weight * .05), (armor_weight + ( armor_weight - weapon_weight )), (int)( armor_weight * 1.95 ));
+   mod = (double)URANGE( (int)( armor_weight * .05), (armor_weight + ( weapon_weight - armor_weight )), (int)( armor_weight * 1.95 ));
 
    /*
     * convert out mod into proper percentage -Davenge
