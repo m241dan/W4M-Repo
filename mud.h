@@ -5015,6 +5015,7 @@ int weight_ratio_dex( int dex, int weight );
 int weight_ratio_str( int str, int weight );
 bool is_physical( EXT_BV *damtype );
 bool is_magical( EXT_BV *damtype );
+int get_haste( CHAR_DATA *ch );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

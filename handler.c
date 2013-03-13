@@ -5876,7 +5876,13 @@ bool is_on_cooldown( CHAR_DATA *ch, int gsn )
 
 double get_skill_cooldown( CHAR_DATA *ch, int gsn )
 {
-   return skill_table[gsn]->cooldown;
+   double cooldown;
+
+   cooldown = skill_table[gsn]->cooldown;
+
+   cooldown *= ( 1 + ( get_haste( ch ) / 100 ) );
+
+   return cooldown;
 }
 
 void set_on_cooldown( CHAR_DATA *ch, int gsn )
@@ -6000,4 +6006,15 @@ void do_beta( CHAR_DATA *ch, const char *argument )
    }
    do_echo( ch, arg );
    return;
+}
+
+int get_haste( CHAR_DATA *ch )
+{
+   int haste;
+   int haste_from_magic;
+
+   haste = UMIN( ch->haste, 20 );
+   haste_from_magic = UMIN( ch->haste_from_magic, 30 );
+
+   return ( haste + haste_from_magic );
 }
