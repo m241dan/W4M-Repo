@@ -1267,9 +1267,12 @@ void do_mpadvance( CHAR_DATA* ch, const char* argument)
       if( level < LEVEL_IMMORTAL )
          send_to_char( "You raise a level!!  ", victim );
       victim->level += 1;
-      advance_level( victim );
+      victim->class_data[ch->Class]->level++;
+      if( victim->level < 50 || victim->level > 50 )
+         victim->top_level++;
+      advance_level( victim, FALSE );
    }
-   victim->experience[victim->Class] = 1000 * UMAX( 1, victim->level );
+   victim->experience[victim->Class] = 0;
    victim->trust = 0;
    return;
 }

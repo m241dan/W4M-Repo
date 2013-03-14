@@ -2389,7 +2389,7 @@ void nanny_read_motd( DESCRIPTOR_DATA * d, const char *argument )
    char buf[MAX_STRING_LENGTH];
    int count;
    ch = d->character;
-   
+
    {
       char motdbuf[MAX_STRING_LENGTH];
 
@@ -2402,101 +2402,33 @@ void nanny_read_motd( DESCRIPTOR_DATA * d, const char *argument )
    if( ch->level == 0 )
    {
       OBJ_DATA *obj;
-      int iLang, uLang;
+      int iLang;
 
       ch->pcdata->clan = NULL;
-      switch ( class_table[ch->Class]->attr_prime )
-      {
-         case APPLY_STR:
-            ch->perm_str = 16;
-            break;
-         case APPLY_INT:
-            ch->perm_int = 16;
-            break;
-         case APPLY_WIS:
-            ch->perm_wis = 16;
-            break;
-         case APPLY_DEX:
-            ch->perm_dex = 16;
-            break;
-         case APPLY_CON:
-            ch->perm_con = 16;
-            break;
-         case APPLY_CHA:
-            ch->perm_cha = 16;
-            break;
-         case APPLY_PAS:
-            ch->perm_pas = 16;
-            break;
-      }
 
-      ch->perm_str += race_table[ch->race]->str_plus;
-      ch->perm_int += race_table[ch->race]->int_plus;
-      ch->perm_wis += race_table[ch->race]->wis_plus;
-      ch->perm_dex += race_table[ch->race]->dex_plus;
-      ch->perm_con += race_table[ch->race]->con_plus;
-      ch->perm_cha += race_table[ch->race]->cha_plus;
-      ch->affected_by = race_table[ch->race]->affected;
-      ch->perm_pas += race_table[ch->race]->pas_plus;
+     /*
+      * Handle Class Native Mod_Stats -Davenge
+      */
+     apply_class_base_stat_mod( ch );
 
-      ch->armor += race_table[ch->race]->ac_plus;
-      ch->alignment += race_table[ch->race]->alignment;
-      ch->attacks = race_table[ch->race]->attacks;
-      ch->defenses = race_table[ch->race]->defenses;
-      ch->saving_poison_death = race_table[ch->race]->saving_poison_death;
-      ch->saving_wand = race_table[ch->race]->saving_wand;
-      ch->saving_para_petri = race_table[ch->race]->saving_para_petri;
-      ch->saving_breath = race_table[ch->race]->saving_breath;
-      ch->saving_spell_staff = race_table[ch->race]->saving_spell_staff;
-
-      ch->height =
-         number_range( ( int )( race_table[ch->race]->height * .9 ), ( int )( race_table[ch->race]->height * 1.1 ) );
-      ch->weight =
-         number_range( ( int )( race_table[ch->race]->weight * .9 ), ( int )( race_table[ch->race]->weight * 1.1 ) );
-
-      if( ch->Class == CLASS_PALADIN )
-         ch->alignment = 1000;
 
       if( ( iLang = skill_lookup( "common" ) ) < 0 )
          bug( "%s", "Nanny: cannot find common language." );
       else
          ch->pcdata->learned[iLang] = 100;
 
-      /*
-       * Give them their racial languages 
-       */
-      if( race_table[ch->race] )
-      {
-         for( iLang = 0; lang_array[iLang] != LANG_UNKNOWN; iLang++ )
-         {
-            if( IS_SET( race_table[ch->race]->language, 1 << iLang ) )
-            {
-               if( ( uLang = skill_lookup( lang_names[iLang] ) ) < 0 )
-                  bug( "%s: cannot find racial language [%s].", __FUNCTION__, lang_names[iLang] );
-               else
-                  ch->pcdata->learned[uLang] = 100;
-            }
-         }
-      }
-
-      /*
-       * ch->resist           += race_table[ch->race]->resist;    drats
-       */
-      /*
-       * ch->susceptible     += race_table[ch->race]->suscept;    drats
-       */
 
       reset_colors( ch );
-      name_stamp_stats( ch );
 
       ch->level = 1;
       ch->top_level = 1;
       for( count = 0; count < MAX_CLASS; count++ )
          ch->experience[count] = 0; 
-      ch->max_hit += race_table[ch->race]->hit;
-      ch->max_mana += race_table[ch->race]->mana;
-      ch->hit = UMAX( 1, ch->max_hit );
-      ch->mana = UMAX( 1, ch->max_mana );
+      ch->max_hit = base_hp[ch->Class];
+      ch->max_mana = base_mana[ch->Class];
+      ch->max_move = base_move[ch->Class];
+      ch->hit = ch->max_hit;
+      ch->mana = ch->max_mana;
       ch->move = ch->max_move;
       /*
        * Set player birthday to current mud day, -17 years - Samson 10-25-99

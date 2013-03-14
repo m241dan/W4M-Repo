@@ -357,7 +357,6 @@ void fwrite_class( CHAR_DATA *ch, FILE *fp )
    {
       fprintf( fp, "ClassID      %d\n", class_id ); //Just incase -Davenge
       fprintf( fp, "Level        %d\n", ch->class_data[class_id]->level );
-      fprintf( fp, "Experience   %d\n", ch->class_data[class_id]->experience );
    }
    fprintf( fp, "\nEnd\n\n" );
 }
@@ -822,13 +821,13 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
    ch->pcdata->filename = STRALLOC( name );
    ch->name = NULL;
    ch->act = multimeb( PLR_BLANK, PLR_COMBINE, PLR_PROMPT, -1 );
-   ch->perm_str = 13;
-   ch->perm_int = 13;
-   ch->perm_wis = 13;
-   ch->perm_dex = 13;
-   ch->perm_con = 13;
-   ch->perm_cha = 13;
-   ch->perm_pas = 13;
+   ch->perm_str = 15;
+   ch->perm_int = 15;
+   ch->perm_wis = 15;
+   ch->perm_dex = 15;
+   ch->perm_con = 15;
+   ch->perm_cha = 15;
+   ch->perm_pas = 15;
    ch->no_resistant = 0;
    ch->no_susceptible = 0;
    ch->no_immune = 0;
@@ -1082,18 +1081,6 @@ void fread_class( CHAR_DATA *ch, FILE * fp )
          case 'E':
             if( !strcmp( word, "End" ) )
                return;
-            if( !strcmp( word, "Experience" ) )
-            {
-               if( class_id == -1 )
-               {
-                  bug( "%s: Reading in Experience before ClassID", __FUNCTION__ );
-                  return;
-               }
-               else
-                  ch->class_data[class_id]->experience = fread_number( fp );
-               fMatch = TRUE;
-               break;
-            }
             break;
          case 'C':
             KEY( "ClassID", class_id, fread_number( fp ) );

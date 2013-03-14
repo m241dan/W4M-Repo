@@ -5981,3 +5981,38 @@ double get_round( CHAR_DATA *ch )
    };
    return round;
 }
+
+void switch_class( CHAR_DATA *ch, int Class )
+{
+   OBJ_DATA *obj;
+   AFFECT_DATA *paf;
+   int counter;
+
+   if( ch->class_data[ch->Class]->level != ch->level )
+      ch->class_data[ch->Class]->level = ch->level;
+
+   for( obj = ch->first_carrying; obj; obj = obj->next_content )
+      if( obj->wear_loc > -1 && obj->wear_loc < MAX_WEAR )
+         unequip_char( ch, obj );
+
+   for( paf = ch->first_affect; paf; paf = paf->next )
+      affect_modify( ch, paf, FALSE );
+
+   for( paf = ch->in_room->first_affect; paf; paf = paf->next )
+      affect_modify( ch, paf, TRUE );
+
+   ch->level = 1;
+   ch->Class = Class;
+
+   ch->max_hit = base_hp[Class];
+   ch->max_mana = base_mana[Class];
+   ch->max_move= base_move[Class];
+
+   apply_class_base_stat_mod( ch );
+   for( counter = 0; counter < ch->class_data[Class]->level; counter++ )
+   {
+      ch->level++;
+      advance_level( ch, TRUE );
+   }
+   return;
+}

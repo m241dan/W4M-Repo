@@ -60,42 +60,28 @@ extern int top_exit;
 /*
  * Advancement stuff.
  */
-void advance_level( CHAR_DATA * ch )
+void advance_level( CHAR_DATA * ch, bool change_class )
 {
    char buf[MAX_STRING_LENGTH];
-   int add_hp, add_mana, add_move, add_prac;
+   int add_hp, add_mana, add_move;
 
-   snprintf( buf, MAX_STRING_LENGTH, "the %s", title_table[ch->Class][ch->level][ch->sex == SEX_FEMALE ? 1 : 0] );
-   set_title( ch, buf );
-
-   add_hp = con_app[get_curr_con( ch )].hitp + number_range( class_table[ch->Class]->hp_min,
-                                                             class_table[ch->Class]->hp_max );
-   add_mana = class_table[ch->Class]->fMana ? number_range( 2, ( 2 * get_curr_int( ch ) + get_curr_wis( ch ) ) / 8 ) : 0;
-   add_move = number_range( 5, ( get_curr_con( ch ) + get_curr_dex( ch ) ) / 4 );
-   add_prac = wis_app[get_curr_wis( ch )].practice;
-
-   add_hp = UMAX( 1, add_hp );
-   add_mana = UMAX( 0, add_mana );
-   add_move = UMAX( 10, add_move );
-
-   /*
-    * bonus for deadlies 
-    */
-   if( IS_PKILL( ch ) )
-   {
-      add_mana = ( int )( add_mana + add_mana * .3 );
-      add_move = ( int )( add_move + add_move * .3 );
-      add_hp += 1;   /* bitch at blod if you don't like this :) */
-      send_to_char( "Gravoc's Pandect steels your sinews.\r\n", ch );
-   }
+   add_hp = hp_lvl_gain[ch->Class];
+   add_mana = mana_lvl_gain[ch->Class];
+   add_move = move_lvl_gain[ch->Class];
 
    ch->max_hit += add_hp;
    ch->max_mana += add_mana;
    ch->max_move += add_move;
-   ch->practice += add_prac;
+
+   ch->hit = ch->max_hit;
+   ch->mana = ch->max_mana;
+   ch->move = ch->max_move;
 
    if( !IS_NPC( ch ) )
       xREMOVE_BIT( ch->act, PLR_BOUGHT_PET );
+
+   if( change_class )
+      return;
 
    if( ch->level == LEVEL_AVATAR )
    {
@@ -107,20 +93,13 @@ void advance_level( CHAR_DATA * ch )
             set_char_color( AT_IMMORT, d->character );
             ch_printf( d->character, "%s has just achieved Avatarhood!\r\n", ch->name );
          }
-      set_char_color( AT_WHITE, ch );
-      do_help( ch, "M_ADVHERO_" );
    }
 
    if( ch->level < LEVEL_IMMORTAL )
    {
-      if( IS_VAMPIRE( ch ) )
-         snprintf( buf, MAX_STRING_LENGTH,
-                   "Your gain is: %d/%d hp, %d/%d bp, %d/%d mv %d/%d prac.\r\n",
-                   add_hp, ch->max_hit, 1, ch->level + 10, add_move, ch->max_move, add_prac, ch->practice );
-      else
-         snprintf( buf, MAX_STRING_LENGTH,
-                   "Your gain is: %d/%d hp, %d/%d mana, %d/%d mv %d/%d prac.\r\n",
-                   add_hp, ch->max_hit, add_mana, ch->max_mana, add_move, ch->max_move, add_prac, ch->practice );
+      snprintf( buf, MAX_STRING_LENGTH,
+                "Your gain is: %d/%d hp, %d/%d mana, %d/%d mv.\r\n",
+                add_hp, ch->max_hit, add_mana, ch->max_mana, add_move, ch->max_move );
       set_char_color( AT_WHITE, ch );
       send_to_char( buf, ch );
    }
@@ -128,29 +107,28 @@ void advance_level( CHAR_DATA * ch )
 
 void gain_exp( CHAR_DATA * ch, int gain )
 {
-   return;
-   /* Left off here... 
-   double modgain;
+   ch->experience[ch->Class] += gain;
 
-   if( IS_NPC( ch ) || ch->level > LEVEL_AVATAR )
-      return;
-
-   if( NOT_AUTHED( ch ) && ch->experience[ch->Class] >= exp_level( ch, ch->level + 1 ) )
+   if( NOT_AUTHED( ch ) && ch->experience[ch->Class] >= exp_to_level[ch->level] )
    {
       send_to_char( "You can not ascend to a higher level until you are authorized.\r\n", ch );
-      ch->experience[ch->Class] = ( exp_level( ch, ( ch->level + 1 ) ) - 1 );
+      ch->experience[ch->Class] = ( exp_to_level[ch->level] - 1 );
       return;
    }
 
-   while( ch->level < LEVEL_AVATAR && ch->experience[ch->Class] >= exp_level( ch, ch->level + 1 ) )
+   while( ch->level < LEVEL_AVATAR && ch->experience[ch->Class] >= exp_to_level[ch->level] )
    {
       set_char_color( AT_WHITE + AT_BLINK, ch );
-      ch->level += 1;
+      ch->level++;
+      ch->class_data[ch->Class]->level++;
       if( ch->top_level < ch->level )
          ch->top_level++;
       ch_printf( ch, "You have now obtained experience level %d!\r\n", ch->level );
-      advance_level( ch );
-   } */
+      ch->experience[ch->Class] -= exp_to_level[ch->level-1];
+      advance_level( ch, FALSE );
+   }
+   if( ch->experience[ch->Class] >= exp_to_level[ch->level] )
+      ch->experience[ch->Class] = exp_to_level[ch->level] - 1;
 }
 
 /*

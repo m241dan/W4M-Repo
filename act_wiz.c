@@ -2080,11 +2080,11 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
                        GET_ATTACK( victim ), victim->wimpy, victim->position );
    pager_printf_color( ch, "&cPenetration: " );
    for( x = 0; x < MAX_DAMTYPE; x++ )
-      pager_printf_color( ch, "&C%d ", ch->penetration[x] );
+      pager_printf_color( ch, "&C%d ", victim->penetration[x] );
    pager_printf_color( ch, "&w\r\n" );
    pager_printf_color( ch, "&cResistance: " );
    for( x = 0; x < MAX_DAMTYPE; x++ )
-      pager_printf_color( ch, "&C%d ", ch->resistance[x] );
+      pager_printf_color( ch, "&C%d ", victim->resistance[x] );
    pager_printf_color( ch, "&w\r\n" );
    pager_printf_color( ch, "&cFighting: &w%-13s   &cMaster : &w%-13s   &cLeader    : &w%s\r\n",
                        victim->fighting ? victim->fighting->who->name : "(none)",
@@ -3639,7 +3639,7 @@ void do_balzhur( CHAR_DATA* ch, const char* argument)
       }
 
    make_wizlist(  );
-   advance_level( victim );
+   advance_level( victim, FALSE );
    do_help( victim, "M_BALZHUR_" );
    set_char_color( AT_WHITE, victim );
    send_to_char( "You awake after a long period of time...\r\n", victim );
@@ -3745,17 +3745,18 @@ void do_advance( CHAR_DATA* ch, const char* argument)
          send_to_char( "Deja vu!  Your mind reels as you re-live your past levels!\r\n", victim );
       }
       victim->level = 1;
-      victim->experience[victim->Class] = exp_level( victim, 1 );
-      victim->max_hit = 20;
-      victim->max_mana = 100;
-      victim->max_move = 100;
+      victim->class_data[victim->Class]->level = 1;
+      victim->experience[victim->Class] = 0;
+      victim->max_hit = base_hp[victim->Class];
+      victim->max_mana = base_mana[victim->Class];
+      victim->max_move = base_move[victim->Class];
       for( sn = 0; sn < num_skills; ++sn )
          victim->pcdata->learned[sn] = 0;
       victim->practice = 0;
       victim->hit = victim->max_hit;
       victim->mana = victim->max_mana;
       victim->move = victim->max_move;
-      advance_level( victim );
+      advance_level( victim, FALSE );
       /*
        * Rank fix added by Narn. 
        */
@@ -3846,11 +3847,12 @@ void do_advance( CHAR_DATA* ch, const char* argument)
       if( level < LEVEL_IMMORTAL )
          send_to_char( "You raise a level!!\r\n", victim );
       victim->level += 1;
+      victim->class_data[victim->Class]->level++;
       if( victim->level < 50 || victim->level > 50 )
          victim->top_level += 1;
-      advance_level( victim );
+      advance_level( victim, FALSE );
    }
-   victim->experience[victim->Class] = exp_level( victim, victim->level );
+   victim->experience[victim->Class] = 0;
    victim->trust = 0;
    return;
 }
@@ -3889,7 +3891,7 @@ void do_elevate( CHAR_DATA* ch, const char* argument)
       do_help( victim, "M_GODLVL2_" );
       victim->level = LEVEL_ACOLYTE;
       set_char_color( AT_WHITE, victim );
-      advance_level( victim );
+      advance_level( victim, FALSE );
       victim->experience[victim->Class] = exp_level( victim, victim->level );
       victim->trust = 0;
       return;
@@ -3905,7 +3907,7 @@ void do_elevate( CHAR_DATA* ch, const char* argument)
       do_help( victim, "M_GODLVL3_" );
       victim->level = LEVEL_CREATOR;
       set_char_color( AT_WHITE, victim );
-      advance_level( victim );
+      advance_level( victim, FALSE );
       victim->experience[victim->Class] = exp_level( victim, victim->level );
       victim->trust = 0;
       return;
@@ -3961,7 +3963,7 @@ void do_immortalize( CHAR_DATA* ch, const char* argument)
       extract_obj( victim->first_carrying );
    victim->level = LEVEL_IMMORTAL;
    victim->top_level = LEVEL_IMMORTAL;
-   advance_level( victim );
+   advance_level( victim, FALSE );
 
    /*
     * Remove clan/guild/order and update accordingly 
@@ -5170,7 +5172,7 @@ void do_mortalize( CHAR_DATA* ch, const char* argument)
       victim->hit = victim->max_hit;
       victim->mana = victim->max_mana;
       victim->move = victim->max_move;
-      advance_level( victim );
+      advance_level( victim, FALSE );
       DISPOSE( victim->pcdata->rank );
       victim->pcdata->rank = str_dup( "" );
       if( xIS_SET( victim->act, PLR_WIZINVIS ) )

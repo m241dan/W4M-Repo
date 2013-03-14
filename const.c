@@ -47,6 +47,25 @@ const double base_class_lag[MAX_CLASS] = {
    4, 4, 4, 3, 3, 3, 2.5, 2.5, 2.5
 };
 
+const int hp_lvl_gain[MAX_CLASS] = {
+   18, 16, 20, 26, 30, 22, 38, 42, 34
+};
+const int move_lvl_gain[MAX_CLASS] = {
+   0, 0, 0, 25, 35, 55, 0, 19, 0
+};
+const int mana_lvl_gain[MAX_CLASS] = {
+   26, 40, 28, 0, 0, 0, 18, 0, 28
+};
+const int base_hp[MAX_CLASS] = {
+   105, 87, 153, 180, 225, 165, 240, 300, 225
+};
+const int base_mana[MAX_CLASS] = {
+   150, 120, 123, 0, 0, 0, 90, 0, 126
+};
+const int base_move[MAX_CLASS] = {
+   0, 0, 0, 90, 105, 135, 0, 75, 0
+};
+
 const int exp_to_level[LEVEL_AVATAR+1] = {
    200, /* lv0 */
    500, /* lv1 */
@@ -647,3 +666,86 @@ const char *const wind_msg[6] = {
    "angry gusts of wind blow",
    "howling winds whip the air into a frenzy"
 };
+
+/*
+ * Each class gets a total of +6 to attributes and -6 to attributes evenly distributed, subject to balancing
+ * -Davenge
+ */
+void apply_class_base_stat_mod( CHAR_DATA *ch )
+{
+   switch( ch->Class )
+   {
+      case CLASS_PRIEST:
+         ch->mod_str = -2;
+         ch->mod_dex = -3;
+         ch->mod_con = 1;
+         ch->mod_int = -1;
+         ch->mod_wis = 4;
+         ch->mod_pas = 1;
+         return;
+      case CLASS_WIZARD:
+         ch->mod_str = -3;
+         ch->mod_dex = -1;
+         ch->mod_con = -2;
+         ch->mod_int = 4;
+         ch->mod_wis = 0;
+         ch->mod_pas = 2;
+         return;
+      case CLASS_SORCEROR:
+         ch->mod_str = -1;
+         ch->mod_dex = -3;
+         ch->mod_con = -2;
+         ch->mod_int = 2;
+         ch->mod_wis = 2;
+         ch->mod_pas = 2;
+         return;
+      case CLASS_BERSERKER:
+         ch->mod_str = 4;
+         ch->mod_dex = 0;
+         ch->mod_con = 2;
+         ch->mod_int = -1;
+         ch->mod_wis = -4;
+         ch->mod_pas = -1;
+         return;
+      case CLASS_TERASKASI:
+         ch->mod_str = 3;
+         ch->mod_dex = 2;
+         ch->mod_con = -2;
+         ch->mod_wis = -2;
+         ch->mod_int = -2;
+         ch->mod_pas = 1;
+         return;
+      case CLASS_BLADEMASTER:
+         ch->mod_str = -1;
+         ch->mod_dex = 4;
+         ch->mod_con = -2;
+         ch->mod_wis = -2;
+         ch->mod_int = -1;
+         ch->mod_pas = 2;
+         return;
+      case CLASS_PALADIN:
+         ch->mod_str = -2;
+         ch->mod_dex = -2;
+         ch->mod_con = 3;
+         ch->mod_wis = 3;
+         ch->mod_int = -2;
+         ch->mod_pas = 0;
+         return;
+      case CLASS_BARBARIAN:
+         ch->mod_str = 2;
+         ch->mod_dex = -1;
+         ch->mod_con = 3;
+         ch->mod_wis = 1;
+         ch->mod_pas = -4;
+         ch->mod_int = -1;
+         return;
+      case CLASS_DRUID:
+         ch->mod_str = -1;
+         ch->mod_dex = 1;
+         ch->mod_con = 1;
+         ch->mod_int = -2;
+         ch->mod_wis = 2;
+         ch->mod_pas = 2;
+         return;
+   }
+}

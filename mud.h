@@ -1824,7 +1824,7 @@ typedef enum
 #define ROOM_VNUM_LIMBO		      2
 #define ROOM_VNUM_POLY		      3
 #define ROOM_VNUM_CHAT		   1200
-#define ROOM_VNUM_TEMPLE	  21001
+#define ROOM_VNUM_TEMPLE	  10000
 #define ROOM_VNUM_ALTAR		  21194
 #define ROOM_VNUM_SCHOOL	  10300
 #define ROOM_AUTH_START		    100
@@ -2383,7 +2383,6 @@ struct char_data
 struct class_data
 {
    short level;
-   int experience;
 };
 
 struct target_data
@@ -3634,6 +3633,12 @@ extern const char *const damage_message[MAX_DAMTYPE];
 extern const char *const combat_filters[MAX_COMBAT_FILTERS];
 
 extern const int exp_to_level[LEVEL_AVATAR+1];
+extern const int hp_lvl_gain[MAX_CLASS];
+extern const int move_lvl_gain[MAX_CLASS];
+extern const int mana_lvl_gain[MAX_CLASS];
+extern const int base_hp[MAX_CLASS];
+extern const int base_mana[MAX_CLASS];
+extern const int base_move[MAX_CLASS];
 
 extern const char **const s_message_table[18];
 extern const char **const p_message_table[18];
@@ -4609,6 +4614,9 @@ REALM_DATA *get_realm_from_char( CHAR_DATA *ch );
 int get_weapontype( const char *type );
 int get_damtype( const char *type );
 
+/* const.c */
+void apply_class_base_stat_mod( CHAR_DATA *ch );
+
 /* clans.c */
 CL *get_clan( const char *name );
 void load_clans( void );
@@ -5031,6 +5039,7 @@ bool is_physical( EXT_BV *damtype );
 bool is_magical( EXT_BV *damtype );
 int get_haste( CHAR_DATA *ch );
 double get_round( CHAR_DATA *ch );
+void switch_class( CHAR_DATA *ch, int Class );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
@@ -5126,7 +5135,7 @@ int find_first_step( ROOM_INDEX_DATA * src, ROOM_INDEX_DATA * target, int maxdis
 #define BFS_MARK 	 ROOM_BFS_MARK
 
 /* update.c */
-void advance_level( CHAR_DATA * ch );
+void advance_level( CHAR_DATA * ch, bool change_class );
 void gain_exp( CHAR_DATA * ch, int gain );
 void gain_condition( CHAR_DATA * ch, int iCond, int value );
 void check_alignment( CHAR_DATA * ch );

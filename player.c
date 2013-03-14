@@ -178,7 +178,7 @@ void do_score( CHAR_DATA* ch, const char* argument )
    * - Uncomment this if you want players to see their birthday's on score. - Kayle 1/22/08
    */
    pager_printf( ch, "LEVEL: %-3d         Race : %-10.10s        Played: %ld hours\r\n",
-                 ch->level, capitalize( get_race( ch ) ), ( long int )GET_TIME_PLAYED( ch ) );
+                 ch->top_level, capitalize( get_race( ch ) ), ( long int )GET_TIME_PLAYED( ch ) );
 
    pager_printf( ch, "YEARS: %-6d      Class: %-11.11s       Log In: %s\r",
                  calculate_age( ch ), capitalize( get_class( ch ) ), ctime( &( ch->logon ) ) );
@@ -308,7 +308,7 @@ void do_score( CHAR_DATA* ch, const char* argument )
    send_to_pager( "Class         | Level |    Experience                                      |\r\n", ch );
    send_to_pager( "----------------------------------------------------------------------------\r\n", ch );
    for( count = 0; count < MAX_CLASS; count ++ )
-      pager_printf( ch, "%s%-14s|  %2d   | %6ld of %-6d \r\n", count == ch->Class ? "&W" : "&c",
+      pager_printf( ch, "%s%-14s|  %2d   | %6ld of %-6d &c\r\n", count == ch->Class ? "&W" : "&c",
                     class_table[count]->who_name,
                     ch->class_data[count]->level,
                     ch->experience[count],
