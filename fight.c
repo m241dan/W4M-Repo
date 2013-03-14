@@ -3391,7 +3391,7 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype )
             mod_pen += ch->penetration[DAM_PHYSICAL] + ch->penetration[counter];
             mod_res += victim->resistance[DAM_PHYSICAL] + victim->resistance[counter];
 
-            mod = (100 + URANGE( -95, ( mod_pen - mod_res ), 95 )) / 100;
+            mod = (100 + URANGE( -95, ( (int)(mod_pen - mod_res) ), 95 )) / 100;
             dam += (int)( split_dam * mod );
          }
          if( counter >= DAM_WIND && counter <= DAM_DARK )
@@ -3399,7 +3399,7 @@ int res_pen( CHAR_DATA *ch, CHAR_DATA *victim, int dam, EXT_BV damtype )
             mod_pen += ch->penetration[DAM_MAGIC] + ch->penetration[counter];
             mod_res += victim->resistance[DAM_PHYSICAL] + victim->resistance[counter];
 
-            mod = (100 +URANGE( -95, ( mod_pen - mod_res ), 95 )) / 100;
+            mod = (100 +URANGE( -95, ( (int)( mod_pen - mod_res ) ), 95 )) / 100;
             dam += (int)( split_dam * mod );
          }
          if( ++progress == num_damtype )
@@ -3539,7 +3539,7 @@ int mattack_mdefense_mod( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
     * 10 magic defense decrease magic damage by 1%
     */
 
-   matkmdef_mod = ( GET_MAGICATTACK( ch ) * 1.5 ) - ( GET_MAGICDEFENSE( victim ) / 10 );
+   matkmdef_mod = (int)( ( GET_MAGICATTACK( ch ) * 1.5 ) - ( GET_MAGICDEFENSE( victim ) / 10 ) );
 
    /*
     * Add it to our base magic damage -Davenge
