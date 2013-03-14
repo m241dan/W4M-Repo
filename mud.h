@@ -2022,7 +2022,7 @@ typedef enum
    PLR_TELNET_GA, PLR_HOLYLIGHT, PLR_WIZINVIS, PLR_ROOMVNUM, PLR_SILENCE,
    PLR_NO_EMOTE, PLR_ATTACKER, PLR_NO_TELL, PLR_LOG, PLR_DENY, PLR_FREEZE,
    PLR_THIEF, PLR_KILLER, PLR_LITTERBUG, PLR_ANSI, PLR_RIP, PLR_NICE, PLR_FLEE,
-   PLR_AUTOGOLD, PLR_AUTOMAP, PLR_AFK, PLR_INVISPROMPT, PLR_COMPASS
+   PLR_AUTOGOLD, PLR_AUTOMAP, PLR_AFK, PLR_INVISPROMPT, PLR_COMPASS, PLR_COORD
 } player_flags;
 
 #define PCFLAG_R1                  BV00
@@ -4689,6 +4689,7 @@ int number_mm args( ( void ) );
 int dice args( ( int number, int size ) );
 int interpolate args( ( int level, int value_00, int value_32 ) );
 void smash_tilde args( ( char *str ) );
+const char* smash_color args( ( const char *str ) );
 const char* smash_tilde args( ( const char *str ) );
 char* smash_tilde_copy args( ( const char *str ) );
 void hide_tilde args( ( char *str ) );

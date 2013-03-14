@@ -1153,6 +1153,8 @@ int get_door( const char *arg )
 void print_compass( CHAR_DATA * ch )
 {
    EXIT_DATA *pexit;
+   char buf[MAX_INPUT_LENGTH];
+   int x, size;
    int exit_info[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
    static const char *const exit_colors[] = { "&w", "&Y", "&C", "&b", "&w", "&R" };
    for( pexit = ch->in_room->first_exit; pexit; pexit = pexit->next )
@@ -1172,30 +1174,32 @@ void print_compass( CHAR_DATA * ch )
          exit_info[pexit->vdir] = 1;
    }
    set_char_color( AT_RMNAME, ch );
-   ch_printf_color( ch, "\r\n%-50s         %s%s    %s%s    %s%s\r\n",
-                    ch->in_room->name,
+   size = strlen( smash_color( ch->in_room->name ) );
+   sprintf( buf, "\r\n&w__" );
+   for( x = 0; x < size+2; x++ )
+      mudstrlcat( buf, "_", MAX_INPUT_LENGTH );
+   ch_printf_color( ch, "%s\r\n| %s &w|", buf, ch->in_room->name );
+   if( IS_IMMORTAL( ch ) && xIS_SET( ch->act, PLR_ROOMVNUM ) )
+      ch_printf_color( ch, "\r\n&w-<---- &YVnum: %6d &w----------------------------->-        ", ch->in_room->vnum );
+   else
+      send_to_char_color( "\r\n&w-<----------------------------------------------->-        ", ch ); 
+   ch_printf_color( ch, "%s%s    %s%s    %s%s\r\n",
                     exit_colors[exit_info[DIR_NORTHWEST]], exit_info[DIR_NORTHWEST] ? "NW" : "- ",
                     exit_colors[exit_info[DIR_NORTH]], exit_info[DIR_NORTH] ? "N" : "-",
                     exit_colors[exit_info[DIR_NORTHEAST]], exit_info[DIR_NORTHEAST] ? "NE" : " -" );
-   if( IS_IMMORTAL( ch ) && xIS_SET( ch->act, PLR_ROOMVNUM ) )
-      ch_printf_color( ch, "&w-<---- &YVnum: %6d &w----------------------------->-        ", ch->in_room->vnum );
+   if( IS_IMMORTAL( ch ) && xIS_SET( ch->act, PLR_COORD ) )
+      ch_printf_color( ch, "&zX: &R%-6d &zY: &R%-6d &zZ: &R%-6d &zSET: &R%-6s                  ",
+                       ch->in_room->coord[X], ch->in_room->coord[Y], ch->in_room->coord[Z], ( ch->in_room->coordset ? "True" : "False" ) );
    else
-      send_to_char_color( "&w-<----------------------------------------------->-        ", ch );
+      ch_printf_color( ch, "                                                           " );
    ch_printf_color( ch, "%s%s&w<-%s%s&w-&W(*)&w-%s%s&w->%s%s\r\n", exit_colors[exit_info[DIR_WEST]],
                     exit_info[DIR_WEST] ? "W" : "-", exit_colors[exit_info[DIR_UP]], exit_info[DIR_UP] ? "U" : "-",
                     exit_colors[exit_info[DIR_DOWN]], exit_info[DIR_DOWN] ? "D" : "-", exit_colors[exit_info[DIR_EAST]],
                     exit_info[DIR_EAST] ? "E" : "-" );
-   if( IS_IMMORTAL( ch ) && xIS_SET( ch->act, PLR_ROOMVNUM ) )
-      ch_printf_color( ch, "&zX: &R%-6d &zY: &R%-6d &zZ: &R%-6d &zSET: &R%-6s                  %s%s    %s%s    %s%s\r\n\r\n",
-                       ch->in_room->coord[X], ch->in_room->coord[Y], ch->in_room->coord[Z], ( ch->in_room->coordset ? "True" : "False" ),
-                       exit_colors[exit_info[DIR_SOUTHWEST]], exit_info[DIR_SOUTHWEST] ? "SW" : "- ",
-                       exit_colors[exit_info[DIR_SOUTH]], exit_info[DIR_SOUTH] ? "S" : "-",
-                       exit_colors[exit_info[DIR_SOUTHEAST]], exit_info[DIR_SOUTHEAST] ? "SE" : " -" );
-   else
-      ch_printf_color( ch, "                                                           %s%s    %s%s    %s%s\r\n\r\n",
-                       exit_colors[exit_info[DIR_SOUTHWEST]], exit_info[DIR_SOUTHWEST] ? "SW" : "- ",
-                       exit_colors[exit_info[DIR_SOUTH]], exit_info[DIR_SOUTH] ? "S" : "-",
-                       exit_colors[exit_info[DIR_SOUTHEAST]], exit_info[DIR_SOUTHEAST] ? "SE" : " -" );
+   ch_printf_color( ch, "                                                           %s%s    %s%s    %s%s\r\n",
+                    exit_colors[exit_info[DIR_SOUTHWEST]], exit_info[DIR_SOUTHWEST] ? "SW" : "- ",
+                    exit_colors[exit_info[DIR_SOUTH]], exit_info[DIR_SOUTH] ? "S" : "-",
+                    exit_colors[exit_info[DIR_SOUTHEAST]], exit_info[DIR_SOUTHEAST] ? "SE" : " -" );
    return;
 }
 
@@ -4301,6 +4305,7 @@ void do_config( CHAR_DATA* ch, const char* argument)
          send_to_char( "\r\n\r\nImmortal toggles:  ", ch );
          set_char_color( AT_GREY, ch );
          ch_printf( ch, "Roomvnum [%s]", xIS_SET( ch->act, PLR_ROOMVNUM ) ? "+" : " " );
+         ch_printf( ch, "   Coord    [%s]", xIS_SET( ch->act, PLR_COORD ) ? "+" : " " );
       }
 
       set_char_color( AT_DGREEN, ch );
@@ -4367,6 +4372,8 @@ void do_config( CHAR_DATA* ch, const char* argument)
          bit = PLR_SHOVEDRAG;
       else if( IS_IMMORTAL( ch ) && !str_prefix( arg + 1, "vnum" ) )
          bit = PLR_ROOMVNUM;
+      else if( IS_IMMORTAL( ch ) && !str_prefix( arg + 1, "coord" ) )
+         bit = PLR_COORD;
 
       if( bit )
       {

@@ -4091,6 +4091,31 @@ void smash_tilde( char *str )
    return;
 }
 
+const char *smash_color( const char *str )
+{
+   static char ret[MAX_STRING_LENGTH];
+   char *retptr;
+
+   retptr = ret;
+
+   if(str == NULL)
+      return NULL;
+
+   for ( ; *str != '\0'; str++ )
+   {
+      if (*str == '&' && *(str + 1) != '\0' )
+         str++;
+      else
+      {
+         *retptr = *str;
+
+         retptr++;
+      }
+   }
+   *retptr = '\0';
+   return ret;
+}
+
 const char* smash_tilde( const char *str )
 {
     static char buf[MAX_STRING_LENGTH];
