@@ -6007,9 +6007,12 @@ void switch_class( CHAR_DATA *ch, int Class )
    ch->max_hit = base_hp[Class];
    ch->max_mana = base_mana[Class];
    ch->max_move= base_move[Class];
+   ch->hit = ch->max_hit;
+   ch->mana = ch->max_mana;
+   ch->move = ch->max_move;
 
    apply_class_base_stat_mod( ch );
-   for( counter = 0; counter < ch->class_data[Class]->level; counter++ )
+   for( counter = 1; counter < ch->class_data[Class]->level; counter++ )
    {
       ch->level++;
       advance_level( ch, TRUE );

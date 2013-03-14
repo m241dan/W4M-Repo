@@ -37,8 +37,8 @@ const char *const npc_race[MAX_NPC_RACE] = {
 
 
 const char *const npc_class[MAX_NPC_CLASS] = {
-   "mage", "cleric", "thief", "warrior", "vampire", "druid", "ranger",
-   "augurer", "paladin", "nephandi", "savage", "pirate", "pc12", "pc13",
+   "priest", "wizard", "sorceror", "berserker", "teraskasi", "blademaster", "paladin",
+   "barbarian", "druid", "nephandi", "savage", "pirate", "pc12", "pc13",
    "pc14", "pc15", "pc16", "pc17", "pc18", "pc19",
    "baker", "butcher", "blacksmith", "mayor", "king", "queen"
 };

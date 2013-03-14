@@ -1537,29 +1537,32 @@ void do_mset( CHAR_DATA* ch, const char* argument)
 
    if( !str_cmp( arg2, "class" ) )
    {
+      int x;
       if( !can_mmodify( ch, victim ) )
          return;
-
-      if( IS_NPC( victim ) )
+      if( value == -1 )
       {
-         if( value >= MAX_NPC_CLASS || value < 0 )
+         for( x = 0; x < MAX_CLASS; x++ )
          {
-            ch_printf( ch, "NPC Class range is 0 to %d.\n", MAX_NPC_CLASS - 1 );
-            return;
+            if( !str_cmp( arg3, npc_class[x] ) )
+            {
+               value = x;
+               break;
+            }
+            if( x == MAX_CLASS )
+            {
+               send_to_char( "Not a valid class name.\r\n", ch );
+               return;
+            }
          }
-         victim->Class = value;
-         if( xIS_SET( victim->act, ACT_PROTOTYPE ) )
-            victim->pIndexData->Class = value;
-         return;
       }
-
-
-      if( value < 0 || value >= MAX_CLASS )
+      else if( value < 0 || value > 9 )
       {
-         ch_printf( ch, "Class range is 0 to %d.\n", MAX_CLASS );
+         send_to_char( "Not a valid class number.\r\n", ch );
          return;
       }
-      victim->Class = value;
+      ch_printf( ch, "Changing %s to %s.\r\n", victim->name, class_table[value]->who_name );
+      switch_class( victim, value );
       return;
    }
 

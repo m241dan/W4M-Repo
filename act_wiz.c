@@ -3756,7 +3756,6 @@ void do_advance( CHAR_DATA* ch, const char* argument)
       victim->hit = victim->max_hit;
       victim->mana = victim->max_mana;
       victim->move = victim->max_move;
-      advance_level( victim, FALSE );
       /*
        * Rank fix added by Narn. 
        */
@@ -3848,7 +3847,7 @@ void do_advance( CHAR_DATA* ch, const char* argument)
          send_to_char( "You raise a level!!\r\n", victim );
       victim->level += 1;
       victim->class_data[victim->Class]->level++;
-      if( victim->level < 50 || victim->level > 50 )
+      if( victim->top_level != 50 && victim->top_level < victim->level )
          victim->top_level += 1;
       advance_level( victim, FALSE );
    }
