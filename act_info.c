@@ -1153,8 +1153,6 @@ int get_door( const char *arg )
 void print_compass( CHAR_DATA * ch )
 {
    EXIT_DATA *pexit;
-   char buf[MAX_INPUT_LENGTH];
-   int x, size;
    int exit_info[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
    static const char *const exit_colors[] = { "&w", "&Y", "&C", "&b", "&w", "&R" };
    for( pexit = ch->in_room->first_exit; pexit; pexit = pexit->next )
@@ -1174,11 +1172,7 @@ void print_compass( CHAR_DATA * ch )
          exit_info[pexit->vdir] = 1;
    }
    set_char_color( AT_RMNAME, ch );
-   size = strlen( smash_color( ch->in_room->name ) );
-   sprintf( buf, "\r\n&w__" );
-   for( x = 0; x < size+2; x++ )
-      mudstrlcat( buf, "_", MAX_INPUT_LENGTH );
-   ch_printf_color( ch, "%s\r\n| %s &w|", buf, ch->in_room->name );
+   ch_printf_color( ch, "%s&w", ch->in_room->name );
    if( IS_IMMORTAL( ch ) && xIS_SET( ch->act, PLR_ROOMVNUM ) )
       ch_printf_color( ch, "\r\n&w-<---- &YVnum: %6d &w----------------------------->-        ", ch->in_room->vnum );
    else
