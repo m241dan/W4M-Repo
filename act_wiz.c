@@ -3579,7 +3579,7 @@ void do_balzhur( CHAR_DATA* ch, const char* argument)
       send_to_char( "This will do little good on mobiles.\r\n", ch );
       return;
    }
-   if( victim->level >= get_trust( ch ) )
+   if( victim->top_level >= get_trust( ch ) )
    {
       send_to_char( "I wouldn't even think of that if I were you...\r\n", ch );
       return;
