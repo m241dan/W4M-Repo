@@ -1267,7 +1267,7 @@ void do_mpadvance( CHAR_DATA* ch, const char* argument)
       if( level < LEVEL_IMMORTAL )
          send_to_char( "You raise a level!!  ", victim );
       victim->level += 1;
-      victim->class_data[ch->Class]->level++;
+      victim->class_data[victim->Class]->level++;
       if( victim->level < 50 || victim->level > 50 )
          victim->top_level++;
       advance_level( victim, FALSE );

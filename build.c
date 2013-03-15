@@ -166,7 +166,7 @@ const char *const plr_flags[] = {
    "outcast", "brief", "combine", "prompt", "telnet_ga", "holylight",
    "wizinvis", "roomvnum", "silence", "noemote", "attacker", "notell", "log",
    "deny", "freeze", "thief", "killer", "litterbug", "ansi", "rip", "nice",
-   "flee", "autogold", "automap", "afk", "invisprompt", "compass"
+   "flee", "autogold", "automap", "afk", "invisprompt", "compass", "coord"
 };
 
 const char *const trap_flags[] = {
