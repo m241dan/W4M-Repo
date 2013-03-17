@@ -166,6 +166,9 @@ typedef struct realm_data REALM_DATA;
 typedef struct queue_timers QTIMER;
 typedef struct cooldown_data CD_DATA;
 typedef struct hit_data HIT_DATA;
+typedef struct conversation_data CONVERSATION_DATA;
+typedef struct talk_data TALK_DATA;
+
 /*
  * Function types.
  */
@@ -2401,7 +2404,7 @@ struct char_data
    short resistance[MAX_DAMTYPE];
    short penetration[MAX_DAMTYPE];
    double next_round;
-   CONVERSATION_DATA conv_data;
+   CONVERSATION_DATA *conv_data;
 };
 
 struct class_data

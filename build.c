@@ -1127,10 +1127,8 @@ void do_tset( CHAR_DATA* ch, const char* argument )
    char arg2[MAX_INPUT_LENGTH];
    char arg3[MAX_INPUT_LENGTH];
    char buf[MAX_STRING_LENGTH];
-   char outbuf[MAX_STRING_LENGTH];
    TALK_DATA *talk;
    CHAR_DATA *victim;
-   int max_talk;
 
    if( IS_NPC( ch ) )
    {
@@ -1203,19 +1201,19 @@ void do_tset( CHAR_DATA* ch, const char* argument )
 
       CREATE( new_talk, TALK_DATA, 1 );
       new_talk->talk_id = get_max_talk( victim ) + 1;
-      mudstrlcpy( new_talk->content, "(blank)", MAX_INPUT_LENGTH );
-      LINK( new_talk, victim->pMobIndex->first_talk, victim->pMobIndex->last_talk, next, prev );
+      mudstrlcpy( (char *)new_talk->content, "(blank)", MAX_INPUT_LENGTH );
+      LINK( new_talk, victim->pIndexData->first_talk, victim->pIndexData->last_talk, next, prev );
       ch_printf( ch, "...Creating New Talk Data with ID of %d\r\n", new_talk->talk_id );
       return;
    }
    if( !str_cmp( arg2, "list" ) )
    {
-      if( !victim->pMobIndex->first_talk )
+      if( !victim->pIndexData->first_talk )
       {
          send_to_char( "Mob has no talk data to list.\r\n", ch );
          return;
       }
-      for( talk = victim->pMobIndex->first_talk; talk; talk = talk->next )
+      for( talk = victim->pIndexData->first_talk; talk; talk = talk->next )
       {
          char buf2[MAX_STRING_LENGTH];
 
@@ -1253,7 +1251,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
    {
       if( !can_mmodify( ch, victim ) )
          return;
-      UNLINK( talk, ch->pMobIndex->first_talk, ch->pMobIndex->last_talk, next, prev );
+      UNLINK( talk, ch->pIndexData->first_talk, ch->pIndexData->last_talk, next, prev );
       free_talk( talk );
       sort_talk_ids( victim );
       send_to_char( "Removed.\r\n", ch );
@@ -1305,7 +1303,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
    {
       if( !can_mmodify( ch, victim ) )
          return;
-      CHECK_SUBRESTRICED( ch );
+      CHECK_SUBRESTRICTED( ch );
       if( ch->substate == SUB_REPEATCMD )
          ch->tempnum = SUB_REPEATCMD;
       else

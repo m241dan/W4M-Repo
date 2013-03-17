@@ -2971,7 +2971,7 @@ void do_talk( CHAR_DATA *ch, const char* argument )
       return;
    }
 
-   if( !mob->first_talk )
+   if( !mob->pIndexData->first_talk )
    {
       send_to_char( "That mob has nothing to say to you.\r\n", ch );
       return;
@@ -2985,8 +2985,7 @@ void do_talk( CHAR_DATA *ch, const char* argument )
 
 void display_branch( CHAR_DATA *ch )
 {
-   TALK_DATA *on_talk
-   TALK_DATA *talk;
+   TALK_DATA *on_talk;
 
    if( ( on_talk = ch->conv_data->current_talk ) == NULL )
    {
@@ -3051,7 +3050,7 @@ TALK_DATA *previous_branch( CHAR_DATA *ch )
 */
 void display_options( CHAR_DATA *ch )
 {
-   TALK_BRANCH *on_talk;
+   TALK_DATA *on_talk;
    TALK_DATA *option;
    int counter = 0;
 
@@ -3064,7 +3063,7 @@ void display_options( CHAR_DATA *ch )
    {
       for( option = ch->conv_data->first_talk; option; option = option->next )
       {
-         if( talk->from_talk == on_talk )
+         if( option->talk_from == on_talk )
          {
             counter++;
             ch_printf( ch, "   %d. %s\r\n", counter, option->content ? option->content : "No Content" );
@@ -3077,8 +3076,8 @@ void display_options( CHAR_DATA *ch )
       ch_printf( ch, "   Back.) %s\r\n", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );
    if( ch->conv_data->first_talk && ch->conv_data->first_talk != ch->conv_data->current_talk )
       ch_printf( ch, "   Return.) %s\r\n", ch->conv_data->first_talk->content ? ch->conv_data->first_talk->content : "No Content" );
-   ch_printf( ch, "   Abort.) To Cancel Conversation\r\n", ch );
-   send_to_char(, "Enter your selection: ", ch );
+   send_to_char( "   Abort.) To Cancel Conversation\r\n", ch );
+   send_to_char( "Enter your selection: ", ch );
    return;
 }
 
@@ -3090,9 +3089,9 @@ void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point )
    CREATE( conversation, CONVERSATION_DATA, 1 );
    conversation->player = ch;
    conversation->mobile = mob;
-   conversation->curr_talk = starting_point;
-   conversation->first_talk = mob->first_talk;
-   conversation->last_talk = mob->last_talk;
+   conversation->current_talk = get_talk( mob, starting_point );
+   conversation->first_talk = mob->pIndexData->first_talk;
+   conversation->last_talk = mob->pIndexData->last_talk;
    for( talk = conversation->first_talk; talk; talk = talk->next )
    {
       if( talk->talk_id == starting_point )
@@ -3133,7 +3132,7 @@ void converse( CHAR_DATA *ch, const char *argument )
 
    if( ( conv = ch->conv_data ) == NULL )
    {
-      bug( "%s: CH:%s conversing with no conv_data" __FUNCTION__, ch->name );
+      bug( "%s: CH:%s conversing with no conv_data", __FUNCTION__, ch->name );
       ch->desc->connected = CON_PLAYING;
       return;
    }
@@ -3147,7 +3146,7 @@ void converse( CHAR_DATA *ch, const char *argument )
 
    if( !conv->mobile || conv->mobile->in_room != ch->in_room )
    {
-      bug( "%s: %s's comversation either has no mobile or the mobile is not in the same room." __FUNCTION__, ch->name );
+      bug( "%s: %s's comversation either has no mobile or the mobile is not in the same room.", __FUNCTION__, ch->name );
       ch->desc->connected = CON_PLAYING;
       return;
    }
@@ -3165,7 +3164,7 @@ void converse( CHAR_DATA *ch, const char *argument )
       display_branch( ch );
       return;
    }
-   else if( !str_cmp( arg, "return" && conv->current_talk != conv->first_talk )
+   else if( !str_cmp( arg, "return" ) && conv->current_talk != conv->first_talk )
    {
       conv->current_talk = conv->first_talk;
       display_branch( ch );
@@ -3187,11 +3186,11 @@ void converse( CHAR_DATA *ch, const char *argument )
       count = 0;
       for( option = conv->first_talk; option; option = option->next )
       {
-         if( option->from_id == conv->current_talk )
+         if( option->talk_from == conv->current_talk )
             ++count;
          if( count == choice )
          {
-            conv->current_talk = talk;
+            conv->current_talk = option;
             display_branch( ch );
             return;
          }
@@ -3210,7 +3209,7 @@ int get_max_talk( CHAR_DATA *ch )
    TALK_DATA *talk;
    int count = 0;
 
-   for( talk = ch->pMobIndex->first_talk; talk; talk = talk->next )
+   for( talk = ch->pIndexData->first_talk; talk; talk = talk->next )
       count++;
 
    return count;
@@ -3220,7 +3219,7 @@ TALK_DATA *get_talk( CHAR_DATA *ch, int id )
 {
    TALK_DATA *talk;
 
-   for( talk = ch->pMobIndex->first_talk; talk; talk = talk->next )
+   for( talk = ch->pIndexData->first_talk; talk; talk = talk->next )
       if( talk->talk_id == id )
          return talk;
 
@@ -3230,7 +3229,7 @@ TALK_DATA *get_talk( CHAR_DATA *ch, int id )
 void free_talk( TALK_DATA *talk )
 {
    talk->talk_to->talk_from = NULL;
-   talk->talk_to-> = NULL;
+   talk->talk_to = NULL;
    talk->talk_from->talk_to = NULL;
    talk->talk_from = NULL;
    if( talk->content )
@@ -3243,7 +3242,7 @@ void sort_talk_ids( CHAR_DATA *ch )
    TALK_DATA *talk;
    int count = 0;
 
-   for( talk = ch->pMobIndex->first_talk; talk; talk = talk->next )
+   for( talk = ch->pIndexData->first_talk; talk; talk = talk->next )
    {
       if( talk->talk_id == count )
          talk->talk_id = count;
