@@ -3171,6 +3171,11 @@ void converse( CHAR_DATA *ch, const char *argument )
       display_branch( ch );
       return;
    }
+   else if( !str_cmp( arg, "abort" ) )
+   {
+      free_conversation( ch->conv_data );
+      ch->desc->connected = CON_PLAYING;
+   }
    else if( is_number( arg ) )
    {
       if( ( choice = atoi( arg ) ) == 0 )
@@ -3200,3 +3205,48 @@ void converse( CHAR_DATA *ch, const char *argument )
    }
 }
 
+int get_max_talk( CHAR_DATA *ch )
+{
+   TALK_DATA *talk;
+   int count = 0;
+
+   for( talk = ch->pMobIndex->first_talk; talk; talk = talk->next )
+      count++;
+
+   return count;
+}
+
+TALK_DATA *get_talk( CHAR_DATA *ch, int id )
+{
+   TALK_DATA *talk;
+
+   for( talk = ch->pMobIndex->first_talk; talk; talk = talk->next )
+      if( talk->talk_id == id )
+         return talk;
+
+   return NULL;
+}
+
+void free_talk( TALK_DATA *talk )
+{
+   talk->talk_to->talk_from = NULL;
+   talk->talk_to-> = NULL;
+   talk->talk_from->talk_to = NULL;
+   talk->talk_from = NULL;
+   if( talk->content )
+      STRFREE( talk->content );
+   DISPOSE( talk );
+}
+
+void sort_talk_ids( CHAR_DATA *ch )
+{
+   TALK_DATA *talk;
+   int count = 0;
+
+   for( talk = ch->pMobIndex->first_talk; talk; talk = talk->next )
+   {
+      if( talk->talk_id == count )
+         talk->talk_id = count;
+   }
+   return;
+}

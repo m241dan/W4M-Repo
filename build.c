@@ -1121,6 +1121,202 @@ void do_goto( CHAR_DATA* ch, const char* argument)
    return;
 }
 
+void do_tset( CHAR_DATA* ch, const char* argument )
+{
+   char arg1[MAX_INPUT_LENGTH];
+   char arg2[MAX_INPUT_LENGTH];
+   char arg3[MAX_INPUT_LENGTH];
+   char buf[MAX_STRING_LENGTH];
+   char outbuf[MAX_STRING_LENGTH];
+   TALK_DATA *talk;
+   CHAR_DATA *victim;
+   int max_talk;
+
+   if( IS_NPC( ch ) )
+   {
+      send_to_char( "Mobs can't tset\r\n", ch );
+      return;
+   }
+
+   if( !ch->desc )
+   {
+      send_to_char( "You have no descriptor\r\n", ch );
+      return;
+   }
+
+   switch( ch->substate )
+   {
+      default:
+         break;
+      case SUB_TALK_CONTENT:
+         if( !ch->dest_buf )
+         {
+            send_to_char( "Fatal error: please report it to staff immediately.\r\n", ch );
+            bug( "%s", "do_tset: sub_talk_content: NULL ch->dest_buf" );
+            ch->substate = SUB_NONE;
+            return;
+         }
+         talk = ( TALK_DATA * ) ch->dest_buf;
+         if( !talk )
+         {
+            bug( "%s: talk data you were editing disappeared.", __FUNCTION__ );
+            stop_editing( ch );
+            return;
+         }
+         STRFREE( talk->content );
+         talk->content = copy_buffer( ch );
+         stop_editing( ch );
+         ch->substate = ch->tempnum;
+         break; 
+   }
+
+   talk = NULL;
+   smash_tilde( argument );
+
+   argument = one_argument( argument, arg1 );
+
+   if( ( victim = get_char_room( ch, arg1 ) ) == NULL )
+   {
+      send_to_char( "That person isn't here.\r\n", ch );
+      return;
+   }
+
+   if( !IS_NPC( victim ) )
+   {
+      send_to_char( "Not on players.\r\n", ch );
+      return;
+   }
+   argument = one_argument( argument, arg2 );
+
+   if( arg2[0] == '\0' )
+   {
+      send_to_char( "Syntax: tset <mob> <option>\r\n", ch );
+      send_to_char( "Option being one of:\r\n", ch );
+      send_to_char( " create, list, remove, from, to, content\r\n", ch );
+   }
+
+   if( !str_cmp( arg2, "create" ) )
+   {
+      TALK_DATA *new_talk;
+      if( !can_mmodify( ch, victim ) )
+         return;
+
+      CREATE( new_talk, TALK_DATA, 1 );
+      new_talk->talk_id = get_max_talk( victim ) + 1;
+      mudstrlcpy( new_talk->content, "(blank)", MAX_INPUT_LENGTH );
+      LINK( new_talk, victim->pMobIndex->first_talk, victim->pMobIndex->last_talk, next, prev );
+      ch_printf( ch, "...Creating New Talk Data with ID of %d\r\n", new_talk->talk_id );
+      return;
+   }
+   if( !str_cmp( arg2, "list" ) )
+   {
+      if( !victim->pMobIndex->first_talk )
+      {
+         send_to_char( "Mob has no talk data to list.\r\n", ch );
+         return;
+      }
+      for( talk = victim->pMobIndex->first_talk; talk; talk = talk->next )
+      {
+         char buf2[MAX_STRING_LENGTH];
+
+         sprintf( buf, "ID: %d ", talk->talk_id );
+         if( talk->talk_to )
+         {
+            sprintf( buf2, "TO: %d ", talk->talk_to->talk_id ? talk->talk_to->talk_id : -1 );
+            mudstrlcat( buf, buf2, MAX_STRING_LENGTH );
+         }
+         if( talk->talk_from )
+         {
+            sprintf( buf2, "FROM: %d ", talk->talk_from->talk_id ? talk->talk_from->talk_id : -1 );
+            mudstrlcat( buf, buf2, MAX_STRING_LENGTH );
+         }
+         sprintf( buf2, "%-30s\r\n", talk->content ? talk->content : "No Content" );
+         mudstrlcat( buf, buf2, MAX_STRING_LENGTH );
+         send_to_char( buf, ch );
+      }
+      return;
+   }
+   argument = one_argument( argument, arg3 );
+   if( !is_number( arg3 ) )
+   {
+      send_to_char( "Not a valid ID entered.\r\n", ch );
+      return;
+   }
+
+   if( ( talk = get_talk( victim, atoi( arg3 ) ) ) == NULL )
+   {
+      send_to_char( "No such talk data with that ID exists on this mob.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( arg2, "remove" ) )
+   {
+      if( !can_mmodify( ch, victim ) )
+         return;
+      UNLINK( talk, ch->pMobIndex->first_talk, ch->pMobIndex->last_talk, next, prev );
+      free_talk( talk );
+      sort_talk_ids( victim );
+      send_to_char( "Removed.\r\n", ch );
+      return;
+   }
+   if( !str_cmp( arg2, "to" ) )
+   {
+      TALK_DATA *talk_to;
+      if( !can_mmodify( ch, victim ) )
+         return;
+
+      argument = one_argument( argument, arg3 );
+      if( !is_number( arg3 ) )
+      {
+         send_to_char( "Input a valid second ID.\r\n", ch );
+         return;
+      }
+      if( ( talk_to = get_talk( victim, atoi( arg3 ) ) ) == NULL )
+      {
+         send_to_char( "No such talk_data exists with that ID.\r\n", ch );
+         return;
+      }
+      talk->talk_to = talk_to;
+      send_to_char( "Ok.\r\n", ch );
+      return;
+   }
+   if( !str_cmp( arg2, "from" ) )
+   {
+      TALK_DATA *talk_from;
+      if( !can_mmodify( ch, victim ) )
+         return;
+
+      argument = one_argument( argument, arg3 );
+      if( !is_number( arg3 ) )
+      {
+         send_to_char( "Input a valid second ID.\r\n", ch );
+         return;
+      }
+      if( ( talk_from = get_talk( victim, atoi( arg3 ) ) ) == NULL )
+      {
+         send_to_char( "No such talk_data exists with that ID.\r\n", ch );
+         return;
+      }
+      talk->talk_from = talk_from;
+      send_to_char( "Ok.\r\n", ch );
+      return;
+   }
+   if( !str_cmp( arg2, "content" ) )
+   {
+      if( !can_mmodify( ch, victim ) )
+         return;
+      CHECK_SUBRESTRICED( ch );
+      if( ch->substate == SUB_REPEATCMD )
+         ch->tempnum = SUB_REPEATCMD;
+      else
+         ch->tempnum = SUB_NONE;
+      ch->substate = SUB_TALK_CONTENT;
+      ch->dest_buf = talk;
+      start_editing( ch, (char *)talk->content );
+      return;
+   }
+}
+
 void do_mset( CHAR_DATA* ch, const char* argument)
 {
    char arg1[MAX_INPUT_LENGTH];

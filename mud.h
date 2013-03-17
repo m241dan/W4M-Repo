@@ -772,9 +772,9 @@ typedef enum
    SUB_ROOM_EXTRA, SUB_ROOM_EXIT_DESC, SUB_WRITING_NOTE, SUB_MPROG_EDIT,
    SUB_HELP_EDIT, SUB_WRITING_MAP, SUB_PERSONAL_BIO, SUB_REPEATCMD,
    SUB_RESTRICTED, SUB_DEITYDESC, SUB_MORPH_DESC, SUB_MORPH_HELP,
-   SUB_PROJ_DESC, SUB_NEWS_POST, SUB_NEWS_EDIT,
+   SUB_PROJ_DESC, SUB_NEWS_POST, SUB_NEWS_EDIT, SUB_TALK_CONTENT,
    /*
-    * timer types ONLY below this point 
+    * timer types ONLY below this point
     */
    SUB_TIMER_DO_ABORT = 128, SUB_TIMER_CANT_ABORT
 } char_substates;
@@ -4217,6 +4217,8 @@ DECLARE_DO_FUN( do_think );
 DECLARE_DO_FUN( do_time );
 DECLARE_DO_FUN( do_timecmd );
 DECLARE_DO_FUN( do_title );
+DECLARE_DO_FUN( do_tset );
+DECLARE_DO_FUN( do_talk );
 DECLARE_DO_FUN( do_track );
 DECLARE_DO_FUN( do_traffic );
 DECLARE_DO_FUN( do_transfer );
@@ -4531,6 +4533,15 @@ bool can_learn_lang( CHAR_DATA * ch, int language );
 int countlangs( int languages );
 char *translate( int percent, const char *in, const char *name );
 const char *obj_short( OBJ_DATA * obj );
+void display_branch( CHAR_DATA *ch );
+void display_options( CHAR_DATA *ch );
+void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point );
+void free_conversation( CONVERSATION_DATA *conv );
+void converse( CHAR_DATA *ch, const char *argument );
+int get_max_talk( CHAR_DATA *ch );
+TALK_DATA *get_talk( CHAR_DATA *ch, int id );
+void free_talk( TALK_DATA *talk );
+void sort_talk_ids( CHAR_DATA *ch );
 
 /* act_info.c */
 int get_door( const char *arg );
