@@ -7070,6 +7070,40 @@ void fread_fuss_mobprog( FILE * fp, MPROG_DATA * mprg, MOB_INDEX_DATA * prog_tar
    }
 }
 
+void fread_fuss_talkdata( FILE * fp, TALK_DATA *talk )
+{
+   bool fMatch;
+   for( ;; )
+   {
+      const char *word = ( feof( fp ) ? "#ENDTALKDATA" : fread_word( fp ) );
+
+      if( word[0] == '\0' )
+      {
+         log_printf( "%s: EOF encountered reading file!", __FUNCTION__ );
+         word = "#ENDMOBILE";
+      }
+
+      switch( word[0])
+      {
+         default:
+            log_printf( "%s: no match: %s", __FUNCTION__, word );
+            fread_to_eol( fp );
+            break;
+         case '#':
+            if( !str_cmp( word, "#ENDTALKDATA" ) )
+               return;
+         case 'C':
+            KEY( "Content", talk->content, fread_string( fp ) );
+            break;
+         case 'T':
+            KEY( "TalkFrom", talk->talk_from_id, fread_number( fp ) );
+            KEY( "TalkID", talk->talk_id, fread_number( fp ) );
+            KEY( "TalkTo", talk->talk_to_id, fread_number( fp ) );
+            break;
+      }
+   }
+}
+
 void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
 {
    MOB_INDEX_DATA *pMobIndex = NULL;
@@ -7105,13 +7139,32 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
                pMobIndex->mudprogs = mprg;
                break;
             }
-
+            if( !str_cmp( word, "#TALKDATA" ) )
+            {
+               TALK_DATA *talk;
+               CREATE( talk, TALK_DATA, 1 );
+               fread_fuss_talkdata( fp, talk );
+               LINK( talk, pMobIndex->first_talk, pMobIndex->last_talk, next, prev );
+               break;
+            }
             if( !str_cmp( word, "#ENDMOBILE" ) )
             {
                if( !pMobIndex->long_descr )
                   pMobIndex->long_descr = STRALLOC( "" );
                if( !pMobIndex->description )
                   pMobIndex->description = STRALLOC( "" );
+
+               if( pMobIndex->first_talk )
+               {
+                  TALK_DATA *talk_sort;
+                  for( talk_sort = pMobIndex->first_talk; talk_sort; talk_sort = talk_sort->next )
+                  {
+                     if( talk_sort->talk_from_id > 0 )
+                        talk_sort->talk_from = get_talk( pMobIndex, talk_sort->talk_from_id );
+                     if( talk_sort->talk_to_id > 0 )
+                        talk_sort->talk_to = get_talk( pMobIndex, talk_sort->talk_to_id );
+                  }
+               }
 
                if( !oldmob )
                {

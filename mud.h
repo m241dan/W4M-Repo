@@ -2206,7 +2206,7 @@ struct mob_index_data
    TALK_DATA *last_talk;
 };
 
-#define INIT_CONVERSATION     0
+#define INIT_CONVERSATION     1
 
 struct conversation_data
 {
@@ -2224,6 +2224,8 @@ struct talk_data
    TALK_DATA *talk_to;
    TALK_DATA *talk_from;
    int talk_id;
+   int talk_to_id;
+   int talk_from_id;
    const char *content;
 };
 
@@ -4539,10 +4541,10 @@ const char *obj_short( OBJ_DATA * obj );
 void display_branch( CHAR_DATA *ch );
 void display_options( CHAR_DATA *ch );
 void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point );
-void free_conversation( CONVERSATION_DATA *conv );
+void free_conversation( CHAR_DATA *ch, CONVERSATION_DATA *conv );
 void converse( CHAR_DATA *ch, const char *argument );
 int get_max_talk( CHAR_DATA *ch );
-TALK_DATA *get_talk( CHAR_DATA *ch, int id );
+TALK_DATA *get_talk( MOB_INDEX_DATA *pIndexData, int id );
 void free_talk( TALK_DATA *talk );
 void sort_talk_ids( CHAR_DATA *ch );
 

@@ -2992,7 +2992,7 @@ void display_branch( CHAR_DATA *ch )
       bug( "CH: %s attempting to display_branch without having one", ch->name );
       return;
    }
-   ch_printf( ch, "%s\r\n", on_talk->content ? on_talk->content : "Nothing..." );
+   ch_printf( ch, "____________________________________________________________________________\r\n%s\r\n", on_talk->content ? on_talk->content : "Nothing..." );
    display_options( ch );
    return;
 }
@@ -3066,16 +3066,16 @@ void display_options( CHAR_DATA *ch )
          if( option->talk_from == on_talk )
          {
             counter++;
-            ch_printf( ch, "   %d. %s\r\n", counter, option->content ? option->content : "No Content" );
+            ch_printf( ch, "\r\n   %d. %s", counter, option->content ? option->content : "No Content" );
          }
       }
    }
    if( counter == 0 )
       send_to_char( "   You have no further talking points to discuss with this person.\r\n", ch );
    if( on_talk->talk_from )
-      ch_printf( ch, "   Back.) %s\r\n", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );
+      ch_printf( ch, "   Back.) %s", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );
    if( ch->conv_data->first_talk && ch->conv_data->first_talk != ch->conv_data->current_talk )
-      ch_printf( ch, "   Return.) %s\r\n", ch->conv_data->first_talk->content ? ch->conv_data->first_talk->content : "No Content" );
+      ch_printf( ch, "   Return.) %s", ch->conv_data->first_talk->content ? ch->conv_data->first_talk->content : "No Content" );
    send_to_char( "   Abort.) To Cancel Conversation\r\n", ch );
    send_to_char( "Enter your selection: ", ch );
    return;
@@ -3089,24 +3089,27 @@ void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point )
    CREATE( conversation, CONVERSATION_DATA, 1 );
    conversation->player = ch;
    conversation->mobile = mob;
-   conversation->current_talk = get_talk( mob, starting_point );
+   conversation->current_talk = get_talk( mob->pIndexData, starting_point );
    conversation->first_talk = mob->pIndexData->first_talk;
    conversation->last_talk = mob->pIndexData->last_talk;
    for( talk = conversation->first_talk; talk; talk = talk->next )
-   {
       if( talk->talk_id == starting_point )
-         conversation->current_talk = talk;
-      else
-      {
-         bug( "%s: No starting point with %d ID exists, called by %s.", __FUNCTION__, starting_point, ch->name );
-         return;
-      }
+          conversation->current_talk = talk;
+   if( conversation->current_talk == NULL )
+   {
+      bug( "%s: No starting point with %d ID exists, called by %s.", __FUNCTION__, starting_point, ch->name );
+      return;
    }
    ch->conv_data = conversation;
+   return;
 }
 
-void free_conversation( CONVERSATION_DATA *conv )
+void free_conversation( CHAR_DATA *ch )
 {
+   CONVERSATION_DATA *conv;
+
+   conv = ch->conv_data;
+   ch->conv_data = NULL;
    conv->player = NULL;
    conv->mobile = NULL;
    conv->first_talk = NULL;
@@ -3172,7 +3175,7 @@ void converse( CHAR_DATA *ch, const char *argument )
    }
    else if( !str_cmp( arg, "abort" ) )
    {
-      free_conversation( ch->conv_data );
+      free_conversation( ch );
       ch->desc->connected = CON_PLAYING;
    }
    else if( is_number( arg ) )
@@ -3190,7 +3193,13 @@ void converse( CHAR_DATA *ch, const char *argument )
             ++count;
          if( count == choice )
          {
-            conv->current_talk = option;
+            conv->current_talk = option->talk_to;
+            if( conv->current_talk == NULL )
+            {
+               free_conversation( ch );
+               ch->desc->connected = CON_PLAYING;
+               return;
+            }
             display_branch( ch );
             return;
          }
@@ -3215,11 +3224,11 @@ int get_max_talk( CHAR_DATA *ch )
    return count;
 }
 
-TALK_DATA *get_talk( CHAR_DATA *ch, int id )
+TALK_DATA *get_talk( MOB_INDEX_DATA *pIndexData, int id )
 {
    TALK_DATA *talk;
 
-   for( talk = ch->pIndexData->first_talk; talk; talk = talk->next )
+   for( talk = pIndexData->first_talk; talk; talk = talk->next )
       if( talk->talk_id == id )
          return talk;
 

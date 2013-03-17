@@ -1165,13 +1165,22 @@ void do_tset( CHAR_DATA* ch, const char* argument )
          talk->content = copy_buffer( ch );
          stop_editing( ch );
          ch->substate = ch->tempnum;
-         break; 
+         return;
    }
 
    talk = NULL;
    smash_tilde( argument );
 
    argument = one_argument( argument, arg1 );
+   argument = one_argument( argument, arg2 );
+
+   if( arg2[0] == '\0' )
+   {
+      send_to_char( "Syntax: tset <mob> <option>\r\n", ch );
+      send_to_char( "Option being one of:\r\n", ch );
+      send_to_char( " create, list, remove, from, to, content\r\n", ch );
+      return;
+   }
 
    if( ( victim = get_char_room( ch, arg1 ) ) == NULL )
    {
@@ -1184,13 +1193,11 @@ void do_tset( CHAR_DATA* ch, const char* argument )
       send_to_char( "Not on players.\r\n", ch );
       return;
    }
-   argument = one_argument( argument, arg2 );
 
-   if( arg2[0] == '\0' )
+   if( !xIS_SET( victim->act, ACT_PROTOTYPE ) )
    {
-      send_to_char( "Syntax: tset <mob> <option>\r\n", ch );
-      send_to_char( "Option being one of:\r\n", ch );
-      send_to_char( " create, list, remove, from, to, content\r\n", ch );
+      send_to_char( "Mob must be set to prototype.\r\n", ch );
+      return;
    }
 
    if( !str_cmp( arg2, "create" ) )
@@ -1201,7 +1208,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
 
       CREATE( new_talk, TALK_DATA, 1 );
       new_talk->talk_id = get_max_talk( victim ) + 1;
-      mudstrlcpy( (char *)new_talk->content, "(blank)", MAX_INPUT_LENGTH );
+      new_talk->content = STRALLOC( "(blank)" );
       LINK( new_talk, victim->pIndexData->first_talk, victim->pIndexData->last_talk, next, prev );
       ch_printf( ch, "...Creating New Talk Data with ID of %d\r\n", new_talk->talk_id );
       return;
@@ -1228,7 +1235,9 @@ void do_tset( CHAR_DATA* ch, const char* argument )
             sprintf( buf2, "FROM: %d ", talk->talk_from->talk_id ? talk->talk_from->talk_id : -1 );
             mudstrlcat( buf, buf2, MAX_STRING_LENGTH );
          }
-         sprintf( buf2, "%-30s\r\n", talk->content ? talk->content : "No Content" );
+         sprintf( buf2, "%s", talk->content ? talk->content : "No Content" );
+         if( nifty_is_name( buf2, "(blank)" ) )
+            mudstrlcat( buf2, "\r\n", MAX_STRING_LENGTH );
          mudstrlcat( buf, buf2, MAX_STRING_LENGTH );
          send_to_char( buf, ch );
       }
@@ -1241,7 +1250,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
       return;
    }
 
-   if( ( talk = get_talk( victim, atoi( arg3 ) ) ) == NULL )
+   if( ( talk = get_talk( victim->pIndexData, atoi( arg3 ) ) ) == NULL )
    {
       send_to_char( "No such talk data with that ID exists on this mob.\r\n", ch );
       return;
@@ -1269,7 +1278,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
          send_to_char( "Input a valid second ID.\r\n", ch );
          return;
       }
-      if( ( talk_to = get_talk( victim, atoi( arg3 ) ) ) == NULL )
+      if( ( talk_to = get_talk( victim->pIndexData, atoi( arg3 ) ) ) == NULL )
       {
          send_to_char( "No such talk_data exists with that ID.\r\n", ch );
          return;
@@ -1290,7 +1299,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
          send_to_char( "Input a valid second ID.\r\n", ch );
          return;
       }
-      if( ( talk_from = get_talk( victim, atoi( arg3 ) ) ) == NULL )
+      if( ( talk_from = get_talk( victim->pIndexData, atoi( arg3 ) ) ) == NULL )
       {
          send_to_char( "No such talk_data exists with that ID.\r\n", ch );
          return;
@@ -6765,6 +6774,19 @@ bool mprog_write_prog( FILE * fpout, MPROG_DATA * mprog )
    return false;
 }
 
+void fwrite_talk_data( FILE * fpout, TALK_DATA * talk )
+{
+   fprintf( fpout, "%s", "#TALKDATA\n" );
+   fprintf( fpout, "TalkID      %d\n", talk->talk_id );
+   fprintf( fpout, "Content     %s~", talk->content );
+   if( talk->talk_from )
+      fprintf( fpout, "TalkFrom    %d\n", talk->talk_from->talk_id );
+   if( talk->talk_to )
+      fprintf( fpout, "TalkTo      %d\n", talk->talk_to->talk_id );
+   fprintf( fpout, "%s", "#ENDTALKDATA\n\n" );
+   return;
+}
+
 void save_reset_level( FILE * fpout, RESET_DATA * start_reset, const int level )
 {
    int spaces = level * 2;
@@ -6999,7 +7021,7 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
    SHOP_DATA *pShop;
    REPAIR_DATA *pRepair;
    MPROG_DATA *mprog;
-
+   TALK_DATA *talk;
    if( install )
       xREMOVE_BIT( pMobIndex->act, ACT_PROTOTYPE );
 
@@ -7089,6 +7111,11 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
    {
       for( mprog = pMobIndex->mudprogs; mprog; mprog = mprog->next )
          mprog_write_prog( fpout, mprog );
+   }
+   if( pMobIndex->first_talk )
+   {
+      for( talk = pMobIndex->first_talk; talk; talk = talk->next )
+         fwrite_talk_data( fpout, talk );
    }
    fprintf( fpout, "%s", "#ENDMOBILE\n\n" );
 }
