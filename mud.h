@@ -759,7 +759,7 @@ typedef enum
 /* Uncomment this section if using Samson's Shell Code */
 /* CON_FORKED, CON_IAFORKED, */
 
-   CON_EDITING
+   CON_EDITING, CON_TALKING
 } connection_types;
 
 /*
@@ -2199,6 +2199,35 @@ struct mob_index_data
    short penetration[MAX_DAMTYPE];
    short resistance[MAX_DAMTYPE];
    EXT_BV damtype;
+   TALK_DATA *first_talk;
+   TALK_DATA *last_talk;
+};
+
+struct conversation_data
+{
+   CHAR_DATA *player;
+   CHAR_DATA *mobile;
+   TALK_DATA *first_talk;
+   TALK_DATA *last_talk;
+   int curr_talk;
+};
+
+struct talk_branch
+{
+   TALK_BRANCH *master_branch;
+   TALK_BRANCH *prev_branch;
+   TALK_DATA *first_option;
+   TALK_DATA *last_option;
+   const char *content;
+   int options;
+};
+
+struct talk_data
+{
+   TALK_BRANCH *to_branch;
+   TALK_DATA *next_option;
+   TALK_DATA *prev_option;
+   const char *prompt;
 };
 
 struct hunt_hate_fear
@@ -2378,6 +2407,7 @@ struct char_data
    short resistance[MAX_DAMTYPE];
    short penetration[MAX_DAMTYPE];
    double next_round;
+   CONVERSATION_DATA conv_data;
 };
 
 struct class_data
