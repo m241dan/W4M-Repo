@@ -2971,82 +2971,138 @@ void do_talk( CHAR_DATA *ch, const char* argument )
       return;
    }
 
-   if( !mob->master_branch && !IS_IMMORTAL( ch ) )
-      return;
-   else if( !mob->master_branch && IS_IMMORTAL( ch ) && !xIS_SET( mob->act, ACT_PROTOTYPE ) )
+   if( !mob->first_talk )
    {
-      send_to_char( "To add more to this mobs conversational skills, mset it to prototype and talk to it again.\r\n", ch );
+      send_to_char( "That mob has nothing to say to you.\r\n", ch );
       return;
    }
-   else
-      CREATE( mob->master_branch, TALK_BRANCH, 1 );
-
    ch_printf( ch, "You begin talking to %s.\r\n", mob->name );
-   create_conversation( ch, mob );
+   create_conversation( ch, mob, INIT_CONVERSATION );
    display_branch( ch );
-
-   if( !ch->conv_data->curr_branch->first_option && ( !IS_IMMORTAL( ch ) || !xIS_SET( ch->act, ACT_PROTOTYPE ) ) )
-      return;
    ch->desc->connected = CON_TALKING;
    return;
 }
 
 void display_branch( CHAR_DATA *ch )
 {
-   TALK_BRANCH *branch;
-   TALK_DATA *option;
-   int counter = 1;
+   TALK_DATA *on_talk
+   TALK_DATA *talk;
 
-   branch = ch->conv_data->curr_branch;
-
-   if( !branch )
+   if( ( on_talk = ch->conv_data->current_talk ) == NULL )
    {
       bug( "CH: %s attempting to display_branch without having one", ch->name );
       return;
    }
-
-   ch_printf( ch, "%s\r\n", branch->content ? branch->content : "Nothing" );
-   send_to_char( "\r\n", ch );
-
-   if( !branch->first_option )
-      for( option = branch->first_option; option; option = option->next_option )
-      {
-         ch_printf( ch, "   %d. %s\r\n", counter, option->prompt ? option->prompt : "Nothing" );
-         counter++;
-      }
+   ch_printf( ch, "%s\r\n", on_talk->content ? on_talk->content : "Nothing..." );
+   display_options( ch );
    return;
 }
+/*
+TALK_DATA *current_branch( CHAR_DATA *ch )
+{
+   TALK_DATA *talk;
 
+   if( !ch->conv_data )
+   {
+      bug( "%s: being called by %s with no conversation happening.", __FUNCTION__, ch->name );
+      return NULL;
+   }
+   if( !ch->conv_data->curr_talk == < 0 )
+   {
+      bug( %s: being called by %s's conversation with not curr_talk set." __FUNCTION__, ch->name );
+      return NULL;
+   }
+   if( !ch->conv_data->first_talk )
+   {
+      bug( %s: being called by %s's conversation that has no talk data", __FUNCTION__, ch->name );
+      return NULL;
+   }
+
+   for( talk = ch->conv_data->first_talk; talk; talk = talk->next )
+   {
+      if( talk->talk_id == ch->conv_data->curr_talk )
+         return talk;
+   }
+   bug( "%s: returned by %s with no talk_data for the current branch they are on.", __FUNCTION__, ch->name );
+   return NULL;
+}
+TALK_DATA *previous_branch( CHAR_DATA *ch )
+{
+   TALK_DATA *prev_branch;
+   TALK_DATA *on_branch;
+
+   if( ( on_branch = current_branch ) == NULL )
+   {
+      bug( %s: being called by %s without being on a branch", __FUNCTION__, ch->name );
+      return NULL;
+   }
+
+   if( on_branch->talk_id == 0 )
+      return NULL;
+
+   for( prev_branch = ch->conv_data->first_talk; prev_branch; prev_branch = prev_branch->next )
+   {
+      if( prev_branch->talk_id == on_branch->from_id )
+         return prev_branch;
+   }
+   bug( "%s: being returned by %s without finding a previous branch.", __FUNCTION__, ch->name );
+   return NULL;
+}
+*/
 void display_options( CHAR_DATA *ch )
 {
-   TALK_BRANCH *branch;
+   TALK_BRANCH *on_talk;
    TALK_DATA *option;
-   int counter = 1;
+   int counter = 0;
 
-   branch = ch->conv_data->curr_branch;
-
-   if( !branch )
+   if( ( on_talk = ch->conv_data->current_talk ) == NULL )
    {
-      bug( "CH: %s attempting to display_branch without having one", ch->name );
+      bug( "CH: %s attempting to display_options without being on a current_talk", ch->name );
       return;
    }
-   if( !branch->first_option )
-      for( option = branch->first_option; option; option = option->next_option )
+   if( ch->conv_data->first_talk )
+   {
+      for( option = ch->conv_data->first_talk; option; option = option->next )
       {
-         ch_printf( ch, "   %d. %s\r\n", counter, option->prompt ? option->prompt : "Nothing" );
-         counter++;
+         if( talk->from_talk == on_talk )
+         {
+            counter++;
+            ch_printf( ch, "   %d. %s\r\n", counter, option->content ? option->content : "No Content" );
+         }
       }
+   }
+   if( counter == 0 )
+      send_to_char( "   You have no further talking points to discuss with this person.\r\n", ch );
+   if( on_talk->talk_from )
+      ch_printf( ch, "   Back.) %s\r\n", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );
+   if( ch->conv_data->first_talk && ch->conv_data->first_talk != ch->conv_data->current_talk )
+      ch_printf( ch, "   Return.) %s\r\n", ch->conv_data->first_talk->content ? ch->conv_data->first_talk->content : "No Content" );
+   ch_printf( ch, "   Abort.) To Cancel Conversation\r\n", ch );
+   send_to_char(, "Enter your selection: ", ch );
    return;
 }
 
-void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob )
+void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point )
 {
    CONVERSATION_DATA *conversation;
+   TALK_DATA *talk;
 
    CREATE( conversation, CONVERSATION_DATA, 1 );
    conversation->player = ch;
    conversation->mobile = mob;
-   conversation->curr_branch = mob->master_branch;
+   conversation->curr_talk = starting_point;
+   conversation->first_talk = mob->first_talk;
+   conversation->last_talk = mob->last_talk;
+   for( talk = conversation->first_talk; talk; talk = talk->next )
+   {
+      if( talk->talk_id == starting_point )
+         conversation->current_talk = talk;
+      else
+      {
+         bug( "%s: No starting point with %d ID exists, called by %s.", __FUNCTION__, starting_point, ch->name );
+         return;
+      }
+   }
    ch->conv_data = conversation;
 }
 
@@ -3054,7 +3110,9 @@ void free_conversation( CONVERSATION_DATA *conv )
 {
    conv->player = NULL;
    conv->mobile = NULL;
-   conv->curr_branch = NULL;
+   conv->first_talk = NULL;
+   conv->last_talk = NULL;
+   conv->current_talk = NULL;
    DISPOSE( conv );
 }
 
@@ -3062,11 +3120,15 @@ void converse( CHAR_DATA *ch, const char *argument )
 {
    CONVERSATION_DATA *conv;
    TALK_DATA *option;
-   const char *orig_argument;
    char arg[MAX_STRING_LENGTH];
-   int number, count;
+   int choice, count;
 
-   orig_argument = argument;
+   if( argument[0] == '\0' )
+   {
+      send_to_char( "Enter your selection: ", ch );
+      return;
+   }
+
    argument = one_argument( argument, arg );
 
    if( ( conv = ch->conv_data ) == NULL )
@@ -3090,82 +3152,51 @@ void converse( CHAR_DATA *ch, const char *argument )
       return;
    }
 
-   if( !conv->curr_branch )
+   if( !conv->current_talk )
    {
       bug( "%s: %s's conversation somehow has no branch.", __FUNCTION__, ch->name );
       ch->desc->connected = CON_PLAYING;
       return;
    }
 
-   if( is_number( arg ) && !conv->editing_option )
+   if( !str_cmp( arg, "back" ) && conv->current_talk->talk_from )
    {
-      number = atoi( arg );
-      if( number > conv->curr_branch->options && ( !IS_IMMORTAL( ch ) || !xIS_SET( conv->mobile->act, ACT_PROTOTYPE ) ) )
-      {
-         send_to_char( "Not a valid option.\r\n", ch );
-         display_options( ch );
-         return;
-      }
-      if( number > ( conv->curr_branch->options + 1 ) )
-      {
-         send_to_char( "Choose a lower number.\r\n", ch );
-         return;
-      }
-      if( number == ( conv->curr_branch->options + 1 ) && IS_IMMORTAL( ch ) && xIS_SET( conv->mobile->act, ACT_PROTOTYPE ) )
-      {
-         TALK_DATA *new_option;
-
-         send_to_char( "Creating new option.\r\Enter Prompt:(cancel to stop)", ch );
-         CREATE( new_option, TALK_DATA, 1 );
-         LINK( new_option, conv->curr_branch->first_option, conv->curr_branch->last_option, next_option, prev_option );
-         conv->editing_option = new_option;
-         conv->curr_branch->options++;
-         return;
-      }
-
-      count = 0;
-
-      for( option = conv->curr_branch->first_option; option; option = option->next_option )
-      {
-         count++;
-         if( count == number )
-            break;
-      }
-
-      if( !option->to_branch && IS_IMMORTAL( ch ) && xIS_SET( conv->mobile->act, ACT_PROTOTYPE ) )
-      {
-         TALK_BRANCH *new_branch;
-
-         send_to_char( "Creating new branch.\r\n", ch );
-
-         CREATE( new_branch, TALK_BRANCH, 1 );
-         new_branch->master_branch = conv->mobile->master_branch;
-         new_branch->prev_branch = conv->curr_branch;
-
-         conv->curr_branch = new_branch;
-      }
-      else
-         conv->curr_branch = option->to_branch;
+      conv->current_talk = conv->current_talk->talk_from;
       display_branch( ch );
       return;
    }
-   if( conv->editing_option )
+   else if( !str_cmp( arg, "return" && conv->current_talk != conv->first_talk )
    {
-      if( !strcmp( arg, "cancel" ) )
+      conv->current_talk = conv->first_talk;
+      display_branch( ch );
+      return;
+   }
+   else if( is_number( arg ) )
+   {
+      if( ( choice = atoi( arg ) ) == 0 )
       {
-         send_to_char( "Deleting Option.\r\n", ch );
-         UNLINK( conv->editing_option, conv->curr_branch->first_option, conv->curr_branch->last_option, next_option, prev_option );
-         conv->editing_option->to_branch = NULL;
-         STRFREE( conv->editing_option->prompt );
-         DISPOSE( conv->editing_option );
-         conv->curr_branch->options--;
+         send_to_char( "Not a valid selection.\r\n ", ch );
+         display_options( ch );
+         return;
       }
-      mudstrlcpy( conv->editing_option->prompt, orig_argument, MAX_STRING_LENGTH );
-      conv->editing_option = NULL;
-      send_to_char( "New Option Prompt Set.\r\n", ch );
+      count = 0;
+      for( option = conv->first_talk; option; option = option->next )
+      {
+         if( option->from_id == conv->current_talk )
+            ++count;
+         if( count == choice )
+         {
+            conv->current_talk = talk;
+            display_branch( ch );
+            return;
+         }
+      }
+   }
+   else
+   {
+      send_to_char( "Not a valid option.\r\n", ch );
       display_options( ch );
       return;
    }
 }
 
-Need to Modularize: Switch branch, delete option, edit_option

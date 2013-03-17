@@ -2203,31 +2203,25 @@ struct mob_index_data
    TALK_DATA *last_talk;
 };
 
+#define INIT_CONVERSATION     0
+
 struct conversation_data
 {
    CHAR_DATA *player;
    CHAR_DATA *mobile;
    TALK_DATA *first_talk;
    TALK_DATA *last_talk;
-   int curr_talk;
-};
-
-struct talk_branch
-{
-   TALK_BRANCH *master_branch;
-   TALK_BRANCH *prev_branch;
-   TALK_DATA *first_option;
-   TALK_DATA *last_option;
-   const char *content;
-   int options;
+   TALK_DATA *current_talk;
 };
 
 struct talk_data
 {
-   TALK_BRANCH *to_branch;
-   TALK_DATA *next_option;
-   TALK_DATA *prev_option;
-   const char *prompt;
+   TALK_DATA *next;
+   TALK_DATA *prev;
+   TALK_DATA *talk_to;
+   TALK_DATA *talk_from;
+   int talk_id;
+   const char *content;
 };
 
 struct hunt_hate_fear
