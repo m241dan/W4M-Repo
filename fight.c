@@ -2719,6 +2719,7 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
    int level_dif;
 
    level_dif = victim->level - gch->level;
+
    if( level_dif >= 5 )
       return 200;
    if( level_dif == 4 )
