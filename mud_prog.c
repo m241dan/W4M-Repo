@@ -2907,6 +2907,26 @@ void mprog_hour_trigger( CHAR_DATA * mob )
       mprog_time_check( mob, NULL, NULL, NULL, HOUR_PROG );
 }
 
+void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor )
+{
+   if( !actor->conv_data )
+   {
+      bug( "%s: being called PC has no conv_data.", __FUNCTION__ );
+      return;
+   }
+   if( !actor->conv_data->current_talk )
+   {
+      bug( "%s: being called without complete conversation data.", __FUNCTION__ );
+      return;
+   }
+   if( !actor->conv_data->current_talk->script )
+   {
+      bug( "%s: being called without a script to execute.", __FUNCTION__ );
+      return;
+   }
+   mprog_driver( actor->conv_data->current_talk->script, mob, actor, NULL, NULL, FALSE );
+}
+
 void mprog_speech_trigger( const char *txt, CHAR_DATA * actor )
 {
    CHAR_DATA *vmob;
