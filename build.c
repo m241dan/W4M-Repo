@@ -1251,8 +1251,6 @@ void do_tset( CHAR_DATA* ch, const char* argument )
                        talk->talk_from ? talk->talk_from->talk_id : 0 ,
                        script ? "Yes" : "No",
                        talk->content ? talk->content : "No Content" );
-         if( nifty_is_name( talk->content, "(blank)" ) )
-            send_to_pager( "\r\n", ch );
       }
       return;
    }
@@ -1273,7 +1271,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
    {
       if( !can_mmodify( ch, victim ) )
          return;
-      UNLINK( talk, ch->pIndexData->first_talk, ch->pIndexData->last_talk, next, prev );
+      UNLINK( talk, victim->pIndexData->first_talk, victim->pIndexData->last_talk, next, prev );
       free_talk( talk );
       sort_talk_ids( victim );
       send_to_char( "Removed.\r\n", ch );

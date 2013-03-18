@@ -3269,8 +3269,8 @@ void sort_talk_ids( CHAR_DATA *ch )
 
    for( talk = ch->pIndexData->first_talk; talk; talk = talk->next )
    {
-      if( talk->talk_id == count )
-         talk->talk_id = count;
+      count++;
+      talk->talk_id = count;
    }
    return;
 }

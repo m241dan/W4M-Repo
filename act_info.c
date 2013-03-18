@@ -814,7 +814,8 @@ void show_char_to_char_0( CHAR_DATA * victim, CHAR_DATA * ch )
       mudstrlcat( buf, "(Writing) ", MAX_STRING_LENGTH );
    if( victim->morph != NULL )
       mudstrlcat( buf, "(Morphed) ", MAX_STRING_LENGTH );
-
+   if( IS_NPC( victim ) && victim->pIndexData->first_talk )
+      mudstrlcat( buf, "(T) ", MAX_STRING_LENGTH );
    set_char_color( AT_PERSON, ch );
    if( ( victim->position == victim->defposition && victim->long_descr[0] != '\0' )
        || ( victim->morph && victim->morph->morph && victim->morph->morph->defpos == victim->position ) )
