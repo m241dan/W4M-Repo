@@ -4861,7 +4861,7 @@ void progbug( const char *str, CHAR_DATA * mob );
 void rset_supermob( ROOM_INDEX_DATA * room );
 void release_supermob( void );
 void mpsleep_update( void );
-void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor );
+void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor, TALK_DATA *talk );
 
 /* planes.c */
 PLANE_DATA *plane_lookup( const char *name );

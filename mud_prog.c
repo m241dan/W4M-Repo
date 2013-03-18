@@ -2907,19 +2907,14 @@ void mprog_hour_trigger( CHAR_DATA * mob )
       mprog_time_check( mob, NULL, NULL, NULL, HOUR_PROG );
 }
 
-void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor )
+void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor, TALK_DATA *talk )
 {
    if( !actor->conv_data )
    {
       bug( "%s: being called PC has no conv_data.", __FUNCTION__ );
       return;
    }
-   if( !actor->conv_data->current_talk )
-   {
-      bug( "%s: being called without complete conversation data.", __FUNCTION__ );
-      return;
-   }
-   if( !actor->conv_data->current_talk->script )
+   if( talk->script )
       return;
    mprog_driver( actor->conv_data->current_talk->script, mob, actor, NULL, NULL, FALSE );
 }

@@ -3193,8 +3193,9 @@ void converse( CHAR_DATA *ch, const char *argument )
             ++count;
          if( count == choice )
          {
-            mprog_talksystem_trigger( conv->mobile, ch );
+            mprog_talksystem_trigger( conv->mobile, ch, option );
             conv->current_talk = option->talk_to;
+            mprog_talksystem_trigger( conv->mobile, ch, conv->current_talk );
             if( conv->current_talk == NULL )
             {
                free_conversation( ch );
