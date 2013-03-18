@@ -4543,7 +4543,7 @@ const char *obj_short( OBJ_DATA * obj );
 void display_branch( CHAR_DATA *ch );
 void display_options( CHAR_DATA *ch );
 void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point );
-void free_conversation( CHAR_DATA *ch, CONVERSATION_DATA *conv );
+void free_conversation( CHAR_DATA *ch );
 void converse( CHAR_DATA *ch, const char *argument );
 int get_max_talk( CHAR_DATA *ch );
 TALK_DATA *get_talk( MOB_INDEX_DATA *pIndexData, int id );

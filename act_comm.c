@@ -2992,6 +2992,12 @@ void display_branch( CHAR_DATA *ch )
       bug( "CH: %s attempting to display_branch without having one", ch->name );
       return;
    }
+   if( ch->conv_data->player->in_room != ch->conv_data->mobile->in_room )
+   {
+      ch_printf( ch, "You are too far from %s to have a conversation with them.\r\n", ch->conv_data->mobile->name );
+      free_conversation( ch );
+      ch->desc->connected = CON_PLAYING;
+   } 
    ch_printf( ch, "____________________________________________________________________________\r\n%s\r\n", on_talk->content ? on_talk->content : "Nothing..." );
    display_options( ch );
    return;
@@ -3143,6 +3149,7 @@ void converse( CHAR_DATA *ch, const char *argument )
    if( !conv->player || conv->player != ch )
    {
       bug( "%s: Some serious problem with %s's conversation attempt.", __FUNCTION__, ch->name );
+      free_conversation( ch );
       ch->desc->connected = CON_PLAYING;
       return;
    }
@@ -3150,6 +3157,7 @@ void converse( CHAR_DATA *ch, const char *argument )
    if( !conv->mobile || conv->mobile->in_room != ch->in_room )
    {
       bug( "%s: %s's comversation either has no mobile or the mobile is not in the same room.", __FUNCTION__, ch->name );
+      free_conversation( ch );
       ch->desc->connected = CON_PLAYING;
       return;
    }
