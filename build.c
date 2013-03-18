@@ -1242,10 +1242,10 @@ void do_tset( CHAR_DATA* ch, const char* argument )
       }
       for( talk = victim->pIndexData->first_talk; talk; talk = talk->next )
       {
-         pager_printf( ch, "ID: %-2d TO: %-3d, FROM: %-3d Script: %-3s Content:\r\n%s", 
+         pager_printf( ch, "-ID: %-2d TO: %-3d, FROM: %-3d Script: %-3s\r\n%s\r\n", 
                        talk->talk_id,
-                       talk->talk_to->talk_id ? talk->talk_to->talk_id : 0,
-                       talk->talk_from->talk_id ? talk->talk_from->talk_id : -1,
+                       talk->talk_to ? talk->talk_to->talk_id : 0,
+                       talk->talk_from ? talk->talk_from->talk_id : 0 ,
                        talk->script ? "Yes" : "No",
                        talk->content ? talk->content : "No Content" );
          if( nifty_is_name( talk->content, "(blank)" ) )
@@ -6802,7 +6802,7 @@ void fwrite_talk_data( FILE * fpout, TALK_DATA * talk )
 {
    fprintf( fpout, "%s", "#TALKDATA\n" );
    fprintf( fpout, "TalkID      %d\n", talk->talk_id );
-   fprintf( fpout, "Content     %s~", talk->content );
+   fprintf( fpout, "Content     %s~\n", talk->content );
    if( talk->talk_from )
       fprintf( fpout, "TalkFrom    %d\n", talk->talk_from->talk_id );
    if( talk->talk_to )
