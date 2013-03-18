@@ -2914,7 +2914,9 @@ void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor, TALK_DATA *ta
       bug( "%s: being called PC has no conv_data.", __FUNCTION__ );
       return;
    }
-   if( talk->script )
+   if( !talk->script )
+      return;
+   else if( talk->script[0] == '\0' )
       return;
    mprog_driver( actor->conv_data->current_talk->script, mob, actor, NULL, NULL, FALSE );
 }

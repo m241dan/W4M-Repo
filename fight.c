@@ -305,7 +305,6 @@ void violence_update( void )
 
       if( ch->target && ch->position == POS_FIGHTING && !ch->fighting && ch->target->range < get_max_range( ch ) )
       {
-         ch_printf( ch, "&R---This is being called---&w\r\n" );
          ch->next_round = .25;
          add_queue( ch, COMBAT_ROUND );
       }

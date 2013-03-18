@@ -1242,11 +1242,14 @@ void do_tset( CHAR_DATA* ch, const char* argument )
       }
       for( talk = victim->pIndexData->first_talk; talk; talk = talk->next )
       {
+         bool script = FALSE;
+         if( talk->script && talk->script[0] != '\0' )
+            script = TRUE;
          pager_printf( ch, "-ID: %-2d TO: %-3d, FROM: %-3d Script: %-3s\r\n%s\r\n", 
                        talk->talk_id,
                        talk->talk_to ? talk->talk_to->talk_id : 0,
                        talk->talk_from ? talk->talk_from->talk_id : 0 ,
-                       talk->script ? "Yes" : "No",
+                       script ? "Yes" : "No",
                        talk->content ? talk->content : "No Content" );
          if( nifty_is_name( talk->content, "(blank)" ) )
             send_to_pager( "\r\n", ch );
@@ -1343,6 +1346,8 @@ void do_tset( CHAR_DATA* ch, const char* argument )
          ch->tempnum = SUB_NONE;
       ch->substate = SUB_TALK_SCRIPT;
       ch->dest_buf = talk;
+      if( !talk->script )
+         talk->script = STRALLOC( "" );
       start_editing( ch, (char *)talk->script );
       return;
    }
