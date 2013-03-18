@@ -7095,6 +7095,9 @@ void fread_fuss_talkdata( FILE * fp, TALK_DATA *talk )
          case 'C':
             KEY( "Content", talk->content, fread_string( fp ) );
             break;
+         case 'S':
+            KEY( "Script", talk->script, fread_string( fp ) );
+            break;
          case 'T':
             KEY( "TalkFrom", talk->talk_from_id, fread_number( fp ) );
             KEY( "TalkID", talk->talk_id, fread_number( fp ) );

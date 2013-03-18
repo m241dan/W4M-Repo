@@ -6808,6 +6808,8 @@ void fwrite_talk_data( FILE * fpout, TALK_DATA * talk )
    fprintf( fpout, "%s", "#TALKDATA\n" );
    fprintf( fpout, "TalkID      %d\n", talk->talk_id );
    fprintf( fpout, "Content     %s~\n", talk->content );
+   if( talk->script && talk->script[0] != '\0' )
+      fprintf( fpout, "Script      %s~\n", strip_cr( talk->script ) );
    if( talk->talk_from )
       fprintf( fpout, "TalkFrom    %d\n", talk->talk_from->talk_id );
    if( talk->talk_to )
