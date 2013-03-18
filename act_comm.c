@@ -2995,9 +2995,8 @@ void display_branch( CHAR_DATA *ch )
    if( ch->conv_data->player->in_room != ch->conv_data->mobile->in_room )
    {
       ch_printf( ch, "You are too far from %s to have a conversation with them.\r\n", ch->conv_data->mobile->name );
-      free_conversation( ch );
-      ch->desc->connected = CON_PLAYING;
-   } 
+      stop_talking( ch );
+   }
    ch_printf( ch, "____________________________________________________________________________\r\n%s\r\n", on_talk->content ? on_talk->content : "Nothing..." );
    display_options( ch );
    return;
@@ -3142,30 +3141,28 @@ void converse( CHAR_DATA *ch, const char *argument )
    if( ( conv = ch->conv_data ) == NULL )
    {
       bug( "%s: CH:%s conversing with no conv_data", __FUNCTION__, ch->name );
-      ch->desc->connected = CON_PLAYING;
+      stop_talking( ch );
       return;
    }
 
    if( !conv->player || conv->player != ch )
    {
       bug( "%s: Some serious problem with %s's conversation attempt.", __FUNCTION__, ch->name );
-      free_conversation( ch );
-      ch->desc->connected = CON_PLAYING;
+      stop_talking( ch );
       return;
    }
 
    if( !conv->mobile || conv->mobile->in_room != ch->in_room )
    {
       bug( "%s: %s's comversation either has no mobile or the mobile is not in the same room.", __FUNCTION__, ch->name );
-      free_conversation( ch );
-      ch->desc->connected = CON_PLAYING;
+      stop_talking( ch );
       return;
    }
 
    if( !conv->current_talk )
    {
       bug( "%s: %s's conversation somehow has no branch.", __FUNCTION__, ch->name );
-      ch->desc->connected = CON_PLAYING;
+      stop_talking( ch );
       return;
    }
 
@@ -3183,8 +3180,8 @@ void converse( CHAR_DATA *ch, const char *argument )
    }
    else if( !str_cmp( arg, "abort" ) )
    {
-      free_conversation( ch );
-      ch->desc->connected = CON_PLAYING;
+      stop_talking( ch );
+      return;
    }
    else if( is_number( arg ) )
    {
@@ -3202,12 +3199,21 @@ void converse( CHAR_DATA *ch, const char *argument )
          if( count == choice )
          {
             mprog_talksystem_trigger( conv->mobile, ch, option );
+            if( !is_talking( ch ) )
+            {
+               stop_talking( ch );
+               return;
+            }
             conv->current_talk = option->talk_to;
             mprog_talksystem_trigger( conv->mobile, ch, conv->current_talk );
+            if( !is_talking( ch ) )
+            {
+               stop_talking( ch );
+               return;
+            }
             if( conv->current_talk == NULL )
             {
-               free_conversation( ch );
-               ch->desc->connected = CON_PLAYING;
+               stop_talking( ch );
                return;
             }
             display_branch( ch );
@@ -3267,4 +3273,23 @@ void sort_talk_ids( CHAR_DATA *ch )
          talk->talk_id = count;
    }
    return;
+}
+
+bool is_talking( CHAR_DATA * ch )
+{
+   if( IS_NPC( ch ) )
+      return FALSE;
+
+   if( ch->conv_data && ch->desc->connected == CON_TALKING )
+      return TRUE;
+   return FALSE;
+}
+
+void stop_talking( CHAR_DATA *ch )
+{
+   if( IS_NPC( ch ) )
+      return;
+   if( ch->conv_data )
+      free_conversation( ch );
+   ch->desc->connected = CON_PLAYING;
 }

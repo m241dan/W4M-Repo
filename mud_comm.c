@@ -3410,3 +3410,37 @@ void do_mpoowner( CHAR_DATA* ch, const char* argument)
    send_to_char( "Done.\r\n", ch );
    return;
 }
+void do_mp_endconversation( CHAR_DATA* ch, const char *argument )
+{
+   CHAR_DATA *victim;
+   char arg[MAX_STRING_LENGTH];
+
+   if( !IS_NPC( ch ) )
+      return;
+
+   argument = one_argument( argument, arg );
+
+   if( ( victim = get_char_room( ch, arg ) ) == NULL )
+   {
+      if( IS_NPC( victim ) )
+         return;
+      if( victim->conv_data )
+      {
+         free_conversation( victim );
+         victim->desc->connected = CON_PLAYING;
+      }
+   }
+   if( !str_cmp( arg, "all" ) )
+   {
+      for( victim = ch->in_room->first_person; victim; victim = victim->next_in_room )
+      {
+         if( IS_NPC( victim ) )
+            continue;
+         if( victim->conv_data )
+         {
+            free_conversation( victim );
+            victim->desc->connected = CON_PLAYING;
+         }
+      }
+   }
+}

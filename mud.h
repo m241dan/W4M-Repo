@@ -4334,6 +4334,7 @@ DECLARE_DO_FUN( do_mpsoundat );
 DECLARE_DO_FUN( do_mpmusic );
 DECLARE_DO_FUN( do_mpmusicaround );
 DECLARE_DO_FUN( do_mpmusicat );
+DECLARE_DO_FUN( do_mp_endconversation );
 
 /*
  * Spell functions.
@@ -4549,6 +4550,9 @@ int get_max_talk( CHAR_DATA *ch );
 TALK_DATA *get_talk( MOB_INDEX_DATA *pIndexData, int id );
 void free_talk( TALK_DATA *talk );
 void sort_talk_ids( CHAR_DATA *ch );
+void stop_talking( CHAR_DATA *ch );
+bool is_talking( CHAR_DATA *ch );
+
 
 /* act_info.c */
 int get_door( const char *arg );

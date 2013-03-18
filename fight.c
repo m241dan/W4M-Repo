@@ -361,10 +361,9 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
       return rNONE;
    }
 
-   if( target->victim->desc->connected == CON_TALKING )
+   if( is_talking( target->victim ) )
    {
-      free_conversation( target->victim );
-      target->victim->desc->connected = CON_PLAYING;
+      stop_talking( target->victim );
       ch_printf( target->victim, "%s's assault interrupts your conversation!\r\n", ch->name );
    }
 
