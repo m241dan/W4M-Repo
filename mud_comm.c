@@ -3420,15 +3420,13 @@ void do_mp_endconversation( CHAR_DATA* ch, const char *argument )
 
    argument = one_argument( argument, arg );
 
-   if( ( victim = get_char_room( ch, arg ) ) == NULL )
+   if( ( victim = get_char_room( ch, arg ) ) != NULL )
    {
       if( IS_NPC( victim ) )
          return;
-      if( victim->conv_data )
-      {
-         free_conversation( victim );
-         victim->desc->connected = CON_PLAYING;
-      }
+      if( is_talking( victim ) )
+         stop_talking( victim );
+      ch_printf( victim, "Your conversation with %s has ended!\r\n", ch->name );
    }
    if( !str_cmp( arg, "all" ) )
    {
@@ -3436,10 +3434,10 @@ void do_mp_endconversation( CHAR_DATA* ch, const char *argument )
       {
          if( IS_NPC( victim ) )
             continue;
-         if( victim->conv_data )
+         if( is_talking( victim ) )
          {
-            free_conversation( victim );
-            victim->desc->connected = CON_PLAYING;
+            stop_talking( victim );
+            ch_printf( victim, "Your conversation with %s has ended!\r\n", ch->name );
          }
       }
    }

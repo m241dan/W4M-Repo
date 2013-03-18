@@ -2978,8 +2978,8 @@ void do_talk( CHAR_DATA *ch, const char* argument )
    }
    ch_printf( ch, "You begin talking to %s.\r\n", mob->name );
    create_conversation( ch, mob, INIT_CONVERSATION );
-   display_branch( ch );
    ch->desc->connected = CON_TALKING;
+   display_branch( ch );
    return;
 }
 
@@ -2998,6 +2998,9 @@ void display_branch( CHAR_DATA *ch )
       stop_talking( ch );
    }
    ch_printf( ch, "____________________________________________________________________________\r\n%s\r\n", on_talk->content ? on_talk->content : "Nothing..." );
+   mprog_talksystem_trigger( ch->conv_data->mobile, ch, on_talk );
+   if( !is_talking( ch ) )
+      return;
    display_options( ch );
    return;
 }
@@ -3071,7 +3074,9 @@ void display_options( CHAR_DATA *ch )
          if( option->talk_from == on_talk )
          {
             counter++;
-            ch_printf( ch, "\r\n   %d. %s", counter, option->content ? option->content : "No Content" );
+            ch_printf( ch, "   %d. %s", counter, option->content ? option->content : "No Content" );
+            if( nifty_is_name( option->content, "(blank)" ) )
+               send_to_char( "\r\n", ch );
          }
       }
    }
@@ -3081,7 +3086,7 @@ void display_options( CHAR_DATA *ch )
       ch_printf( ch, "   Back.) %s\r\n", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );
    if( ch->conv_data->first_talk && ch->conv_data->first_talk != ch->conv_data->current_talk )
       ch_printf( ch, "   Return.) %s\r\n", ch->conv_data->first_talk->content ? ch->conv_data->first_talk->content : "No Content" );
-   send_to_char( "   Abort.) To Cancel Conversation\r\n", ch );
+   send_to_char( "   Abort.) To Cancel Conversation\r\n\r\n", ch );
    send_to_char( "Enter your selection: ", ch );
    return;
 }
@@ -3200,12 +3205,8 @@ void converse( CHAR_DATA *ch, const char *argument )
          {
             mprog_talksystem_trigger( conv->mobile, ch, option );
             if( !is_talking( ch ) )
-            {
-               stop_talking( ch );
                return;
-            }
             conv->current_talk = option->talk_to;
-            mprog_talksystem_trigger( conv->mobile, ch, conv->current_talk );
             if( !is_talking( ch ) )
             {
                stop_talking( ch );

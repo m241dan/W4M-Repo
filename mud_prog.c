@@ -2918,7 +2918,7 @@ void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor, TALK_DATA *ta
       return;
    else if( talk->script[0] == '\0' )
       return;
-   mprog_driver( actor->conv_data->current_talk->script, mob, actor, NULL, NULL, FALSE );
+   mprog_driver( talk->script, mob, actor, NULL, NULL, FALSE );
 }
 
 void mprog_speech_trigger( const char *txt, CHAR_DATA * actor )
