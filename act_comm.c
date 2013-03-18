@@ -3193,6 +3193,7 @@ void converse( CHAR_DATA *ch, const char *argument )
             ++count;
          if( count == choice )
          {
+            mprog_talksystem_trigger( conv->mobile, ch );
             conv->current_talk = option->talk_to;
             if( conv->current_talk == NULL )
             {

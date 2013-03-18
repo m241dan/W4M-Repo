@@ -2920,10 +2920,7 @@ void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor )
       return;
    }
    if( !actor->conv_data->current_talk->script )
-   {
-      bug( "%s: being called without a script to execute.", __FUNCTION__ );
       return;
-   }
    mprog_driver( actor->conv_data->current_talk->script, mob, actor, NULL, NULL, FALSE );
 }
 

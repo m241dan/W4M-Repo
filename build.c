@@ -1166,6 +1166,26 @@ void do_tset( CHAR_DATA* ch, const char* argument )
          stop_editing( ch );
          ch->substate = ch->tempnum;
          return;
+      case SUB_TALK_SCRIPT:
+        if( !ch->dest_buf )
+        {
+           send_to_char( "Fatal error: please report it to staff immediately.\r\n", ch );
+           bug( "%s", "do_tset: sub_talk_script: NULL ch->dest_buf" );
+           ch->substate = SUB_NONE;
+           return;
+        }
+         talk = ( TALK_DATA * ) ch->dest_buf;
+         if( !talk )
+         {
+            bug( "%s: talk data you were editing disappeared.", __FUNCTION__ );
+            stop_editing( ch );
+            return;
+         }
+         STRFREE( talk->script );
+         talk->script = copy_buffer( ch );
+         stop_editing( ch );
+         ch->substate = ch->tempnum;
+         return;
    }
 
    talk = NULL;
@@ -1178,7 +1198,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
    {
       send_to_char( "Syntax: tset <mob> <option>\r\n", ch );
       send_to_char( "Option being one of:\r\n", ch );
-      send_to_char( " create, list, remove, from, to, content\r\n", ch );
+      send_to_char( " create, list, remove, from, to, content, script\r\n", ch );
       return;
    }
 
@@ -1209,6 +1229,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
       CREATE( new_talk, TALK_DATA, 1 );
       new_talk->talk_id = get_max_talk( victim ) + 1;
       new_talk->content = STRALLOC( "(blank)" );
+      new_talk->script = NULL;
       LINK( new_talk, victim->pIndexData->first_talk, victim->pIndexData->last_talk, next, prev );
       ch_printf( ch, "...Creating New Talk Data with ID of %d\r\n", new_talk->talk_id );
       return;
@@ -1320,6 +1341,20 @@ void do_tset( CHAR_DATA* ch, const char* argument )
       ch->substate = SUB_TALK_CONTENT;
       ch->dest_buf = talk;
       start_editing( ch, (char *)talk->content );
+      return;
+   }
+   if( !str_cmp( arg2, "script" ) )
+   {
+      if( !can_mmodify( ch, victim ) )
+         return;
+      CHECK_SUBRESTRICTED( ch );
+      if( ch->substate == SUB_REPEATCMD )
+         ch->tempnum = SUB_REPEATCMD;
+      else
+         ch->tempnum = SUB_NONE;
+      ch->substate = SUB_TALK_SCRIPT;
+      ch->dest_buf = talk;
+      start_editing( ch, (char *)talk->script );
       return;
    }
 }
