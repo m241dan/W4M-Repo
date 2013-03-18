@@ -3253,12 +3253,12 @@ TALK_DATA *get_talk( MOB_INDEX_DATA *pIndexData, int id )
 
 void free_talk( TALK_DATA *talk )
 {
-   talk->talk_to->talk_from = NULL;
    talk->talk_to = NULL;
-   talk->talk_from->talk_to = NULL;
    talk->talk_from = NULL;
    if( talk->content )
       STRFREE( talk->content );
+   if( talk->script )
+      STRFREE( talk->script );
    DISPOSE( talk );
 }
 
