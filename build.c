@@ -1126,7 +1126,6 @@ void do_tset( CHAR_DATA* ch, const char* argument )
    char arg1[MAX_INPUT_LENGTH];
    char arg2[MAX_INPUT_LENGTH];
    char arg3[MAX_INPUT_LENGTH];
-   char buf[MAX_STRING_LENGTH];
    TALK_DATA *talk;
    CHAR_DATA *victim;
 
@@ -1243,24 +1242,14 @@ void do_tset( CHAR_DATA* ch, const char* argument )
       }
       for( talk = victim->pIndexData->first_talk; talk; talk = talk->next )
       {
-         char buf2[MAX_STRING_LENGTH];
-
-         sprintf( buf, "ID: %d ", talk->talk_id );
-         if( talk->talk_to )
-         {
-            sprintf( buf2, "TO: %d ", talk->talk_to->talk_id ? talk->talk_to->talk_id : -1 );
-            mudstrlcat( buf, buf2, MAX_STRING_LENGTH );
-         }
-         if( talk->talk_from )
-         {
-            sprintf( buf2, "FROM: %d ", talk->talk_from->talk_id ? talk->talk_from->talk_id : -1 );
-            mudstrlcat( buf, buf2, MAX_STRING_LENGTH );
-         }
-         sprintf( buf2, "%s", talk->content ? talk->content : "No Content" );
-         if( nifty_is_name( buf2, "(blank)" ) )
-            mudstrlcat( buf2, "\r\n", MAX_STRING_LENGTH );
-         mudstrlcat( buf, buf2, MAX_STRING_LENGTH );
-         send_to_char( buf, ch );
+         pager_printf( ch, "ID: %-2d TO: %-3d, FROM: %-3d Script: %-3s Content:\r\n%s", 
+                       talk->talk_id,
+                       talk->talk_to->talk_id ? talk->talk_to->talk_id : 0,
+                       talk->talk_from->talk_id ? talk->talk_from->talk_id : -1,
+                       talk->script ? "Yes" : "No",
+                       talk->content ? talk->content : "No Content" );
+         if( nifty_is_name( talk->content, "(blank)" ) )
+            send_to_pager( "\r\n", ch );
       }
       return;
    }
