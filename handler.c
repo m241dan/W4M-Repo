@@ -5979,7 +5979,7 @@ double get_round( CHAR_DATA *ch )
       if( counter > 70 )
          round += .25;
    };
-   return round;
+   return ( round * ( 1 - ( get_haste( ch ) / 10 ) ) );
 }
 
 void switch_class( CHAR_DATA *ch, int Class )

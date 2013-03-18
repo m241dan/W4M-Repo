@@ -3073,9 +3073,9 @@ void display_options( CHAR_DATA *ch )
    if( counter == 0 )
       send_to_char( "   You have no further talking points to discuss with this person.\r\n", ch );
    if( on_talk->talk_from )
-      ch_printf( ch, "   Back.) %s", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );
+      ch_printf( ch, "   Back.) %s\r\n", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );
    if( ch->conv_data->first_talk && ch->conv_data->first_talk != ch->conv_data->current_talk )
-      ch_printf( ch, "   Return.) %s", ch->conv_data->first_talk->content ? ch->conv_data->first_talk->content : "No Content" );
+      ch_printf( ch, "   Return.) %s\r\n", ch->conv_data->first_talk->content ? ch->conv_data->first_talk->content : "No Content" );
    send_to_char( "   Abort.) To Cancel Conversation\r\n", ch );
    send_to_char( "Enter your selection: ", ch );
    return;
