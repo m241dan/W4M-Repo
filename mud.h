@@ -169,6 +169,7 @@ typedef struct cooldown_data CD_DATA;
 typedef struct hit_data HIT_DATA;
 typedef struct conversation_data CONVERSATION_DATA;
 typedef struct talk_data TALK_DATA;
+typedef struct gthreat_data GTHREAT_DATA;
 
 /*
  * Function types.
@@ -2414,6 +2415,15 @@ struct char_data
    THREAT_DATA *last_threat;
 };
 
+struct gthreat_data
+{
+   GTHREAT_DATA *next;
+   GTHREAT_DATA *prev;
+   CHAR_DATA *involved;
+   CHAR_DATA *involved_2;
+   THREAT_DATA *threat;
+}
+
 struct threat_data
 {
    THREAT_DATA *next;
@@ -3838,6 +3848,9 @@ extern CHAR_DATA *saving_char;
 extern OBJ_DATA *all_obj;
 extern SPEC_LIST *first_specfun;
 extern SPEC_LIST *last_specfun;
+extern GTHREAT_DATA *first_gthreat;
+extern GTHREAT_DATA *last_gthreat;
+
 
 extern time_t current_time;
 extern bool fLogAll;
@@ -4840,7 +4853,8 @@ int calc_threat( THREAT_DATA *threat );
 CHAR_DATA *most_threatening( CHAR_DATA *ch );
 void free_threat args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 void free_threat args( ( CHAR_DATA * ch, THREAT_DATA * threat ) );
-
+void decay_threat args( ( void ) );
+void decay_threat args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dam ) );
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );

@@ -2962,7 +2962,7 @@ void do_kill( CHAR_DATA* ch, const char* argument)
    ch->position = POS_FIGHTING;
    set_new_target( ch, target );
    check_attacker( ch, target->victim );
-   multi_hit( ch, target, TYPE_UNDEFINED );
+   ch->next_round = .25;
    add_queue( ch, COMBAT_ROUND );
    return;
 }
@@ -3663,17 +3663,23 @@ int get_mdefense_from_wis( CHAR_DATA * ch )
 void generate_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
 {
    THREAT_DATA *threat;
+   GTHREAT_DATA *gthreat;
 
-   int fickle = (int)( dam * .75 );
+   int fickle = (int)( dam * .75 ) + ( ch->threat * 2 );
    int constant = (int)( dam *.25 );
 
    if( ( threat = is_threatened( ch, victim ) ) == NULL )
    {
       CREATE( threat, THREAT_DATA, 1 );
-      threat->attacker = attacker;
+      threat->attacker = ch;
       threat->fickle = fickle;
       threat->constant = constant;
-      LINK( threat, defender->first_threat, defender->last_threat, next, prev );
+      LINK( threat, victim->first_threat, victim->last_threat, next, prev );
+      CREATE( gthreat, GTHREAT_DATA, 1 );
+      gthreat->threat = threat;
+      gthreat->involved = victim;
+      gthreat->involved_2 = ch;
+      LINK( gthreat, first_gthreat, last_gtheat, next, prev );
    }
    else
    {
@@ -3695,28 +3701,35 @@ THREAT_DATA *is_threat( CHAR_DATA *ch, CHAR_DATA *victim )
    return NULL;
 }
 
+void decay_threat( void )
+{
+   GTHREAT_DATA *gthreat;
+   THREAT_DATA *threat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+   {
+      if( gthreat->threat == NULL )
+         continue;
+      threat = gthreat->threat;
+
+      if( threat->fickle <= 0 )
+         continue;
+      decay = ( (int)( threat->fickle *.02 ) - ch->threat )
+      if( decay < 5 )
+         decay = 5;
+      threat->fickle -= decay;
+      if( threat->fickle < 0 )
+         threat->fickle = 0;
+   }
+}
+
 void decay_threat( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
 {
    THREAT_DATA *threat;
-   int decay;
 
-   if( !ch )
+   if( ( threat = is_threat( ch, victim ) ) != NULL )
    {
-      for( threat = victim->first_threat; threat; threat = threat->next )
-      {
-         if( threat->fickle <= 0 )
-            continue;
-         decay = (int)( threat->fickle *.02 )
-         if( decay < 5 )
-            decay = 5;
-         threat->fickle -= decay;
-         if( threat->fickle < 0 )
-            threat->fickle = 0;
-      }
-   }
-   else if( ( threat = is_threat( ch, victim ) ) != NULL )
-   {
-      threat->fickle -= (int)( dam *.05 );
+      threat->fickle -= (int)( dam *.05 ) - (int)( ch->threat * 1.5 );
       if( threat->fuckle < 0 )
          threat->fickle = 0;
    }
@@ -3745,16 +3758,25 @@ CHAR_DATA *most_threat( CHAR_DATA *ch )
       if( calc_threat( threat ) > calc_threat( most_threaning )
          most_threatening = threat;
    }
-   return most_threat->attacker;
+   return most_threatening->attacker;
 }
 
 void free_threat( CHAR_DATA *ch, THREAT_DATA *threat )
 {
-   if( !threat )
+   GTHREAT_DATA *gthreat;
+   THREAT_DATA *next_threat;
+
+  if( !threat )
    {
-      for( threat = ch->first_threat; threat; threat = threat->next )
+      for( threat = ch->first_threat; threat; threat = next_threat )
+      {
+         next_thread = threat->next;
          free_threat( ch, threat );
+      }
    }
+
+   if( ( gthreat = get_global_threat( threat ) ) != NULL )
+      free_global_threat( gthreat );
 
    UNLINK( threat, ch->first_threat, ch->last_threat, next, prev );
    threat->attacker = NULL;
@@ -3769,7 +3791,36 @@ void free_threat( CHAR_DATA *ch, CHAR_DATA *victim )
    for( threat = ch->first_threat; threat; threat = threat->next )
    {
       if( threat->attacker == victim )
-         free_Threat( ch, threat );
+         free_threat( ch, threat );
    }
    return;
+}
+
+void free_global_threat( GTHREAT_DATA *gthreat )
+{
+   UNLINK( gthreat, first_gthreat, last_gthreat, next, prev );
+   gthreat->involved = NULL;
+   gthreat->involved_2 = NULL;
+   gthreat->threat = NULL;
+   DISPOSE( gthreat );
+}
+
+GTHREAT_DATA *get_global_threat( THREAT_DATA *threat )
+{
+   GTHREAT_DATA *gthreat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+      if( gthreat->threat == threat )
+         return gthreat;
+   return NULL;
+}
+
+GTHREAT_DATA *has_threat( CHAR_DATA *ch )
+{
+   GTHREAT_DATA *gthreat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+      if( ch == gthreat->involved || ch == gthreat->involved_2 )
+         return gthreat;
+   return NULL;
 }
