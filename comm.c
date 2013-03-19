@@ -2465,10 +2465,10 @@ void nanny_read_motd( DESCRIPTOR_DATA * d, const char *argument )
          }
       }
       if( !sysdata.WAIT_FOR_AUTH )
-         char_to_room( ch, get_room_index( ROOM_VNUM_SCHOOL ) );
+         char_to_room( ch, get_room_index( 101 ) );
       else
       {
-         char_to_room( ch, get_room_index( ROOM_AUTH_START ) );
+         char_to_room( ch, get_room_index( 101 ) );
          ch->pcdata->auth_state = 0;
          SET_BIT( ch->pcdata->flags, PCFLAG_UNAUTHED );
       }
