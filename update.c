@@ -543,6 +543,8 @@ void mobile_update( void )
    {
       set_cur_char( ch );
 
+      decay_threat( NULL, ch, 0 );
+
       if( !IS_NPC( ch ) )
       {
          drunk_randoms( ch );
@@ -2532,6 +2534,13 @@ void timers_update(  )
 
             if( IS_AFFECTED( ch, AFF_PARALYSIS ) )
                break;
+            if( IS_NPC( ch ) )
+            {
+               CHAR_DATA *most_threatening;
+
+               if( ch->target->victim != ( most_threatening = most_threat( ch ) ) )
+                  set_new_target( ch, get_target_2( ch, most_threatening ) );
+            }
 
             victim = ch->target->victim;
             retcode = rNONE;

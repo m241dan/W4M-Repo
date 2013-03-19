@@ -99,6 +99,7 @@ if ( !str_cmp( word, (literal) ) )     \
 /*
  * Structure types.
  */
+typedef struct threat_data THREAT_DATA;
 typedef struct class_data CLASS_DATA;
 typedef struct affect_data AFFECT_DATA;
 typedef struct area_data AREA_DATA;
@@ -2409,6 +2410,17 @@ struct char_data
    short penetration[MAX_DAMTYPE];
    double next_round;
    CONVERSATION_DATA *conv_data;
+   THREAT_DATA *first_threat;
+   THREAT_DATA *last_threat;
+};
+
+struct threat_data
+{
+   THREAT_DATA *next;
+   THREAT_DATA *prev;
+   CHAR_DATA *attacker;
+   int constant;
+   int fickle;
 };
 
 struct class_data
@@ -4822,6 +4834,13 @@ int get_attack_from_str( CHAR_DATA * ch );
 int get_mattack_from_int( CHAR_DATA *ch );
 int get_defense_from_con( CHAR_DATA *ch );
 int get_mdefense_from_wis( CHAR_DATA *ch );
+void generate_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
+THREAT_DATA *is_threat( CHAR_DATA *ch, CHAR_DATA *victim );
+int calc_threat( THREAT_DATA *threat );
+CHAR_DATA *most_threatening( CHAR_DATA *ch );
+void free_threat args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
+void free_threat args( ( CHAR_DATA * ch, THREAT_DATA * threat ) );
+
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );

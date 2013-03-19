@@ -262,41 +262,6 @@ void violence_update( void )
       if( char_died( ch ) )
          continue;
 
-      for( timer = ch->first_timer; timer; timer = timer_next )
-      {
-         timer_next = timer->next;
-         if( --timer->count <= 0 )
-         {
-            if( timer->type == TIMER_ASUPRESSED )
-            {
-               if( timer->value == -1 )
-               {
-                  timer->count = 1000;
-                  continue;
-               }
-            }
-
-            if( timer->type == TIMER_NUISANCE )
-               DISPOSE( ch->pcdata->nuisance );
-
-            if( timer->type == TIMER_DO_FUN )
-            {
-               int tempsub;
-
-               tempsub = ch->substate;
-               ch->substate = timer->value;
-               ( timer->do_fun ) ( ch, "" );
-               if( char_died( ch ) )
-                  break;
-               ch->substate = tempsub;
-            }
-            extract_timer( ch, timer );
-         }
-      }
-
-      if( char_died( ch ) )
-         continue;
-
       /*
        * check for exits moving players around 
        */
@@ -1396,6 +1361,9 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     */
    victim->hit -= dam;
 
+   generate_threat( ch, victim );
+   decay_threat( victim, ch, dam );
+
    if( !IS_NPC( victim ) && victim->level >= LEVEL_IMMORTAL && victim->hit < 1 )
       victim->hit = 1;
 
@@ -1488,6 +1456,9 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
 
       clear_target( ch );
       clear_target( victim );
+
+      free_threat( victim, NULL );
+      free_threat( ch, victim );
 
       stop_fighting( ch, TRUE );
 
@@ -2136,9 +2107,9 @@ void update_pos( CHAR_DATA * victim )
       return;
    }
 
-   if( victim->hit <= -6 )
+   if( victim->hit <= -400 )
       victim->position = POS_MORTAL;
-   else if( victim->hit <= -3 )
+   else if( victim->hit <= -250 )
       victim->position = POS_INCAP;
    else
       victim->position = POS_STUNNED;
@@ -3689,3 +3660,116 @@ int get_mdefense_from_wis( CHAR_DATA * ch )
    return (int)mdefense;
 }
 
+void generate_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
+{
+   THREAT_DATA *threat;
+
+   int fickle = (int)( dam * .75 );
+   int constant = (int)( dam *.25 );
+
+   if( ( threat = is_threatened( ch, victim ) ) == NULL )
+   {
+      CREATE( threat, THREAT_DATA, 1 );
+      threat->attacker = attacker;
+      threat->fickle = fickle;
+      threat->constant = constant;
+      LINK( threat, defender->first_threat, defender->last_threat, next, prev );
+   }
+   else
+   {
+      threat->fickle += fickle;
+      threat->constant += constant;
+   }
+   if( threat->constant > 2000 )
+      threat->constant = 2000;
+   return;
+}
+
+THREAT_DATA *is_threat( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   THREAT_DATA *threat;
+
+   for( threat = victim->first_threat; threat; threat = threat->next )
+      if( threat->attacker == ch )
+         return threat;
+   return NULL;
+}
+
+void decay_threat( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
+{
+   THREAT_DATA *threat;
+   int decay;
+
+   if( !ch )
+   {
+      for( threat = victim->first_threat; threat; threat = threat->next )
+      {
+         if( threat->fickle <= 0 )
+            continue;
+         decay = (int)( threat->fickle *.02 )
+         if( decay < 5 )
+            decay = 5;
+         threat->fickle -= decay;
+         if( threat->fickle < 0 )
+            threat->fickle = 0;
+      }
+   }
+   else if( ( threat = is_threat( ch, victim ) ) != NULL )
+   {
+      threat->fickle -= (int)( dam *.05 );
+      if( threat->fuckle < 0 )
+         threat->fickle = 0;
+   }
+   return;
+}
+
+int calc_threat( THREAT_DATA *threat )
+{
+   if( threat->fickle >= threat->constant )
+      return threat->fickle;
+   return threat->constant;
+}
+
+CHAR_DATA *most_threat( CHAR_DATA *ch )
+{
+   THREAT_DATA *threat, *most_threatening;
+   int max_threat;
+
+   most_threatening = ch->first_threat;
+
+   if( !most_threatening )
+      return NULL;
+
+   for( threat = most_threatening->next; threat; threat->next )
+   {
+      if( calc_threat( threat ) > calc_threat( most_threaning )
+         most_threatening = threat;
+   }
+   return most_threat->attacker;
+}
+
+void free_threat( CHAR_DATA *ch, THREAT_DATA *threat )
+{
+   if( !threat )
+   {
+      for( threat = ch->first_threat; threat; threat = threat->next )
+         free_threat( ch, threat );
+   }
+
+   UNLINK( threat, ch->first_threat, ch->last_threat, next, prev );
+   threat->attacker = NULL;
+   DISPOSE( threat );
+   return;
+}
+
+void free_threat( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   THREAT_DATA *threat;
+
+   for( threat = ch->first_threat; threat; threat = threat->next )
+   {
+      if( threat->attacker == victim )
+         free_Threat( ch, threat );
+   }
+   return;
+}
