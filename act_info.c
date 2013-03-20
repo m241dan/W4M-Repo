@@ -3189,9 +3189,9 @@ void do_who( CHAR_DATA* ch, const char* argument)
    {
       if( !ch )
          fprintf( whoout, "%s",
-                  "\r\n-------------------------------[ DEADLY CHARACTERS ]-------------------------\r\n\r\n" );
+                  "\r\n&z ----------------------------&R[&D &pDEADLY CHARACTERS&R ]&D&z---------------------------&D\r\n\r\n" );
       else
-         send_to_pager( "\r\n-------------------------------[ DEADLY CHARACTERS ]--------------------------\r\n\r\n", ch );
+         send_to_pager( "\r\n&z ----------------------------&R[&D &pDEADLY CHARACTERS&R ]&D&z----------------------------&D\r\n\r\n", ch );
    }
 
    for( cur_who = first_deadly; cur_who; cur_who = next_who )
@@ -3246,9 +3246,9 @@ void do_who( CHAR_DATA* ch, const char* argument)
    {
       if( !ch )
          fprintf( whoout, "%s",
-                  "\r\n-----------------------------------[ IMMORTALS ]-----------------------------\r\n\r\n" );
+                  "\r\n&z --------------------------------&R[ &D&rIMMORTALS&R ]&D&z-------------------------------&D\r\n\r\n" );
       else
-         send_to_pager( "\r\n-----------------------------------[ IMMORTALS ]------------------------------\r\n\r\n", ch );
+         send_to_pager( "\r\n&z --------------------------------&R[ &D&rIMMORTALS&R ]&D&z--------------------------------&D\r\n\r\n", ch );
    }
 
    for( cur_who = first_imm; cur_who; cur_who = next_who )
@@ -3264,7 +3264,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
 
    if( !ch )
    {
-      fprintf( whoout, "%d player%s.\r\n", nMatch, nMatch == 1 ? "" : "s" );
+      fprintf( whoout, "&z                                %-30.10d player%s.\r\n", nMatch, nMatch == 1 ? "" : "s" );
       fclose( whoout );
       return;
    }
