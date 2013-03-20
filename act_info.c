@@ -2950,7 +2950,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
       else
          mudstrlcpy( char_name, wch->name, MAX_INPUT_LENGTH );
 
-      snprintf( class_text, MAX_INPUT_LENGTH, "%s%2d %s", NOT_AUTHED( wch ) ? "N" : " ", wch->level,
+      snprintf( class_text, MAX_INPUT_LENGTH, "%s%d %s", NOT_AUTHED( wch ) ? "N" : "", wch->level,
                 class_table[wch->Class]->who_name );
       Class = class_text;
       switch ( wch->top_level )
@@ -2961,49 +2961,49 @@ void do_who( CHAR_DATA* ch, const char* argument)
             Class = "&rDivine Being&D";
             break;
          case MAX_LEVEL - 1:
-            Class = "&cInfinite&D";
+            Class = "&cInfinite&D    ";
             break;
          case MAX_LEVEL - 2:
-            Class = "&CEternal&D";
+            Class = "&CEternal&D     ";
             break;
          case MAX_LEVEL - 3:
-            Class = "&OAncient&D";
+            Class = "&OAncient&D     ";
             break;
          case MAX_LEVEL - 4:
-            Class = "&OExalted God&D";
+            Class = "&OExalted&D     ";
             break;
          case MAX_LEVEL - 5:
-            Class = "&bAscendant God&D";
+            Class = "&bAscendant&D   ";
             break;
          case MAX_LEVEL - 6:
-            Class = "&bGreater God&D";
+            Class = "&bGreater&D     ";
             break;
          case MAX_LEVEL - 7:
-            Class = "&BGodly&D";
+            Class = "&BGodly&D       ";
             break;
          case MAX_LEVEL - 8:
-            Class = "&BLesser God&D";
+            Class = "&BLesser&D      ";
             break;
          case MAX_LEVEL - 9:
-            Class = "&YImmortal&D";
+            Class = "&YImmortal&D    ";
             break;
          case MAX_LEVEL - 10:
-            Class = "&YDemi God&D";
+            Class = "&YDemi God&D    ";
             break;
          case MAX_LEVEL - 11:
-            Class = "&GSavior&D";
+            Class = "&GSavior&D      ";
             break;
          case MAX_LEVEL - 12:
-            Class = "&GCrafter&D";
+            Class = "&GCrafter&D     ";
             break;
          case MAX_LEVEL - 13:
-            Class = "&PAcolyte&D";
+            Class = "&PAcolyte&D     ";
             break;
          case MAX_LEVEL - 14:
-            Class = "&PNeophyte&D";
+            Class = "&PNeophyte&D    ";
             break;
          case MAX_LEVEL - 15:
-            Class = "&PAvatar&D";
+            Class = "&PAvatar&D      ";
             break;
       }
 
@@ -3015,9 +3015,9 @@ void do_who( CHAR_DATA* ch, const char* argument)
          extra_title = "";
 
       if( IS_RETIRED( wch ) )
-         Class = "&zRetired&D";
+         Class = "&zRetired&D     ";
       else if( IS_GUEST( wch ) )
-         Class = "Guest";
+         Class = "Guest           ";
       else if( wch->pcdata->clan
                && !str_cmp( wch->name, wch->pcdata->clan->leader ) && wch->pcdata->clan->leadrank[0] != '\0' )
          Class = wch->pcdata->clan->leadrank;
