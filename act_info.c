@@ -3264,13 +3264,13 @@ void do_who( CHAR_DATA* ch, const char* argument)
 
    if( !ch )
    {
-      fprintf( whoout, "&z                                %.30d player%s.\r\n", nMatch, nMatch == 1 ? "" : "s" );
+      fprintf( whoout, "&z%30d player%s.&D\r\n", nMatch, nMatch == 1 ? "" : "s" );
       fclose( whoout );
       return;
    }
 
    set_char_color( AT_YELLOW, ch );
-   ch_printf( ch, "%d player%s.\r\n", nMatch, nMatch == 1 ? "" : "s" );
+   ch_printf( ch, "&z%30d player%s.&D\r\n", nMatch, nMatch == 1 ? "" : "s" );
    return;
 }
 
