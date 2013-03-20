@@ -3179,6 +3179,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
       if( !ch )
          fprintf( whoout, "%s", cur_who->text );
       else
+	 send_to_pager( "\r\n&z ---------------------------------&R[ &D&pMORTALS&R ]&D&z---------------------------------&D \n\r\n\r", ch );
          send_to_pager( cur_who->text, ch );
       next_who = cur_who->next;
       DISPOSE( cur_who->text );
