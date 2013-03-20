@@ -2885,7 +2885,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
    nMatch = 0;
    buf[0] = '\0';
    if( ch )
-      set_pager_color( AT_GREEN, ch );
+      set_pager_color( AT_WHITE, ch );
    else
    {
       if( fShowHomepage )
@@ -2958,52 +2958,52 @@ void do_who( CHAR_DATA* ch, const char* argument)
          default:
             break;
          case MAX_LEVEL - 0:
-            Class = "Supreme Entity";
+            Class = "&rDivine Being&D";
             break;
          case MAX_LEVEL - 1:
-            Class = "Infinite";
+            Class = "&cInfinite&D";
             break;
          case MAX_LEVEL - 2:
-            Class = "Eternal";
+            Class = "&CEternal&D";
             break;
          case MAX_LEVEL - 3:
-            Class = "Ancient";
+            Class = "&OAncient&D";
             break;
          case MAX_LEVEL - 4:
-            Class = "Exalted God";
+            Class = "&OExalted God&D";
             break;
          case MAX_LEVEL - 5:
-            Class = "Ascendant God";
+            Class = "&bAscendant God&D";
             break;
          case MAX_LEVEL - 6:
-            Class = "Greater God";
+            Class = "&bGreater God&D";
             break;
          case MAX_LEVEL - 7:
-            Class = "God";
+            Class = "&BGodly&D";
             break;
          case MAX_LEVEL - 8:
-            Class = "Lesser God";
+            Class = "&BLesser God&D";
             break;
          case MAX_LEVEL - 9:
-            Class = "Immortal";
+            Class = "&YImmortal&D";
             break;
          case MAX_LEVEL - 10:
-            Class = "Demi God";
+            Class = "&YDemi God&D";
             break;
          case MAX_LEVEL - 11:
-            Class = "Savior";
+            Class = "&GSavior&D";
             break;
          case MAX_LEVEL - 12:
-            Class = "Creator";
+            Class = "&GCrafter&D";
             break;
          case MAX_LEVEL - 13:
-            Class = "Acolyte";
+            Class = "&PAcolyte&D";
             break;
          case MAX_LEVEL - 14:
-            Class = "Neophyte";
+            Class = "&PNeophyte&D";
             break;
          case MAX_LEVEL - 15:
-            Class = "Avatar";
+            Class = "&PAvatar&D";
             break;
       }
 
@@ -3015,7 +3015,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
          extra_title = "";
 
       if( IS_RETIRED( wch ) )
-         Class = "Retired";
+         Class = "&zRetired&D";
       else if( IS_GUEST( wch ) )
          Class = "Guest";
       else if( wch->pcdata->clan
@@ -3107,11 +3107,11 @@ void do_who( CHAR_DATA* ch, const char* argument)
                 ( fGroup ? whogr->indent : 0 ), "",
                 Class,
                 invis_str,
-                ( wch->desc && wch->desc->connected ) ? "[WRITING] " : "",
-                xIS_SET( wch->act, PLR_AFK ) ? "[AFK] " : "",
-                xIS_SET( wch->act, PLR_ATTACKER ) ? "(ATTACKER) " : "",
-                xIS_SET( wch->act, PLR_KILLER ) ? "(KILLER) " : "",
-                xIS_SET( wch->act, PLR_THIEF ) ? "(THIEF) " : "",
+                ( wch->desc && wch->desc->connected ) ? "&G[WRITING]&D " : "",
+                xIS_SET( wch->act, PLR_AFK ) ? "&G[AFK]&D " : "",
+                xIS_SET( wch->act, PLR_ATTACKER ) ? "&R(ATTACKER)&D " : "",
+                xIS_SET( wch->act, PLR_KILLER ) ? "&R(KILLER)&D " : "",
+                xIS_SET( wch->act, PLR_THIEF ) ? "&R(THIEF)&D " : "",
                 char_name, wch->pcdata->title, extra_title, clan_name, council_name );
 
       /*
@@ -3264,13 +3264,13 @@ void do_who( CHAR_DATA* ch, const char* argument)
 
    if( !ch )
    {
-      fprintf( whoout, "&z%30d player%s.&D\r\n", nMatch, nMatch == 1 ? "" : "s" );
+      fprintf( whoout, "&z%36d player%s.&D\r\n", nMatch, nMatch == 1 ? "" : "s" );
       fclose( whoout );
       return;
    }
 
    set_char_color( AT_YELLOW, ch );
-   ch_printf( ch, "&z%30d player%s.&D\r\n", nMatch, nMatch == 1 ? "" : "s" );
+   ch_printf( ch, "&z%36d player%s.&D\r\n", nMatch, nMatch == 1 ? "" : "s" );
    return;
 }
 
