@@ -3264,7 +3264,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
 
    if( !ch )
    {
-      fprintf( whoout, "&z                                %30d player%s.\r\n", nMatch, nMatch == 1 ? "" : "s" );
+      fprintf( whoout, "&z                                %.30d player%s.\r\n", nMatch, nMatch == 1 ? "" : "s" );
       fclose( whoout );
       return;
    }
