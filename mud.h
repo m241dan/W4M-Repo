@@ -2372,6 +2372,7 @@ struct char_data
    short weight;
    short armor;
    short magic_defense;
+   short threat;
    short wimpy;
    int deaf;
    short perm_str;
@@ -4852,10 +4853,16 @@ void generate_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
 THREAT_DATA *is_threat( CHAR_DATA *ch, CHAR_DATA *victim );
 int calc_threat( THREAT_DATA *threat );
 CHAR_DATA *most_threatening( CHAR_DATA *ch );
+void free_threat args( ( CHAR_DATA * ch ) );
 void free_threat args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
 void free_threat args( ( CHAR_DATA * ch, THREAT_DATA * threat ) );
 void decay_threat args( ( void ) );
 void decay_threat args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dam ) );
+void update_threat( CHAR_DATA *ch );
+GTHREAT_DATA *has_threat( CHAR_DATA *ch );
+GTHREAT_DATA *get_global_threat( THREAT_DATA *threat );
+void free_global_threat( GTHREAT_DATA *gthreat );
+CHAR_DATA *most_threat( CHAR_DATA *ch );
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );

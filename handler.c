@@ -2385,6 +2385,7 @@ void extract_obj( OBJ_DATA * obj )
 void extract_char( CHAR_DATA * ch, bool fPull )
 {
    CHAR_DATA *wch, *next_wch;
+   GTHREAT_DATA *gthreat, *gthreat_next;
    OBJ_DATA *obj;
    char buf[MAX_STRING_LENGTH];
    ROOM_INDEX_DATA *location;
@@ -2451,6 +2452,15 @@ void extract_char( CHAR_DATA * ch, bool fPull )
          next_wch = wch->next_person_targetting_your_target;
          clear_target( wch );
       }
+
+   free_threat( ch );
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat_next )
+   {
+      gthreat_next = gthreat->next;
+      if( gthreat->threat_attacker == ch )
+         free_threat( gthreat->threat_owner, gthreat->threat );
+   }
 
    if( ch->mount )
    {

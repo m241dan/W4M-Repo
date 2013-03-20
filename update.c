@@ -543,8 +543,6 @@ void mobile_update( void )
    {
       set_cur_char( ch );
 
-      decay_threat( NULL, ch, 0 );
-
       if( !IS_NPC( ch ) )
       {
          drunk_randoms( ch );
@@ -1905,6 +1903,7 @@ void update_handler( void )
    {
       pulse_mobile = PULSE_MOBILE;
       mobile_update(  );
+      decay_threat(  );
    }
 
    if( --pulse_violence <= 0 )
@@ -2539,7 +2538,7 @@ void timers_update(  )
                CHAR_DATA *most_threatening;
 
                if( ch->target->victim != ( most_threatening = most_threat( ch ) ) )
-                  set_new_target( ch, get_target_2( ch, most_threatening ) );
+                  set_new_target( ch, get_target_2( ch, most_threatening, -1 ) );
             }
 
             victim = ch->target->victim;

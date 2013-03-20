@@ -4060,14 +4060,12 @@ bool check_parry( CHAR_DATA * ch, CHAR_DATA * victim )
     * Put in the call to chance() to allow penalties for misaligned
     * clannies.  
     */
-   if( chances != 0 && victim->morph )
-      chances += victim->morph->parry;
-
-   if( !chance( victim, chances + victim->level - ch->level ) )
+   if( !chance( victim, chances  ) )
    {
       learn_from_failure( victim, gsn_parry );
       return FALSE;
    }
+
    if( !IS_NPC( victim ) && !IS_SET( victim->pcdata->flags, PCFLAG_GAG ) )
        /*SB*/ act( AT_SKILL, "You parry $n's attack.", ch, NULL, victim, TO_VICT );
 
