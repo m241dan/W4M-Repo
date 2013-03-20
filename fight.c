@@ -1361,8 +1361,11 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     */
    victim->hit -= dam;
 
-   generate_threat( ch, victim );
-   decay_threat( victim, ch, dam );
+   if( ch != victim )
+   {
+      generate_threat( ch, victim );
+      decay_threat( victim, ch, dam );
+   }
 
    if( !IS_NPC( victim ) && victim->level >= LEVEL_IMMORTAL && victim->hit < 1 )
       victim->hit = 1;
@@ -2957,12 +2960,11 @@ void do_kill( CHAR_DATA* ch, const char* argument)
       send_to_char( "You're already fighting something, just switch targets!\r\n", ch );
       return;
    }
- 
+
    ch_printf( ch, "You begin targeting %s and drop to a fighting stance.\r\n", target->victim->name );
    ch->position = POS_FIGHTING;
    set_new_target( ch, target );
    check_attacker( ch, target->victim );
-   ch->next_round = .25;
    add_queue( ch, COMBAT_ROUND );
    return;
 }
@@ -3677,8 +3679,8 @@ void generate_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
       LINK( threat, victim->first_threat, victim->last_threat, next, prev );
       CREATE( gthreat, GTHREAT_DATA, 1 );
       gthreat->threat = threat;
-      gthreat->involved = victim;
-      gthreat->involved_2 = ch;
+      gthreat->threat_owner = victim;
+      gthreat->threat_attack = ch;
       LINK( gthreat, first_gthreat, last_gtheat, next, prev );
    }
    else
@@ -3799,10 +3801,11 @@ void free_threat( CHAR_DATA *ch, CHAR_DATA *victim )
 void free_global_threat( GTHREAT_DATA *gthreat )
 {
    UNLINK( gthreat, first_gthreat, last_gthreat, next, prev );
-   gthreat->involved = NULL;
-   gthreat->involved_2 = NULL;
+   gthreat->threat_owner = NULL;
+   gthreat->threat_attacker = NULL;
    gthreat->threat = NULL;
    DISPOSE( gthreat );
+   return;
 }
 
 GTHREAT_DATA *get_global_threat( THREAT_DATA *threat )
@@ -3820,7 +3823,70 @@ GTHREAT_DATA *has_threat( CHAR_DATA *ch )
    GTHREAT_DATA *gthreat;
 
    for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
-      if( ch == gthreat->involved || ch == gthreat->involved_2 )
+      if( ch == gthreat->threat_owner || ch == gthreat->threat_attacker )
          return gthreat;
    return NULL;
+}
+
+void update_threat( CHAR_DATA * ch )
+{
+   GTHREAT_DATA *gthreat, *next_gthreat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = next_gthreat )
+   {
+      next_gthreat = gthreat->next;
+      if( ( ch == gthreat->threat_owner || ch == gthreat->threat_attacker )
+         && find_distance( gthreat_owner, gthreat_attacker, -1 ) > 9 )
+      {
+         free_threat( gthreat_owner, gthreat->threat );
+         ch_printf( gthreat_attacker, "&Y%s no longer holds threat over you.&w\r\n", gthreat_owner->name );
+         ch_printf( gthreat_owner, "&YYou give up your threat towards %s.&w\r\n", gthreat_attacker->name );
+      }
+   }
+   return;
+}
+
+void do_forgive( CHAR_DATA *ch, const char *argument )
+{
+   THREAT_DATA *threat, *next_threat;
+   CHAR_DATA *victim;
+   char arg[MAX_STRING_LENGTH];
+
+   argument = one_argument( argument, arg );
+
+   if( arg[0] == '\0' )
+   {
+      send_to_char( "Forgive who?\r\n", ch );
+      return;
+   }
+   if( !ch->first_threat )
+   {
+      send_to_char( "You hold threat for no person.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( strlower( arg ), "all" ) )
+   {
+      for( threat = ch->first_threat; threat; threat = next_threat )
+      {
+         next_threat = threat->next;
+         ch_printf( threat->attacker, "%s has forgiven you and no longer holds threat towards you.\r\n", ch->name );
+         free_threat( ch, threat );
+      }
+      send_to_char( "You forgive all your opponents.\r\n", ch );
+      return;
+   }
+   if( ( victim = get_char_world( ch, arg ) ) != NULL )
+   {
+      if( ( threat = is_threat( victim, ch ) ) == NULL )
+      {
+         send_to_char( "You hold no threat for them.\r\n", ch );
+         return;
+      }
+      ch_printf( victim, "%s has forgiven you and no longer holds threat towards you.\r\n", ch->name );
+      send_to_char( "You forgive them.\r\n", ch );
+      free_threat( ch, threat );
+      return;
+   }
+   return;
 }

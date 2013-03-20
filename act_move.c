@@ -1096,6 +1096,11 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
    if( ch->target || ch->first_targetedby )
       update_target_ch_moved( ch );
 
+   update_threat( ch );
+
+   if( has_threat( ch ) )
+      add_queue( ch, COMBAT_LAG_TIMER );
+
    if( IS_IMMORTAL( ch ) && !ch->in_room->coordset && from_room->coordset && ch->in_room->area->realmed )
       update_room_coords( ch->in_room, from_room, pexit->vdir );
 

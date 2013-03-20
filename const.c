@@ -44,7 +44,7 @@ const char *const npc_class[MAX_NPC_CLASS] = {
 };
 
 const double base_class_lag[MAX_CLASS] = {
-   4, 4, 4, 3, 3, 3, 2.5, 2.5, 2.5
+   3, 3, 3, 2.5, 2.5, 2.5, 2, 2, 2
 };
 
 const int hp_lvl_gain[MAX_CLASS] = {

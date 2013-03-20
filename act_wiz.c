@@ -2118,6 +2118,18 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
    else
       pager_printf_color( ch, "&cTargeted By:&C No one\r\n" );
 
+   pager_printf_color( ch, "&cHas threat against...:&w" );
+   if( victim->first_threat )
+   {
+      THREAT_DATA *threat;
+
+      for( threat = victim->first_threat; threat; threat = threat->next )
+         pager_printf_color( ch, "\r\n&cAttacker: &C%-15s &cC_Threat: &C%-4d &cF_Threat: &C%d&w", threat->attacker->name, threat->constant, threat->fickle );
+      send_to_pager( "\r\n", ch );
+   }
+   else
+      pager_printf_color( ch, "&CNo one&w\r\n" );
+
    if( IS_NPC( victim ) )
       pager_printf_color( ch,
                           "&cMob hitdie : &C%dd%d+%d    &cMob damdie : &C%dd%d+%3d    &cIndex damdie : &C%dd%d+%3d\r\n&cNumAttacks : &C%d     &cRange : &C%d\r\n",

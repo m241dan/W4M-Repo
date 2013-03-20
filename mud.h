@@ -2419,10 +2419,10 @@ struct gthreat_data
 {
    GTHREAT_DATA *next;
    GTHREAT_DATA *prev;
-   CHAR_DATA *involved;
-   CHAR_DATA *involved_2;
+   CHAR_DATA *threat_owner;
+   CHAR_DATA *threat_attacker;
    THREAT_DATA *threat;
-}
+};
 
 struct threat_data
 {
@@ -3865,6 +3865,7 @@ extern struct act_prog_data *mob_act_list;
  * Command functions.
  * Defined in act_*.c (mostly).
  */
+DECLARE_DO_FUN( do_forgive );
 DECLARE_DO_FUN( do_beta );
 DECLARE_DO_FUN( do_findexit );
 DECLARE_DO_FUN( do_rdig );
