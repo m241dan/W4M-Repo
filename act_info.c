@@ -52,32 +52,32 @@ bool EXA_prog_trigger = TRUE;
  */
 
 const char *const where_name[] = {
-   "&W<&wused as light&W>&D     ",
-   "&W<&wworn on finger&W>&D    ",
-   "&W<&wworn on finger&W>&D    ",
-   "&W<&wworn around neck&W>&D  ",
-   "&W<&wworn around neck&W>&D  ",
-   "&W<&wworn on body&W>&D      ",
-   "&W<&wworn on head&W>&D      ",
-   "&W<&wworn on legs&W>&D      ",
-   "&W<&wworn on feet&W>&D      ",
-   "&W<&wworn on hands&W>&D     ",
-   "&W<&wworn on arms&W>&D      ",
-   "&W<&wworn as shield&W>&D    ",
-   "&W<&wworn about body&W>&D   ",
-   "&W<&wworn about waist&W>&D  ",
-   "&W<&wworn around wrist&W>&D ",
-   "&W<&wworn around wrist&W>&D ",
-   "&W<&wwielded&W>&D           ",
-   "&W<&wheld&W>&D              ",
-   "&W<&wdual wielded&W>&D      ",
-   "&W<&wworn on ears&W>&D      ",
-   "&W<&wworn on eyes&W>&D      ",
-   "&W<&wmissile wielded&W>&D   ",
-   "&W<&wworn on back&W>&D      ",
-   "&W<&wworn over face&W>&D    ",
-   "&W<&wworn around ankle&W>&D ",
-   "&W<&wworn around ankle&W>&D ",
+   "&W<&D&wused as light&W>&D     ",
+   "&W<&D&wworn on finger&W>&D    ",
+   "&W<&D&wworn on finger&W>&D    ",
+   "&W<&D&wworn around neck&W>&D  ",
+   "&W<&D&wworn around neck&W>&D  ",
+   "&W<&D&wworn on body&W>&D      ",
+   "&W<&D&wworn on head&W>&D      ",
+   "&W<&D&wworn on legs&W>&D      ",
+   "&W<&D&wworn on feet&W>&D      ",
+   "&W<&D&wworn on hands&W>&D     ",
+   "&W<&D&wworn on arms&W>&D      ",
+   "&W<&D&wworn as shield&W>&D    ",
+   "&W<&D&wworn about body&W>&D   ",
+   "&W<&D&wworn about waist&W>&D  ",
+   "&W<&D&wworn around wrist&W>&D ",
+   "&W<&D&wworn around wrist&W>&D ",
+   "&W<&D&wwielded&W>&D           ",
+   "&W<&D&wheld&W>&D              ",
+   "&W<&D&wdual wielded&W>&D      ",
+   "&W<&D&wworn on ears&W>&D      ",
+   "&W<&D&wworn on eyes&W>&D      ",
+   "&W<&D&wmissile wielded&W>&D   ",
+   "&W<&D&wworn on back&W>&D      ",
+   "&W<&D&wworn over face&W>&D    ",
+   "&W<&D&wworn around ankle&W>&D ",
+   "&W<&D&wworn around ankle&W>&D ",
    "<BUG Inform Nivek>  ",
    "<BUG Inform Nivek>  ",
    "<BUG Inform Nivek>  "
@@ -286,7 +286,7 @@ char *format_obj_to_char( OBJ_DATA * obj, CHAR_DATA * ch, bool fShort )
    if( ch->Class == CLASS_PALADIN
        && ( !IS_OBJ_STAT( obj, ITEM_ANTI_EVIL ) && IS_OBJ_STAT( obj, ITEM_ANTI_NEUTRAL )
             && !IS_OBJ_STAT( obj, ITEM_ANTI_GOOD ) ) )
-      mudstrlcat( buf, "&W(&wFlaming Grey&W)&D ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&D&wFlaming Grey&W)&D ", MAX_STRING_LENGTH );
    if( ch->Class == CLASS_PALADIN
        && ( !IS_OBJ_STAT( obj, ITEM_ANTI_EVIL ) && !IS_OBJ_STAT( obj, ITEM_ANTI_NEUTRAL )
             && IS_OBJ_STAT( obj, ITEM_ANTI_GOOD ) ) )
@@ -306,17 +306,17 @@ char *format_obj_to_char( OBJ_DATA * obj, CHAR_DATA * ch, bool fShort )
       mudstrlcat( buf, "(Smouldering Grey-White) ", MAX_STRING_LENGTH );
 
    if( ( IS_AFFECTED( ch, AFF_DETECT_MAGIC ) || xIS_SET( ch->act, PLR_HOLYLIGHT ) ) && IS_OBJ_STAT( obj, ITEM_MAGIC ) )
-      mudstrlcat( buf, "&W(&wMagical&W)&D ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&D&wMagical&W)&D ", MAX_STRING_LENGTH );
    if( !glowsee && IS_OBJ_STAT( obj, ITEM_GLOW ) )
       mudstrlcat( buf, "&W(&YGlowing&W)&D ", MAX_STRING_LENGTH );
    if( IS_OBJ_STAT( obj, ITEM_HUM ) )
-      mudstrlcat( buf, "&Y(&wHumming&Y)&D ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&Y(&D&wHumming&Y)&D ", MAX_STRING_LENGTH );
    if( IS_OBJ_STAT( obj, ITEM_HIDDEN ) )
       mudstrlcat( buf, "&p(&wHidden&p)&D ", MAX_STRING_LENGTH );
    if( IS_OBJ_STAT( obj, ITEM_BURIED ) )
       mudstrlcat( buf, "(Buried) ", MAX_STRING_LENGTH );
    if( IS_IMMORTAL( ch ) && IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) )
-      mudstrlcat( buf, "&W(&PPROTO&W)&D ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&D&pPROTO&W)&D ", MAX_STRING_LENGTH );
    if( ( IS_AFFECTED( ch, AFF_DETECTTRAPS ) || xIS_SET( ch->act, PLR_HOLYLIGHT ) ) && is_trapped( obj ) )
       mudstrlcat( buf, "(Trap) ", MAX_STRING_LENGTH );
 
@@ -687,9 +687,9 @@ void show_visible_affects_to_char( CHAR_DATA * victim, CHAR_DATA * ch )
       if( IS_GOOD( victim ) )
          ch_printf( ch, "%s glows with an aura of divine radiance.\r\n", name );
       else if( IS_EVIL( victim ) )
-         ch_printf( ch, "%s shimmers beneath an aura of dark energy.\r\n", name );
+         ch_printf( ch, "&D&p%s shimmers beneath an aura of dark energy.&D\r\n", name );
       else
-         ch_printf( ch, "%s is shrouded in flowing shadow and light.\r\n", name );
+         ch_printf( ch, "&w%s is shrouded in flowing shadow and light.&D\r\n", name );
    }
    if( IS_AFFECTED( victim, AFF_FIRESHIELD ) )
    {
@@ -698,7 +698,7 @@ void show_visible_affects_to_char( CHAR_DATA * victim, CHAR_DATA * ch )
    }
    if( IS_AFFECTED( victim, AFF_SHOCKSHIELD ) )
    {
-      set_char_color( AT_BLUE, ch );
+      set_char_color( AT_YELLOW, ch );
       ch_printf( ch, "%s is surrounded by cascading torrents of energy.\r\n", name );
    }
    if( IS_AFFECTED( victim, AFF_ACIDMIST ) )
@@ -742,25 +742,25 @@ void show_char_to_char_0( CHAR_DATA * victim, CHAR_DATA * ch )
    if( !IS_NPC( victim ) && !victim->desc )
    {
       if( !victim->switched )
-         send_to_char_color( "&P[(Link Dead)] ", ch );
+         send_to_char_color( "&w[&W(&D&cLink Dead&D&W)&D&w]&D ", ch );
       else if( !IS_AFFECTED( victim, AFF_POSSESS ) )
-         mudstrlcat( buf, "(Switched) ", MAX_STRING_LENGTH );
+         mudstrlcat( buf, "&W(&D&cSwitched&W)&D ", MAX_STRING_LENGTH );
    }
 
    if( IS_NPC( victim ) && IS_AFFECTED( victim, AFF_POSSESS ) && IS_IMMORTAL( ch ) && victim->desc )
    {
-      snprintf( buf1, MAX_STRING_LENGTH, "(%s)", victim->desc->original->name );
+      snprintf( buf1, MAX_STRING_LENGTH, "&W(&D&c%s&W)&D", victim->desc->original->name );
       mudstrlcat( buf, buf1, MAX_STRING_LENGTH );
    }
 
    if( !IS_NPC( victim ) && xIS_SET( victim->act, PLR_AFK ) )
-      mudstrlcat( buf, "[AFK] ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W[&D&cAFK&W]&D ", MAX_STRING_LENGTH );
 
    if( ( !IS_NPC( victim ) && xIS_SET( victim->act, PLR_WIZINVIS ) )
        || ( IS_NPC( victim ) && xIS_SET( victim->act, ACT_MOBINVIS ) ) )
    {
       if( !IS_NPC( victim ) )
-         snprintf( buf1, MAX_STRING_LENGTH, "(Invis %d) ", victim->pcdata->wizinvis );
+         snprintf( buf1, MAX_STRING_LENGTH, "&W(&D&cInvis %d&W)&D ", victim->pcdata->wizinvis );
       else
          snprintf( buf1, MAX_STRING_LENGTH, "(Mobinvis %d) ", victim->mobinvis );
       mudstrlcat( buf, buf1, MAX_STRING_LENGTH );
@@ -769,7 +769,7 @@ void show_char_to_char_0( CHAR_DATA * victim, CHAR_DATA * ch )
    if( !IS_NPC( victim ) )
    {
       if( IS_IMMORTAL( victim ) && victim->level > LEVEL_AVATAR )
-         send_to_char_color( "&P(&WImmortal&P) ", ch );
+         send_to_char_color( "&W(&D&rImmortal&W)&D ", ch );
       if( victim->pcdata->clan
           && IS_SET( victim->pcdata->flags, PCFLAG_DEADLY )
           && victim->pcdata->clan->badge
@@ -782,22 +782,22 @@ void show_char_to_char_0( CHAR_DATA * victim, CHAR_DATA * ch )
    set_char_color( AT_PERSON, ch );
 
    if( IS_AFFECTED( victim, AFF_INVISIBLE ) )
-      mudstrlcat( buf, "(Invis) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&YInvis&W)&D ", MAX_STRING_LENGTH );
    if( IS_AFFECTED( victim, AFF_HIDE ) )
-      mudstrlcat( buf, "(Hide) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&D&pHide&W)&D ", MAX_STRING_LENGTH );
    if( IS_AFFECTED( victim, AFF_PASS_DOOR ) )
-      mudstrlcat( buf, "(Translucent) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&z(&wTranslucent&z)&D ", MAX_STRING_LENGTH );
    if( IS_AFFECTED( victim, AFF_FAERIE_FIRE ) )
-      mudstrlcat( buf, "(Pink Aura) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&PPink Aura&W)&D ", MAX_STRING_LENGTH );
    if( IS_EVIL( victim ) && ( IS_AFFECTED( ch, AFF_DETECT_EVIL ) || ch->Class == CLASS_PALADIN ) )
-      mudstrlcat( buf, "(Red Aura) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&RRed Aura&W)&D ", MAX_STRING_LENGTH );
    if( IS_NEUTRAL( victim ) && ch->Class == CLASS_PALADIN )
-      mudstrlcat( buf, "(Grey Aura) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&D&zGrey Aura&W)&D ", MAX_STRING_LENGTH );
    if( IS_GOOD( victim ) && ch->Class == CLASS_PALADIN )
-      mudstrlcat( buf, "(White Aura) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&z(&WWhite Aura&D&z)&D ", MAX_STRING_LENGTH );
 
    if( IS_AFFECTED( victim, AFF_BERSERK ) )
-      mudstrlcat( buf, "(Wild-eyed) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&z(&pWild&C-&geyed&z)&D ", MAX_STRING_LENGTH );
    if( !IS_NPC( victim ) && xIS_SET( victim->act, PLR_ATTACKER ) )
       mudstrlcat( buf, "(ATTACKER) ", MAX_STRING_LENGTH );
    if( !IS_NPC( victim ) && xIS_SET( victim->act, PLR_KILLER ) )
@@ -807,15 +807,15 @@ void show_char_to_char_0( CHAR_DATA * victim, CHAR_DATA * ch )
    if( !IS_NPC( victim ) && xIS_SET( victim->act, PLR_LITTERBUG ) )
       mudstrlcat( buf, "(LITTERBUG) ", MAX_STRING_LENGTH );
    if( IS_NPC( victim ) && IS_IMMORTAL( ch ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
-      mudstrlcat( buf, "(PROTO) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&D&pPROTO&W)&D ", MAX_STRING_LENGTH );
    if( IS_NPC( victim ) && ch->mount && ch->mount == victim && ch->in_room == ch->mount->in_room )
       mudstrlcat( buf, "(Mount) ", MAX_STRING_LENGTH );
    if( victim->desc && victim->desc->connected == CON_EDITING )
-      mudstrlcat( buf, "(Writing) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&gWriting&W) ", MAX_STRING_LENGTH );
    if( victim->morph != NULL )
       mudstrlcat( buf, "(Morphed) ", MAX_STRING_LENGTH );
    if( IS_NPC( victim ) && victim->pIndexData->first_talk )
-      mudstrlcat( buf, "(T) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&cT&W)&D ", MAX_STRING_LENGTH );
    set_char_color( AT_PERSON, ch );
    if( ( victim->position == victim->defposition && victim->long_descr[0] != '\0' )
        || ( victim->morph && victim->morph->morph && victim->morph->morph->defpos == victim->position ) )
@@ -987,11 +987,11 @@ void show_char_to_char_1( CHAR_DATA * victim, CHAR_DATA * ch )
 
    if( can_see( victim, ch ) && !IS_NPC( ch ) && !xIS_SET( ch->act, PLR_WIZINVIS ) )
    {
-      act( AT_ACTION, "$n looks at you.", ch, NULL, victim, TO_VICT );
+      act( AT_ACTION, "&w$n looks at you.&D", ch, NULL, victim, TO_VICT );
       if( victim != ch )
-         act( AT_ACTION, "$n looks at $N.", ch, NULL, victim, TO_NOTVICT );
+         act( AT_ACTION, "&w$n looks at $N.&D", ch, NULL, victim, TO_NOTVICT );
       else
-         act( AT_ACTION, "$n looks at $mself.", ch, NULL, victim, TO_NOTVICT );
+         act( AT_ACTION, "&w$n looks at $mself.&D", ch, NULL, victim, TO_NOTVICT );
    }
 
    if( victim->description[0] != '\0' )
@@ -1006,11 +1006,11 @@ void show_char_to_char_1( CHAR_DATA * victim, CHAR_DATA * ch )
       if( victim->morph != NULL && victim->morph->morph != NULL )
          send_to_char( victim->morph->morph->description, ch );
       else if( IS_NPC( victim ) )
-         act( AT_PLAIN, "You see nothing special about $M.", ch, NULL, victim, TO_CHAR );
+         act( AT_PLAIN, "&wYou see nothing special about $M.&D", ch, NULL, victim, TO_CHAR );
       else if( ch != victim )
-         act( AT_PLAIN, "$E isn't much to look at...", ch, NULL, victim, TO_CHAR );
+         act( AT_PLAIN, "&w$E isn't much to look at...&D", ch, NULL, victim, TO_CHAR );
       else
-         act( AT_PLAIN, "You're not much to look at...", ch, NULL, NULL, TO_CHAR );
+         act( AT_PLAIN, "&wYou're not much to look at...&D", ch, NULL, NULL, TO_CHAR );
    }
 
    show_race_line( ch, victim );
@@ -1025,9 +1025,9 @@ void show_char_to_char_1( CHAR_DATA * victim, CHAR_DATA * ch )
          {
             send_to_char( "\r\n", ch );
             if( victim != ch )
-               act( AT_PLAIN, "$N is using:", ch, NULL, victim, TO_CHAR );
+               act( AT_PLAIN, "&w$N is using:&D", ch, NULL, victim, TO_CHAR );
             else
-               act( AT_PLAIN, "You are using:", ch, NULL, NULL, TO_CHAR );
+               act( AT_PLAIN, "&wYou are using:&D", ch, NULL, NULL, TO_CHAR );
             found = TRUE;
          }
          if( ( !IS_NPC( victim ) ) && ( victim->race > 0 ) && ( victim->race < MAX_PC_RACE ) )
@@ -1048,10 +1048,10 @@ void show_char_to_char_1( CHAR_DATA * victim, CHAR_DATA * ch )
    if( IS_IMMORTAL( ch ) )
    {
       if( IS_NPC( victim ) )
-         ch_printf( ch, "\r\nMobile #%d '%s' ", victim->pIndexData->vnum, victim->name );
+         ch_printf( ch, "\r\n&D&cMobile &D#%d '%s' ", victim->pIndexData->vnum, victim->name );
       else
-         ch_printf( ch, "\r\n%s ", victim->name );
-      ch_printf( ch, "is a level %d %s %s.\r\n",
+         ch_printf( ch, "\r\n&D&c%s&D ", victim->name );
+      ch_printf( ch, "&D&wis a level %d %s %s.&D\r\n",
                  victim->level,
                  IS_NPC( victim ) ? victim->race < MAX_NPC_RACE && victim->race >= 0 ?
                  npc_race[victim->race] : "unknown" : victim->race < MAX_PC_RACE &&
@@ -1112,7 +1112,7 @@ bool check_blind( CHAR_DATA * ch )
 
    if( IS_AFFECTED( ch, AFF_BLIND ) )
    {
-      send_to_char( "You can't see a thing!\r\n", ch );
+      send_to_char( "&D&pYou can't see a thing!&D\r\n", ch );
       return FALSE;
    }
 
