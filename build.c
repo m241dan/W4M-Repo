@@ -1197,7 +1197,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
    {
       send_to_char( "Syntax: tset <mob> <option>\r\n", ch );
       send_to_char( "Option being one of:\r\n", ch );
-      send_to_char( " create, list, remove, from, to, content, script\r\n", ch );
+      send_to_char( " create, list, remove, from, to, content, script, show\r\n", ch );
       return;
    }
 
