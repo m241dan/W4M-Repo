@@ -628,7 +628,28 @@ void mobile_update( void )
           && !xIS_SET( pexit->to_room->room_flags, ROOM_DEATH )
           && ( !xIS_SET( ch->act, ACT_STAY_AREA ) || pexit->to_room->area == ch->in_room->area ) )
       {
-         retcode = move_char( ch, pexit, 0 );
+         bool can_move = FALSE;
+
+         if( !xIS_EMPTY( pexit->to_room->color ) )
+         {
+            int x;
+            for( x = 0; x < MAX_COLOR_FLAG; x++ )
+            {
+               if( xIS_SET( ch->color, x ) && xIS_SET( pexit->to_room->color, x )
+                  && !xIS_SET( pexit->to_room->color, ( x + (MAX_COLOR_FLAG / 2 ) ) ) )
+                  can_move = TRUE;
+               else
+               {
+                  can_move = FALSE;
+                  break;
+               }
+            }
+         }
+         else
+            can_move = TRUE;
+
+         if( can_move )
+            retcode = move_char( ch, pexit, 0 );
          /*
           * If ch changes position due
           * to it's or someother mob's

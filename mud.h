@@ -2019,6 +2019,15 @@ typedef enum
 } styles;
 
 /*
+ * Color bits for mobs/rooms -Davenge
+ */
+typedef enum
+{
+   COLOR_RED, COLOR_BLUE, COLOR_GREEN, COLOR_YELLOW, COLOR_ORANGE, COLOR_PURPLE,
+   NO_RED, NO_BLUE, NO_GREEN, NO_YELLOW, NO_ORANGE, NO_PURPLE, MAX_COLOR_FLAG
+} color_bits;
+
+/*
  * ACT bits for players.
  */
 typedef enum
@@ -2207,6 +2216,7 @@ struct mob_index_data
    EXT_BV damtype;
    TALK_DATA *first_talk;
    TALK_DATA *last_talk;
+   EXT_BV color;
 };
 
 #define INIT_CONVERSATION     1
@@ -2336,6 +2346,7 @@ struct char_data
    EXT_BV act;
    EXT_BV affected_by;
    EXT_BV no_affected_by;
+   EXT_BV color;
    int carry_weight;
    int carry_number;
    int xflags;
@@ -2973,6 +2984,7 @@ struct room_index_data
    MPROG_DATA *mudprogs;   /* mudprogs */
    EXT_BV room_flags;
    EXT_BV progtypes; /* mudprogs */
+   EXT_BV color;
    const char *name;
    const char *description;
    int mpactnum;  /* mudprogs */
@@ -3729,6 +3741,7 @@ extern const char *const ex_pwater[];
 extern const char *const ex_pair[];
 extern const char *const ex_pearth[];
 extern const char *const ex_pfire[];
+extern const char * const color_flags[MAX_COLOR_FLAG];
 extern const double base_class_lag[MAX_CLASS];
 
 extern int const lang_array[];
@@ -4652,6 +4665,7 @@ int get_atype( const char *type );
 int get_aflag( const char *flag );
 int get_oflag( const char *flag );
 int get_wflag( const char *flag );
+int get_colorflag( const char *flag );
 int get_risflag( const char *flag );
 int get_attackflag( const char *flag );
 int get_defenseflag( const char *flag );

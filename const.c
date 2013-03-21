@@ -43,6 +43,11 @@ const char *const npc_class[MAX_NPC_CLASS] = {
    "baker", "butcher", "blacksmith", "mayor", "king", "queen"
 };
 
+const char *const color_flags[MAX_COLOR_FLAG] = {
+   "red", "blue", "green", "yellow", "orange", "purple",
+   "no_red", "no_blue", "no_green", "no_yellow", "no_orange", "no_purple"
+};
+
 const double base_class_lag[MAX_CLASS] = {
    3, 3, 3, 2.5, 2.5, 2.5, 2, 2, 2
 };

@@ -2771,6 +2771,7 @@ CHAR_DATA *create_mobile( MOB_INDEX_DATA * pMobIndex )
    /*
     * Perhaps add this to the index later --Shaddai
     */
+   mob->color = pMobIndex->color;
    for( counter = 0; counter < MAX_DAMTYPE; counter++ )
    {
       mob->penetration[counter] = pMobIndex->penetration[counter];
@@ -6352,6 +6353,7 @@ void fread_fuss_room( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'C':
+            KEY( "Color", pRoomIndex->color, fread_bitvector( fp ) );
             if( !str_cmp( word, "Coord" ) )
             {
                pRoomIndex->coord[X] = fread_number( fp );
@@ -7280,6 +7282,7 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
             break;
 
          case 'C':
+            KEY( "Color", pMobIndex->color, fread_bitvector( fp ) );
             if( !str_cmp( word, "Class" ) )
             {
                short Class = get_npc_class( fread_flagstring( fp ) );

@@ -462,6 +462,16 @@ int get_aflag( const char *flag )
    return -1;
 }
 
+int get_colorflag( const char *flag )
+{
+   unsigned int x;
+
+   for( x = 0; x < MAX_COLOR_FLAG; x++ )
+      if( !str_cmp( flag, color_flags[x] ) )
+         return x;
+   return -1;
+}
+
 int get_trapflag( const char *flag )
 {
    size_t x;
@@ -1498,6 +1508,7 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       send_to_char( "  gold hp mana move practice align race\r\n", ch );
       send_to_char( "  attack armor affected level haste haste_from_magic\r\n", ch );
       send_to_char( "  thirst drunk full blood flags range\r\n", ch );
+      send_to_char( "  color\r\n", ch );
       send_to_char( "  pos defpos part (see BODYPARTS)\r\n", ch );
       send_to_char( "  sav1 sav2 sav4 sav4 sav5 (see SAVINGTHROWS)\r\n", ch );
       send_to_char( "  resistant immune susceptible (see RIS)\r\n", ch );
@@ -1947,6 +1958,23 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
          victim->pIndexData->range = victim->range;
       send_to_char( "Ok.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( arg2, "color" ) )
+   {
+      if( !can_mmodify( ch, victim ) )
+         return;
+
+      if( value == -1 )
+         value = get_colorflag( arg3 );
+      if( value == -1 || value > MAX_COLOR_FLAG )
+      {
+         send_to_char( "Not a valid color flag.\r\n", ch );
+         return;
+      }
+      send_to_char( "Toggling bit.\r\n", ch );
+      xTOGGLE_BIT( victim->color, value );
       return;
    }
 
@@ -5171,6 +5199,7 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       send_to_char( "  exit bexit exdesc exflags exname exkey exangle\r\n", ch );
       send_to_char( "  flags sector teledelay televnum tunnel\r\n", ch );
       send_to_char( "  rlist exdistance pulltype pull push unset\r\n", ch );
+      send_to_char( "  color\r\n", ch );
       return;
    }
 
@@ -5544,7 +5573,22 @@ void do_redit( CHAR_DATA* ch, const char* argument)
       send_to_char( "Done.\r\n", ch );
       return;
    }
+   if( !str_cmp( arg, "color" ) )
+   {
+      if( !is_number( arg2 ) )
+         value = get_colorflag( arg2 );
+      else
+         value = atoi( arg2 );
 
+      if( value == -1 || value > MAX_COLOR_FLAG )
+      {
+         send_to_char( "Not a valid color flag.\r\n", ch );
+         return;
+      }
+      send_to_char( "Toggling bit.\r\n", ch );
+      xTOGGLE_BIT( location->color, value );
+      return;
+   }
    if( !str_cmp( arg, "exflags" ) )
    {
       if( !argument || argument[0] == '\0' )
@@ -6909,6 +6953,8 @@ void fwrite_fuss_room( FILE * fpout, ROOM_INDEX_DATA * room, bool install )
    fprintf( fpout, "CoordSet %d\n", ( room->coordset ? 1 : 0 ) );
    fprintf( fpout, "Name     %s~\n", room->name );
    fprintf( fpout, "Sector   %s~\n", strip_cr( sec_flags[room->sector_type] ) );
+   if( !xIS_EMPTY( room->color ) )
+      fprintf( fpout, "Color   %s\n", print_bitvector( &room->color ) );
    if( !xIS_EMPTY( room->room_flags ) )
       fprintf( fpout, "Flags    %s~\n", ext_flag_string( &room->room_flags, r_flags ) );
    if( room->tele_delay > 0 || room->tele_vnum > 0 || room->tunnel > 0 )
@@ -7106,10 +7152,11 @@ void fwrite_fuss_mobile( FILE * fpout, MOB_INDEX_DATA * pMobIndex, bool install 
          fprintf( fpout, " %d", pMobIndex->penetration[count] );
       fprintf( fpout, "\n" );
    }
-   if( !xIS_EMPTY( pMobIndex->damtype ) )
+   if( xIS_EMPTY( pMobIndex->damtype ) )
       xSET_BIT( pMobIndex->damtype, DAM_BLUNT );
    fprintf( fpout, "Damtype    %s\n", print_bitvector( &pMobIndex->damtype ) );
-
+   if( !xIS_EMPTY( pMobIndex->color ) )
+      fprintf( fpout, "Color      %s\n", print_bitvector( &pMobIndex->color ) );
    fprintf( fpout, "Saves      %d %d %d %d %d\n",
             pMobIndex->saving_poison_death,
             pMobIndex->saving_wand, pMobIndex->saving_para_petri, pMobIndex->saving_breath, pMobIndex->saving_spell_staff );
