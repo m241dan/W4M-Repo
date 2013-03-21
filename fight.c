@@ -240,7 +240,6 @@ void violence_update( void )
    CHAR_DATA *ch;
    CHAR_DATA *lst_ch;
    TRV_WORLD *lcw;
-   TIMER *timer, *timer_next;
    ch_ret retcode;
    static int pulse = 0;
 
@@ -259,41 +258,6 @@ void violence_update( void )
        * Since he/she's in the char_list, it's likely to be the later...
        * and should not already be in another fight already
        */
-      if( char_died( ch ) )
-         continue;
-
-      for( timer = ch->first_timer; timer; timer = timer_next )
-      {
-         timer_next = timer->next;
-         if( --timer->count <= 0 )
-         {
-            if( timer->type == TIMER_ASUPRESSED )
-            {
-               if( timer->value == -1 )
-               {
-                  timer->count = 1000;
-                  continue;
-               }
-            }
-
-            if( timer->type == TIMER_NUISANCE )
-               DISPOSE( ch->pcdata->nuisance );
-
-            if( timer->type == TIMER_DO_FUN )
-            {
-               int tempsub;
-
-               tempsub = ch->substate;
-               ch->substate = timer->value;
-               ( timer->do_fun ) ( ch, "" );
-               if( char_died( ch ) )
-                  break;
-               ch->substate = tempsub;
-            }
-            extract_timer( ch, timer );
-         }
-      }
-
       if( char_died( ch ) )
          continue;
 
@@ -1396,6 +1360,12 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     */
    victim->hit -= dam;
 
+   if( ch != victim )
+   {
+      generate_threat( ch, victim, dam );
+      decay_threat( victim, ch, dam );
+   }
+
    if( !IS_NPC( victim ) && victim->level >= LEVEL_IMMORTAL && victim->hit < 1 )
       victim->hit = 1;
 
@@ -1488,6 +1458,9 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
 
       clear_target( ch );
       clear_target( victim );
+
+      free_threat( victim );
+      free_threat( ch, victim );
 
       stop_fighting( ch, TRUE );
 
@@ -2136,9 +2109,9 @@ void update_pos( CHAR_DATA * victim )
       return;
    }
 
-   if( victim->hit <= -6 )
+   if( victim->hit <= -400 )
       victim->position = POS_MORTAL;
-   else if( victim->hit <= -3 )
+   else if( victim->hit <= -250 )
       victim->position = POS_INCAP;
    else
       victim->position = POS_STUNNED;
@@ -2781,7 +2754,7 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
       if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
          ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, w_flags[hit_wear], dam );
       if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
-         ch_printf( ch, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, w_flags[hit_wear], dam );
+         ch_printf( victim, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, w_flags[hit_wear], dam );
       /*
        * Now everyone in the room who might care about the ch -Davenge
        */
@@ -2986,12 +2959,11 @@ void do_kill( CHAR_DATA* ch, const char* argument)
       send_to_char( "You're already fighting something, just switch targets!\r\n", ch );
       return;
    }
- 
+
    ch_printf( ch, "You begin targeting %s and drop to a fighting stance.\r\n", target->victim->name );
    ch->position = POS_FIGHTING;
    set_new_target( ch, target );
    check_attacker( ch, target->victim );
-   multi_hit( ch, target, TYPE_UNDEFINED );
    add_queue( ch, COMBAT_ROUND );
    return;
 }
@@ -3689,3 +3661,243 @@ int get_mdefense_from_wis( CHAR_DATA * ch )
    return (int)mdefense;
 }
 
+void generate_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
+{
+   THREAT_DATA *threat;
+   GTHREAT_DATA *gthreat;
+
+   int fickle = (int)( amount * .75 ) + ( ch->threat * 2 );
+   int constant = (int)( amount *.25 );
+
+   if( fickle < 1 )
+      fickle = 1;
+   if( constant < 1 )
+      constant = 1;
+
+   if( ( threat = is_threat( ch, victim ) ) == NULL )
+   {
+      CREATE( threat, THREAT_DATA, 1 );
+      threat->attacker = ch;
+      threat->fickle = fickle;
+      threat->constant = constant;
+      LINK( threat, victim->first_threat, victim->last_threat, next, prev );
+      CREATE( gthreat, GTHREAT_DATA, 1 );
+      gthreat->threat = threat;
+      gthreat->threat_owner = victim;
+      gthreat->threat_attacker = ch;
+      LINK( gthreat, first_gthreat, last_gthreat, next, prev );
+   }
+   else
+   {
+      threat->fickle += fickle;
+      threat->constant += constant;
+   }
+   if( threat->constant > 2000 )
+      threat->constant = 2000;
+   return;
+}
+
+THREAT_DATA *is_threat( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   THREAT_DATA *threat;
+
+   for( threat = victim->first_threat; threat; threat = threat->next )
+      if( threat->attacker == ch )
+         return threat;
+   return NULL;
+}
+
+void decay_threat( void )
+{
+   GTHREAT_DATA *gthreat;
+   THREAT_DATA *threat;
+   int decay;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+   {
+      if( gthreat->threat == NULL )
+         continue;
+      threat = gthreat->threat;
+
+      if( threat->fickle <= 0 )
+         continue;
+      decay = ( (int)( threat->fickle *.02 ) - threat->attacker->threat );
+      if( decay < 3 )
+         decay = 3;
+      threat->fickle -= decay;
+      if( threat->fickle < 0 )
+         threat->fickle = 0;
+   }
+}
+
+void decay_threat( CHAR_DATA *ch, CHAR_DATA *victim, int dam )
+{
+   THREAT_DATA *threat;
+   int decay;
+
+   if( ( threat = is_threat( ch, victim ) ) != NULL )
+   {
+      decay = (int)( dam *.05 ) - (int)( ch->threat * 1.5 );
+      if( decay < 1 )
+         decay = 1;
+      threat->fickle -= decay;
+      if( threat->fickle < 0 )
+         threat->fickle = 0;
+   }
+   return;
+}
+
+int calc_threat( THREAT_DATA *threat )
+{
+   if( threat->fickle >= threat->constant )
+      return threat->fickle;
+   return threat->constant;
+}
+
+CHAR_DATA *most_threat( CHAR_DATA *ch )
+{
+   THREAT_DATA *threat, *most_threatening;
+
+   most_threatening = ch->first_threat;
+
+   if( !most_threatening )
+      return NULL;
+
+   for( threat = most_threatening->next; threat; threat = threat->next )
+   {
+      if( calc_threat( threat ) > calc_threat( most_threatening ) )
+         most_threatening = threat;
+   }
+   return most_threatening->attacker;
+}
+
+void free_threat( CHAR_DATA *ch )
+{
+   THREAT_DATA *threat;
+   THREAT_DATA *next_threat;
+
+   for( threat = ch->first_threat; threat; threat = next_threat )
+   {
+      next_threat = threat->next;
+      free_threat( ch, threat );
+   }
+   return;
+}
+
+void free_threat( CHAR_DATA *ch, THREAT_DATA *threat )
+{
+   GTHREAT_DATA *gthreat;
+
+   if( ( gthreat = get_global_threat( threat ) ) != NULL )
+      free_global_threat( gthreat );
+
+   UNLINK( threat, ch->first_threat, ch->last_threat, next, prev );
+   threat->attacker = NULL;
+   DISPOSE( threat );
+   return;
+}
+
+void free_threat( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   THREAT_DATA *threat;
+
+   for( threat = ch->first_threat; threat; threat = threat->next )
+   {
+      if( threat->attacker == victim )
+         free_threat( ch, threat );
+   }
+   return;
+}
+
+void free_global_threat( GTHREAT_DATA *gthreat )
+{
+   UNLINK( gthreat, first_gthreat, last_gthreat, next, prev );
+   gthreat->threat_owner = NULL;
+   gthreat->threat_attacker = NULL;
+   gthreat->threat = NULL;
+   DISPOSE( gthreat );
+   return;
+}
+
+GTHREAT_DATA *get_global_threat( THREAT_DATA *threat )
+{
+   GTHREAT_DATA *gthreat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+      if( gthreat->threat == threat )
+         return gthreat;
+   return NULL;
+}
+
+GTHREAT_DATA *has_threat( CHAR_DATA *ch )
+{
+   GTHREAT_DATA *gthreat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+      if( ch == gthreat->threat_owner || ch == gthreat->threat_attacker )
+         return gthreat;
+   return NULL;
+}
+
+void update_threat( CHAR_DATA * ch )
+{
+   GTHREAT_DATA *gthreat, *next_gthreat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = next_gthreat )
+   {
+      next_gthreat = gthreat->next;
+      if( ( ch == gthreat->threat_owner || ch == gthreat->threat_attacker )
+         && find_distance( gthreat->threat_owner, gthreat->threat_attacker, -1 ) > 9 )
+      {
+         free_threat( gthreat->threat_owner, gthreat->threat );
+         ch_printf( gthreat->threat_attacker, "&Y%s no longer holds threat over you.&w\r\n", gthreat->threat_owner->name );
+         ch_printf( gthreat->threat_owner, "&YYou give up your threat towards %s.&w\r\n", gthreat->threat_attacker->name );
+      }
+   }
+   return;
+}
+
+void do_forgive( CHAR_DATA *ch, const char *argument )
+{
+   THREAT_DATA *threat, *next_threat;
+   CHAR_DATA *victim;
+   char arg[MAX_STRING_LENGTH];
+
+   argument = one_argument( argument, arg );
+
+   if( arg[0] == '\0' )
+   {
+      send_to_char( "Forgive who?\r\n", ch );
+      return;
+   }
+   if( !ch->first_threat )
+   {
+      send_to_char( "You hold threat for no person.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( strlower( arg ), "all" ) )
+   {
+      for( threat = ch->first_threat; threat; threat = next_threat )
+      {
+         next_threat = threat->next;
+         ch_printf( threat->attacker, "%s has forgiven you and no longer holds threat towards you.\r\n", ch->name );
+         free_threat( ch, threat );
+      }
+      send_to_char( "You forgive all your opponents.\r\n", ch );
+      return;
+   }
+   if( ( victim = get_char_world( ch, arg ) ) != NULL )
+   {
+      if( ( threat = is_threat( victim, ch ) ) == NULL )
+      {
+         send_to_char( "You hold no threat for them.\r\n", ch );
+         return;
+      }
+      ch_printf( victim, "%s has forgiven you and no longer holds threat towards you.\r\n", ch->name );
+      send_to_char( "You forgive them.\r\n", ch );
+      free_threat( ch, threat );
+      return;
+   }
+   return;
+}

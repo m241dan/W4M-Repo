@@ -1903,6 +1903,7 @@ void update_handler( void )
    {
       pulse_mobile = PULSE_MOBILE;
       mobile_update(  );
+      decay_threat(  );
    }
 
    if( --pulse_violence <= 0 )
@@ -2532,6 +2533,13 @@ void timers_update(  )
 
             if( IS_AFFECTED( ch, AFF_PARALYSIS ) )
                break;
+            if( IS_NPC( ch ) )
+            {
+               CHAR_DATA *most_threatening;
+
+               if( ch->target->victim != ( most_threatening = most_threat( ch ) ) )
+                  set_new_target( ch, get_target_2( ch, most_threatening, -1 ) );
+            }
 
             victim = ch->target->victim;
             retcode = rNONE;

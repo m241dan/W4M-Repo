@@ -1248,7 +1248,7 @@ void do_tset( CHAR_DATA* ch, const char* argument )
          pager_printf( ch, "-ID: %-2d TO: %-3d, FROM: %-3d Script: %-3s\r\n%s\r\n", 
                        talk->talk_id,
                        talk->talk_to ? talk->talk_to->talk_id : 0,
-                       talk->talk_from ? talk->talk_from->talk_id : 0 ,
+                       talk->talk_from ? talk->talk_from->talk_id : 0,
                        script ? "Yes" : "No",
                        talk->content ? talk->content : "No Content" );
       }
@@ -1267,6 +1267,17 @@ void do_tset( CHAR_DATA* ch, const char* argument )
       return;
    }
 
+   if( !str_cmp( arg2, "show" ) )
+   {
+      pager_printf( ch, "ID: %-3d TO: %-3d FROM: %-3d\r\n", 
+                        talk->talk_id,
+                       talk->talk_to ? talk->talk_to->talk_id : 0,
+                       talk->talk_from ? talk->talk_from->talk_id : 0 );
+      pager_printf( ch, "-----------------------------------------------------------------------\r\n%s\r\n", talk->content );
+      if( talk->script )
+         pager_printf( ch, "-----------------------------------------------------------------------\r\n%s\r\n", talk->script );
+      return;
+   }
    if( !str_cmp( arg2, "remove" ) )
    {
       if( !can_mmodify( ch, victim ) )

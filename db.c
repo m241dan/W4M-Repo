@@ -230,6 +230,9 @@ SYSTEM_DATA sysdata;
 QTIMER *first_qtimer;
 QTIMER *last_qtimer;
 
+GTHREAT_DATA *first_gthreat;
+GTHREAT_DATA *last_gthreat;
+
 int top_affect;
 int top_area;
 int top_ed;
@@ -490,6 +493,9 @@ void boot_db( bool fCopyOver )
    last_ban = NULL;
    first_qtimer = NULL;
    last_qtimer = NULL;
+   first_gthreat = NULL;
+   last_gthreat = NULL;
+
 
    CREATE( auction, AUCTION_DATA, 1 );
    auction->item = NULL;
@@ -4317,6 +4323,7 @@ char *strlower( const char *str )
    static char strlow[MAX_STRING_LENGTH];
    int i;
 
+   strlow[0] = '\0';
    for( i = 0; str[i] != '\0'; i++ )
       strlow[i] = LOWER( str[i] );
    strlow[i] = '\0';
@@ -4331,6 +4338,7 @@ char *strupper( const char *str )
    static char strup[MAX_STRING_LENGTH];
    int i;
 
+   strup[0] = '\0';
    for( i = 0; str[i] != '\0'; i++ )
       strup[i] = UPPER( str[i] );
    strup[i] = '\0';

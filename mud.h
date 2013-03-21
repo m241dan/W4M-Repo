@@ -99,6 +99,7 @@ if ( !str_cmp( word, (literal) ) )     \
 /*
  * Structure types.
  */
+typedef struct threat_data THREAT_DATA;
 typedef struct class_data CLASS_DATA;
 typedef struct affect_data AFFECT_DATA;
 typedef struct area_data AREA_DATA;
@@ -168,6 +169,7 @@ typedef struct cooldown_data CD_DATA;
 typedef struct hit_data HIT_DATA;
 typedef struct conversation_data CONVERSATION_DATA;
 typedef struct talk_data TALK_DATA;
+typedef struct gthreat_data GTHREAT_DATA;
 
 /*
  * Function types.
@@ -2370,6 +2372,7 @@ struct char_data
    short weight;
    short armor;
    short magic_defense;
+   short threat;
    short wimpy;
    int deaf;
    short perm_str;
@@ -2409,6 +2412,26 @@ struct char_data
    short penetration[MAX_DAMTYPE];
    double next_round;
    CONVERSATION_DATA *conv_data;
+   THREAT_DATA *first_threat;
+   THREAT_DATA *last_threat;
+};
+
+struct gthreat_data
+{
+   GTHREAT_DATA *next;
+   GTHREAT_DATA *prev;
+   CHAR_DATA *threat_owner;
+   CHAR_DATA *threat_attacker;
+   THREAT_DATA *threat;
+};
+
+struct threat_data
+{
+   THREAT_DATA *next;
+   THREAT_DATA *prev;
+   CHAR_DATA *attacker;
+   int constant;
+   int fickle;
 };
 
 struct class_data
@@ -3826,6 +3849,9 @@ extern CHAR_DATA *saving_char;
 extern OBJ_DATA *all_obj;
 extern SPEC_LIST *first_specfun;
 extern SPEC_LIST *last_specfun;
+extern GTHREAT_DATA *first_gthreat;
+extern GTHREAT_DATA *last_gthreat;
+
 
 extern time_t current_time;
 extern bool fLogAll;
@@ -3840,6 +3866,7 @@ extern struct act_prog_data *mob_act_list;
  * Command functions.
  * Defined in act_*.c (mostly).
  */
+DECLARE_DO_FUN( do_forgive );
 DECLARE_DO_FUN( do_beta );
 DECLARE_DO_FUN( do_findexit );
 DECLARE_DO_FUN( do_rdig );
@@ -4822,6 +4849,20 @@ int get_attack_from_str( CHAR_DATA * ch );
 int get_mattack_from_int( CHAR_DATA *ch );
 int get_defense_from_con( CHAR_DATA *ch );
 int get_mdefense_from_wis( CHAR_DATA *ch );
+void generate_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
+THREAT_DATA *is_threat( CHAR_DATA *ch, CHAR_DATA *victim );
+int calc_threat( THREAT_DATA *threat );
+CHAR_DATA *most_threatening( CHAR_DATA *ch );
+void free_threat args( ( CHAR_DATA * ch ) );
+void free_threat args( ( CHAR_DATA * ch, CHAR_DATA * victim ) );
+void free_threat args( ( CHAR_DATA * ch, THREAT_DATA * threat ) );
+void decay_threat args( ( void ) );
+void decay_threat args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dam ) );
+void update_threat( CHAR_DATA *ch );
+GTHREAT_DATA *has_threat( CHAR_DATA *ch );
+GTHREAT_DATA *get_global_threat( THREAT_DATA *threat );
+void free_global_threat( GTHREAT_DATA *gthreat );
+CHAR_DATA *most_threat( CHAR_DATA *ch );
 
 /* makeobjs.c */
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer );
