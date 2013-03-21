@@ -1781,11 +1781,6 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       int x;
       if( !can_mmodify( ch, victim ) )
          return;
-      if( IS_NPC( victim ) )
-      {
-         send_to_char( "Not yet.\r\n", ch );
-         return;
-      }
       if( value == -1 )
       {
          for( x = 0; x < MAX_CLASS; x++ )
@@ -1802,9 +1797,15 @@ void do_mset( CHAR_DATA* ch, const char* argument)
             }
          }
       }
-      else if( value < 0 || value > 9 )
+      else if( value < 0 || value > MAX_CLASS )
       {
          send_to_char( "Not a valid class number.\r\n", ch );
+         return;
+      }
+      if( IS_NPC( victim ) )
+      {
+         victim->Class = value;
+         send_to_char( "Ok.\r\n", ch );
          return;
       }
       ch_printf( ch, "Changing %s to %s.\r\n", victim->name, class_table[value]->who_name );
