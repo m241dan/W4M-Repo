@@ -52,32 +52,32 @@ bool EXA_prog_trigger = TRUE;
  */
 
 const char *const where_name[] = {
-   "<used as light>     ",
-   "<worn on finger>    ",
-   "<worn on finger>    ",
-   "<worn around neck>  ",
-   "<worn around neck>  ",
-   "<worn on body>      ",
-   "<worn on head>      ",
-   "<worn on legs>      ",
-   "<worn on feet>      ",
-   "<worn on hands>     ",
-   "<worn on arms>      ",
-   "<worn as shield>    ",
-   "<worn about body>   ",
-   "<worn about waist>  ",
-   "<worn around wrist> ",
-   "<worn around wrist> ",
-   "<wielded>           ",
-   "<held>              ",
-   "<dual wielded>      ",
-   "<worn on ears>      ",
-   "<worn on eyes>      ",
-   "<missile wielded>   ",
-   "<worn on back>  ",
-   "<worn over face>  ",
-   "<worn around ankle>  ",
-   "<worn around ankle>  ",
+   "&W<&wused as light&W>&D     ",
+   "&W<&wworn on finger&W>&D    ",
+   "&W<&wworn on finger&W>&D    ",
+   "&W<&wworn around neck&W>&D  ",
+   "&W<&wworn around neck&W>&D  ",
+   "&W<&wworn on body&W>&D      ",
+   "&W<&wworn on head&W>&D      ",
+   "&W<&wworn on legs&W>&D      ",
+   "&W<&wworn on feet&W>&D      ",
+   "&W<&wworn on hands&W>&D     ",
+   "&W<&wworn on arms&W>&D      ",
+   "&W<&wworn as shield&W>&D    ",
+   "&W<&wworn about body&W>&D   ",
+   "&W<&wworn about waist&W>&D  ",
+   "&W<&wworn around wrist&W>&D ",
+   "&W<&wworn around wrist&W>&D ",
+   "&W<&wwielded&W>&D           ",
+   "&W<&wheld&W>&D              ",
+   "&W<&wdual wielded&W>&D      ",
+   "&W<&wworn on ears&W>&D      ",
+   "&W<&wworn on eyes&W>&D      ",
+   "&W<&wmissile wielded&W>&D   ",
+   "&W<&wworn on back&W>&D      ",
+   "&W<&wworn over face&W>&D    ",
+   "&W<&wworn around ankle&W>&D ",
+   "&W<&wworn around ankle&W>&D ",
    "<BUG Inform Nivek>  ",
    "<BUG Inform Nivek>  ",
    "<BUG Inform Nivek>  "
@@ -275,22 +275,22 @@ char *format_obj_to_char( OBJ_DATA * obj, CHAR_DATA * ch, bool fShort )
 
    buf[0] = '\0';
    if( IS_OBJ_STAT( obj, ITEM_INVIS ) )
-      mudstrlcat( buf, "(Invis) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&YInvis&W)&D ", MAX_STRING_LENGTH );
    if( ( IS_AFFECTED( ch, AFF_DETECT_EVIL ) || ch->Class == CLASS_PALADIN ) && IS_OBJ_STAT( obj, ITEM_EVIL ) )
-      mudstrlcat( buf, "(Red Aura) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&w(&rRed Aura&w)&D ", MAX_STRING_LENGTH );
 
    if( ch->Class == CLASS_PALADIN
        && ( IS_OBJ_STAT( obj, ITEM_ANTI_EVIL ) && !IS_OBJ_STAT( obj, ITEM_ANTI_NEUTRAL )
             && !IS_OBJ_STAT( obj, ITEM_ANTI_GOOD ) ) )
-      mudstrlcat( buf, "(Flaming Red) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&RFlaming Red&W)&D ", MAX_STRING_LENGTH );
    if( ch->Class == CLASS_PALADIN
        && ( !IS_OBJ_STAT( obj, ITEM_ANTI_EVIL ) && IS_OBJ_STAT( obj, ITEM_ANTI_NEUTRAL )
             && !IS_OBJ_STAT( obj, ITEM_ANTI_GOOD ) ) )
-      mudstrlcat( buf, "(Flaming Grey) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&wFlaming Grey&W)&D ", MAX_STRING_LENGTH );
    if( ch->Class == CLASS_PALADIN
        && ( !IS_OBJ_STAT( obj, ITEM_ANTI_EVIL ) && !IS_OBJ_STAT( obj, ITEM_ANTI_NEUTRAL )
             && IS_OBJ_STAT( obj, ITEM_ANTI_GOOD ) ) )
-      mudstrlcat( buf, "(Flaming White) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&w(&WFlaming White&w)&D ", MAX_STRING_LENGTH );
 
    if( ch->Class == CLASS_PALADIN
        && ( IS_OBJ_STAT( obj, ITEM_ANTI_EVIL ) && IS_OBJ_STAT( obj, ITEM_ANTI_NEUTRAL )
@@ -306,17 +306,17 @@ char *format_obj_to_char( OBJ_DATA * obj, CHAR_DATA * ch, bool fShort )
       mudstrlcat( buf, "(Smouldering Grey-White) ", MAX_STRING_LENGTH );
 
    if( ( IS_AFFECTED( ch, AFF_DETECT_MAGIC ) || xIS_SET( ch->act, PLR_HOLYLIGHT ) ) && IS_OBJ_STAT( obj, ITEM_MAGIC ) )
-      mudstrlcat( buf, "(Magical) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&wMagical&W)&D ", MAX_STRING_LENGTH );
    if( !glowsee && IS_OBJ_STAT( obj, ITEM_GLOW ) )
-      mudstrlcat( buf, "(Glowing) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&YGlowing&W)&D ", MAX_STRING_LENGTH );
    if( IS_OBJ_STAT( obj, ITEM_HUM ) )
-      mudstrlcat( buf, "(Humming) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&Y(&wHumming&Y)&D ", MAX_STRING_LENGTH );
    if( IS_OBJ_STAT( obj, ITEM_HIDDEN ) )
-      mudstrlcat( buf, "(Hidden) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&p(&wHidden&p)&D ", MAX_STRING_LENGTH );
    if( IS_OBJ_STAT( obj, ITEM_BURIED ) )
       mudstrlcat( buf, "(Buried) ", MAX_STRING_LENGTH );
    if( IS_IMMORTAL( ch ) && IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) )
-      mudstrlcat( buf, "(PROTO) ", MAX_STRING_LENGTH );
+      mudstrlcat( buf, "&W(&PPROTO&W)&D ", MAX_STRING_LENGTH );
    if( ( IS_AFFECTED( ch, AFF_DETECTTRAPS ) || xIS_SET( ch->act, PLR_HOLYLIGHT ) ) && is_trapped( obj ) )
       mudstrlcat( buf, "(Trap) ", MAX_STRING_LENGTH );
 
