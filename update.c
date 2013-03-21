@@ -164,33 +164,6 @@ int hit_gain( CHAR_DATA * ch )
             break;
       }
 
-      if( IS_VAMPIRE( ch ) )
-      {
-         if( ch->pcdata->condition[COND_BLOODTHIRST] <= 1 )
-            gain /= 2;
-         else if( ch->pcdata->condition[COND_BLOODTHIRST] >= ( 8 + ch->level ) )
-            gain *= 2;
-         if( IS_OUTSIDE( ch ) )
-         {
-            switch ( time_info.sunlight )
-            {
-               case SUN_RISE:
-               case SUN_SET:
-                  gain /= 2;
-                  break;
-               case SUN_LIGHT:
-                  gain /= 4;
-                  break;
-            }
-         }
-      }
-
-      if( ch->pcdata->condition[COND_FULL] == 0 )
-         gain /= 2;
-
-      if( ch->pcdata->condition[COND_THIRST] == 0 )
-         gain /= 2;
-
    }
 
    if( IS_AFFECTED( ch, AFF_POISON ) )
@@ -222,12 +195,6 @@ int mana_gain( CHAR_DATA * ch )
             gain += ( int )( get_curr_int( ch ) * 1.75 );
             break;
       }
-
-      if( ch->pcdata->condition[COND_FULL] == 0 )
-         gain /= 2;
-
-      if( ch->pcdata->condition[COND_THIRST] == 0 )
-         gain /= 2;
 
    }
 
@@ -266,33 +233,6 @@ int move_gain( CHAR_DATA * ch )
             gain += ( int )( get_curr_dex( ch ) * 2.5 );
             break;
       }
-
-      if( IS_VAMPIRE( ch ) )
-      {
-         if( ch->pcdata->condition[COND_BLOODTHIRST] <= 1 )
-            gain /= 2;
-         else if( ch->pcdata->condition[COND_BLOODTHIRST] >= ( 8 + ch->level ) )
-            gain *= 2;
-         if( IS_OUTSIDE( ch ) )
-         {
-            switch ( time_info.sunlight )
-            {
-               case SUN_RISE:
-               case SUN_SET:
-                  gain /= 2;
-                  break;
-               case SUN_LIGHT:
-                  gain /= 4;
-                  break;
-            }
-         }
-      }
-
-      if( ch->pcdata->condition[COND_FULL] == 0 )
-         gain /= 2;
-
-      if( ch->pcdata->condition[COND_THIRST] == 0 )
-         gain /= 2;
    }
 
    if( IS_AFFECTED( ch, AFF_POISON ) )
@@ -757,40 +697,7 @@ void char_calendar_update( void )
    for( ch = last_char; ch; ch = trvch_wnext( lc ) )
    {
       if( !IS_NPC( ch ) && !IS_IMMORTAL( ch ) )
-      {
          gain_condition( ch, COND_DRUNK, -1 );
-
-         /*
-          * Newbies won't starve now - Samson 10-2-98 
-          */
-         if( ch->in_room && ch->level > 3 )
-            gain_condition( ch, COND_FULL, -1 + race_table[ch->race]->hunger_mod );
-
-         /*
-          * Newbies won't dehydrate now - Samson 10-2-98 
-          */
-         if( ch->in_room && ch->level > 3 )
-         {
-            int sector;
-
-            sector = ch->in_room->sector_type;
-
-            switch ( sector )
-            {
-               default:
-                  gain_condition( ch, COND_THIRST, -1 + race_table[ch->race]->thirst_mod );
-                  break;
-               case SECT_DESERT:
-                  gain_condition( ch, COND_THIRST, -3 + race_table[ch->race]->thirst_mod );
-                  break;
-               case SECT_UNDERWATER:
-               case SECT_OCEANFLOOR:
-                  if( number_bits( 1 ) == 0 )
-                     gain_condition( ch, COND_THIRST, -1 + race_table[ch->race]->thirst_mod );
-                  break;
-            }
-         }
-      }
    }
    trworld_dispose( &lc );
 }

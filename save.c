@@ -251,7 +251,7 @@ void save_char_obj( CHAR_DATA * ch )
       return;
    }
 
-   if( IS_NPC( ch ) || ch->level < 1 )
+   if( IS_NPC( ch ) || ch->top_level < 2 )
       return;
 
    saving_char = ch;
