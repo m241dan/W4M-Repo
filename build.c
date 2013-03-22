@@ -5575,6 +5575,8 @@ void do_redit( CHAR_DATA* ch, const char* argument)
    }
    if( !str_cmp( arg, "color" ) )
    {
+      argument = one_argument( argument, arg2 );
+
       if( !is_number( arg2 ) )
          value = get_colorflag( arg2 );
       else
