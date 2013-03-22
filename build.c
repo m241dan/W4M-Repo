@@ -467,7 +467,7 @@ int get_colorflag( const char *flag )
    unsigned int x;
 
    for( x = 0; x < MAX_COLOR_FLAG; x++ )
-      if( !str_cmp( flag, color_flags[x] ) )
+      if( !str_cmp( strlower( flag ), smash_color( color_flags[x] ) ) )
          return x;
    return -1;
 }

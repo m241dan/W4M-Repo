@@ -630,14 +630,23 @@ void mobile_update( void )
       {
          bool can_move = FALSE;
 
-         if( !xIS_EMPTY( pexit->to_room->color ) )
+         if( !xIS_EMPTY( pexit->to_room->color ) && !xIS_EMPTY( ch->color ) )
          {
             int x;
-            for( x = 0; x < MAX_COLOR_FLAG; x++ )
+            for( x = 0; x < NO_RED; x++ )
             {
-               if( xIS_SET( ch->color, x ) && xIS_SET( pexit->to_room->color, x )
-                  && !xIS_SET( pexit->to_room->color, ( x + (MAX_COLOR_FLAG / 2 ) ) ) )
+               if( xIS_SET( ch->color, x ) && xIS_SET( pexit->to_room->color, x ) )
                   can_move = TRUE;
+               else if( xIS_SET( ch->color, x ) && xIS_SET( pexit->to_room->color, ( x + (MAX_COLOR_FLAG / 2 ) ) ) )
+               {
+                  can_move = FALSE;
+                  break;
+               }
+               else if( xIS_SET( pexit->to_room->color, x ) && xIS_SET( ch->color, ( x + (MAX_COLOR_FLAG / 2 ) ) ) )
+               {
+                  can_move = FALSE;
+                  break;
+               }
                else
                {
                   can_move = FALSE;
