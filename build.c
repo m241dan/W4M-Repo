@@ -34,6 +34,7 @@ bool check_area_conflict( AREA_DATA * carea, int low_range, int hi_range );
 char *sprint_reset( RESET_DATA * pReset, short *num );
 void fix_exits( void );
 bool validate_spec_fun( const char *name );
+void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp );
 
 /*
  * Exit Pull/push types
@@ -10909,3 +10910,111 @@ REALM_DATA *get_realm_from_char( CHAR_DATA *ch )
 {
    return ch->in_room->area->realm;
 }
+
+/* Quest System Below -Davenge */
+
+void do_questolc( CHAR_DATA *ch, const char *argument )
+{
+
+}
+
+void quest_olc( CHAR_DATA *ch, const char *argument )
+{
+
+}
+
+void save_quests( void )
+{
+   FILE *fp;
+   QUEST_DATA *quest;
+   char strsave[MAX_INPUT_LENGTH];
+
+   if( !first_quest )
+   {
+      bug( "%s: null first_quest", __FUNCTION__ );
+      return;
+   }
+
+   snprintf( strsave, MAX_INPUT_LENGTH, "%s", QUESTS_FILE );
+
+   if( !( fp = fopen( strsave, "w" ) ) )
+   {
+      perror( strsave );
+      bug( "%s: can't open %s", __FUNCTION__, strsave );
+   }
+   else
+   {
+      for( quest = first_quest; quest; quest = quest->next )
+         fwrite_fuss_quest( quest, fp );
+      fprintf( fp, "#ENDQUESTS" );
+   }
+   fclose( fp );
+   fp = NULL;
+   return;
+}
+
+void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
+{
+   STAGE_DATA *stage;
+   TRIGGER_DATA *trigger;
+   OBJECTIVE_DATA *objective;
+   PATH_DATA *path;
+   REWARD_DATA *reward;
+   int x;
+
+   fprintf( fp, "#QUEST\n" );
+   fprintf( fp, "Name         %s~\n", quest->name );
+   fprintf( fp, "Description  %s~\n", quest->description );
+   fprintf( fp, "Type         %d\n", quest->type );
+   fprintf( fp, "Level_Req   " );
+   for( x = 0; x < MAX_CLASS; x++ )
+      fprintf( fp, " %d", quest->level_required[x] );
+   fprintf( fp, "\n" );
+   fprintf( fp, "Class_req   " );
+   for( x = 0; x < MAX_CLASS; x++ )
+      fprintf( fp, " %d", quest->class_required[x] );
+   fprintf( fp, "\n" );
+
+   for( stage = quest->first_stage; stage; stage = stage->next )
+   {
+      fprintf( fp, "#STAGE\n" );
+       for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
+      {
+         fprintf( fp, "#TRIGGER\n" );
+         fprintf( fp, "Type        %d\n", trigger->type );
+         fprintf( fp, "Script      %s~\n", strip_cr( trigger->script ) );
+         fprintf( fp, "#ENDTRIGGER\n" );
+      }
+      for( objective = stage->first_objective; objective; objective = objective->next )
+      {
+         fprintf( fp, "#OBJECTIVE\n" );
+         fprintf( fp, "Type        %d\n", objective->type );
+         fprintf( fp, "Vnum        %d\n", objective->vnum );
+         fprintf( fp, "Required    %d\n", objective->required );
+         fprintf( fp, "#ENDOBJECTIVE\n" );
+      }
+      fprintf( fp, "#ENDSTAGE\n" );
+   }
+   for( path = quest->first_path; path; path = path->next )
+   {
+      fprintf( fp, "#PATH\n" );
+      for( reward = path->first_reward; reward; reward = reward->next )
+      {
+         fprintf( fp, "#REWARD\n" );
+         fprintf( fp, "Type        %d\n", reward->type );
+         fprintf( fp, "Amount      %d\n", reward->amount );
+         fprintf( fp, "Ovnum       %d\n", reward->o_vnum );
+         fprintf( fp, "#ENDREWARD\n" );
+      }
+      fprintf( fp, "#ENDPATH\n" );
+   }
+   fprintf( fp, "#ENDQUEST\n" );
+   return;
+}
+
+/* End Quest System */
+
+
+
+
+

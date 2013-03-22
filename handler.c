@@ -6029,3 +6029,4 @@ void switch_class( CHAR_DATA *ch, int Class )
    }
    return;
 }
+

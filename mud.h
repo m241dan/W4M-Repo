@@ -171,6 +171,17 @@ typedef struct conversation_data CONVERSATION_DATA;
 typedef struct talk_data TALK_DATA;
 typedef struct gthreat_data GTHREAT_DATA;
 
+/* Quest system Typedefs -Davenge */
+
+typedef struct quest_data QUEST_DATA;
+typedef struct player_quest PLAYER_QUEST;
+typedef struct stage_data STAGE_DATA;
+typedef struct trigger_data TRIGGER_DATA;
+typedef struct objective_data OBJECTIVE_DATA;
+typedef struct objective_tracker OBJECTIVE_TRACKER;
+typedef struct path_data PATH_DATA;
+typedef struct reward_data REWARD_DATA;
+
 /*
  * Function types.
  */
@@ -764,7 +775,7 @@ typedef enum
 /* Uncomment this section if using Samson's Shell Code */
 /* CON_FORKED, CON_IAFORKED, */
 
-   CON_EDITING, CON_TALKING
+   CON_EDITING, CON_TALKING, CON_QUEST_OLC
 } connection_types;
 
 /*
@@ -2425,6 +2436,8 @@ struct char_data
    CONVERSATION_DATA *conv_data;
    THREAT_DATA *first_threat;
    THREAT_DATA *last_threat;
+   PLAYER_QUEST *first_quest;
+   PLAYER_QUEST *last_quest;
 };
 
 struct gthreat_data
@@ -2771,6 +2784,102 @@ struct hit_data
 
 };
 
+/* Quest structures... _davenge */
+
+struct quest_data
+{
+   QUEST_DATA *next;
+   QUEST_DATA *prev;
+   STAGE_DATA *first_stage;
+   STAGE_DATA *last_stage;
+   PATH_DATA *first_path;
+   PATH_DATA *last_path;
+   const char *name;
+   const char *description;
+   int id;
+   int type;
+   int level_required[MAX_CLASS];
+   int class_required[MAX_CLASS];
+};
+
+struct player_quest
+{
+   PLAYER_QUEST *next;
+   PLAYER_QUEST *prev;
+   QUEST_DATA *quest;
+   OBJECTIVE_TRACKER *first_objective_tracker;
+   OBJECTIVE_TRACKER *last_objective_tracker;
+   int stage;
+   int times_completed[MAX_CLASS];
+};
+
+struct stage_data
+{
+   STAGE_DATA *next;
+   STAGE_DATA *prev;
+   TRIGGER_DATA *first_trigger;
+   TRIGGER_DATA *last_trigger;
+   OBJECTIVE_DATA *first_objective;
+   OBJECTIVE_DATA *last_objective;
+};
+
+struct trigger_data
+{
+   TRIGGER_DATA *next;
+   TRIGGER_DATA *prev;
+   int type;
+   const char *script;
+};
+
+struct objective_tracker
+{
+   OBJECTIVE_TRACKER *next;
+   OBJECTIVE_TRACKER *prev;
+   OBJECTIVE_DATA *objective;
+   int progress;
+};
+
+struct objective_data
+{
+   OBJECTIVE_DATA *next;
+   OBJECTIVE_DATA *prev;
+   int type;
+   int vnum;
+   int required;
+};
+
+struct path_data
+{
+   PATH_DATA *next;
+   PATH_DATA *prev;
+   REWARD_DATA *first_reward;
+   REWARD_DATA *last_reward;
+};
+
+struct reward_data
+{
+   REWARD_DATA *next;
+   REWARD_DATA *prev;
+   int type;
+   int amount;
+   int o_vnum;
+};
+
+typedef enum
+{
+   QUEST_REPEATABLE, QUEST_ONE_TIME, QUEST_ONE_PER_CLASS, MAX_QUEST_TYPE
+} quest_types;
+
+typedef enum
+{
+   TYPE_OBJ_DROP, TYPE_OBJ_RECEIVE, TYPE_OBJ_PUT, TYPE_OBJ_GIVE, TYPE_OBJ_DESTROY,
+   TYPE_MOB_KILL, TYPE_MOB_TALK, TYPE_MOB_FOLLOW, MAX_TRIGGER_TYPE
+} trigger_types;
+
+typedef enum
+{
+   OBJECTIVE_MOB, OBJECTIVE_ITEM, MAX_OBJECTIVE_TYPE
+} objective_types;
 /*
  * Creating a timer that is queued and runs every pulse of the CPU
  * Basically, this is giving us more accuracy in our ability to generate
@@ -3864,7 +3973,8 @@ extern SPEC_LIST *first_specfun;
 extern SPEC_LIST *last_specfun;
 extern GTHREAT_DATA *first_gthreat;
 extern GTHREAT_DATA *last_gthreat;
-
+extern QUEST_DATA *first_quest;
+extern QUEST_DATA *last_quest;
 
 extern time_t current_time;
 extern bool fLogAll;
@@ -4542,7 +4652,7 @@ DECLARE_SPELL_FUN( spell_sacral_divinity );
 #define COMMAND_FILE	SYSTEM_DIR "commands.dat"  /* Commands      */
 #define PROJECTS_FILE	SYSTEM_DIR "projects.txt"  /* For projects  */
 #define PLANE_FILE	SYSTEM_DIR "planes.dat" /* For planes       */
-
+#define QUESTS_FILE     SYSTEM_DIR "quest.dat" /* For Quests */
 /*
  * Our function prototypes.
  * One big lump ... this is every function in Merc.
