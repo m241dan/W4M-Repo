@@ -133,7 +133,7 @@ const char *const a_types[] = {
    "grip", "scribe", "brew", "wearspell", "removespell", "emotion", "mentalstate",
    "stripsn", "remove", "dig", "full", "thirst", "drunk", "blood", "cook",
    "recurringspell", "contagious", "xaffected", "odor", "roomflag", "sectortype",
-   "roomlight", "televnum", "teledelay", "penetration", "resistance"
+   "roomlight", "televnum", "teledelay", "penetration", "resistance", "object"
 };
 
 const char *const a_flags[] = {
@@ -10915,7 +10915,197 @@ REALM_DATA *get_realm_from_char( CHAR_DATA *ch )
 
 void do_questolc( CHAR_DATA *ch, const char *argument )
 {
+   QUEST_DATA *quest;
 
+   if( IS_NPC( ch ) || !IS_IMMORTAL( ch ) )
+      return;
+
+   if( ( quest = get_quest( argument ) ) == NULL )
+   {
+      send_to_char( "No such quest exists.\r\nCreating quest...\r\n", ch );
+      create_quest( argument );
+      do_questolc( ch, argument );
+      return;
+   }
+
+   if( quest->player_editing )
+   {
+      ch_printf( ch, "%s is already editing that quest, one at a time please.\r\n", quest->player_editing->name );
+      return;
+   }
+
+   ch->desc->connected = CON_QUEST_OLC;
+   ch->quest_edit_ptr = quest;
+   ch->substate = SUB_QUEST_EDIT;
+   quest->player_editing = ch;
+   display_questolc( ch );
+}
+
+QUEST_DATA *get_quest( const char *argument )
+{
+   QUEST_DATA *quest;
+
+   for( quest = first_quest; quest; quest = quest->next )
+   {
+      if( !str_cmp( quest->name, argument ) )
+         return quest;
+      if( nifty_is_name( quest->name, argument ) )
+         return quest;
+   }
+   return NULL;
+}
+
+void create_quest( const char *argument )
+{
+   QUEST_DATA *quest;
+
+   if( ( quest = get_quest( argument ) ) == NULL )
+   {
+      CREATE( quest, QUEST_DATA, 1 );
+      quest->name = str_dup( argument );
+      quest->description = STRALLOC( "" );
+      LINK( quest, first_quest, last_quest, next, prev );
+      save_quests( );
+      return;
+   }
+   else
+   {
+      bug( "%s: being called to create a quest with same name as one that already exists: %s", __FUNCTION__, argument );
+      return;
+   }
+}
+
+void display_questolc( CHAR_DATA *ch )
+{
+   QUEST_DATA *quest;
+   STAGE_DATA *stage;
+   PATH_DATA *path;
+   TRIGGER_DATA *trigger;
+   OBJECTIVE_DATA *objective;
+   REWARD_DATA *reward;
+   int x;
+
+   if( IS_NPC( ch ) || !IS_IMMORTAL( ch ) )
+      return;
+
+   if( !ch->quest_edit_ptr )
+   {
+      bug( "%s: being called with no spare_ptr allocated.", __FUNCTION__ );
+      return;
+   }
+
+   switch( ch->substate )
+   {
+      case SUB_QUEST_EDIT:
+         bool lAll = TRUE;
+         int level_req = quest->level_required[0];
+         quest = (QUEST_DATA *)ch->quest_edit_ptr;
+
+         pager_printf( ch, "Displaying Quest: %s\r\n", quest->name );
+         pager_printf( ch, "Type: %s\r\n", quest_types[quest->type] );
+         pager_printf( ch, "Required:" );
+         for( x = 0; x < MAX_CLASS; x++ )
+            if( level_req != quest->level_required[x] )
+               lAll = FALSE;
+         if( lAll )
+            pager_printf( ch, " any level %d\r\n", level_req );
+         else
+         {
+            for( x = 0; x < MAX_CLASS; x++ )
+            {
+               if( quest->level_required[x] > 0 )
+                  pager_printf( ch, " %s level %d,", class_table[x], level_required[x] );
+            }
+            send_to_pager( "\r\n", ch );
+         }
+         pager_printf( ch, "
+         pager_printf( ch, "-----------------------------------------------------------------------\r\n%s\r\n", quest->description );
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         x = 1;
+         if( get_num_stages( quest ) > get_num_paths( quest ) )
+         {
+            for( path = quest->first_path, stage = quest->first_stage; stage; stage = stage->next, path = path->next )
+            {
+               pager_printf( ch, "Stage #%2d: %-30s |", x, stage->name );
+               if( path )
+                  pager_printf( ch, "Path #%2d: %-30s\r\n", x, path->name );
+               else
+                  send_to_pager( "\r\n", ch );
+              x++;
+            }
+         }
+         else
+         {
+            for( path = quest->first_path, stage = quest->first_stage; path; stage = stage->next, path = path->next )
+            {
+               pager_printf( ch, "Path #%2d: %-30s |", x, path->name );
+               if( stage )
+                  pager_printf( ch, "Stage #%2d: %-30s\r\n", x, stage->name );
+               else
+                  send_to_pager( "\r\n", ch );
+              x++;
+            }
+
+         }
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         break;
+      case SUB_STAGE_EDIT:
+         stage = (STAGE_DATA *)ch->quest_edit_ptr;
+         x = 0;
+
+         pager_printf( ch, "Display Stage: %s\r\n-----------------------------------------------------------------------\r\n", stage->name );
+         for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
+         {
+            x++;
+            pager_printf( ch, "Trigger: %2d Type: %-15s Vnum(Object or Mobile): %d\r\n", x, trigger_types[trigger->type], trigger->vnum );
+         }
+/*         x = 0;
+         for( objective = stage->first_objective; objective; objective = objective->next )
+         {
+            x++;
+            pager_printf( ch, "Objective: %-3s Vnum: %-10d Required Amount: %d\r\n", objective->type == OBJECTIVE_MOB ? "Mob" : "Obj", objective->vnum, objective->required );
+         } */
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         break;
+      case SUB_PATH_EDIT:
+         path = (PATH_DATA *)ch->quest_edit_ptr;
+         x = 0;
+
+         pager_printf( ch, "Display Path: %s\r\n-----------------------------------------------------------------------\r\n", page->name );
+         x = 0;
+         for( reward = path->first_reward; reward; reward = reward->next )
+         {
+            x++;
+            if( type == APPLY_OBJECT )
+               pager_printf( ch, "Reward %2d: %-20s Amount: %d\r\n", x, (get_obj_index(reward->o_vnum))->short_descr, reward->amount );
+            else
+               pager_printf( ch, "Reward %2d: %-20s Amount: %d\r\n", x, a_types[reward->type], reward->amount );
+         }
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         break;
+   }
+}
+
+int get_num_stages( QUEST_DATA *quest )
+{
+   STAGE_DATA *stage;
+   int x = 0;
+
+   for( stage = quest->first_stage; stage; stage = stage->next )
+      x++;
+
+   return x;
+}
+
+int get_num_paths( QUEST_DATA *quest )
+{
+   PATH_DATA *path;
+   int x = 0;
+
+   for( path = quest->first_path; path; path = path->next )
+      x++;
+
+   return x;
 }
 
 void quest_olc( CHAR_DATA *ch, const char *argument )
@@ -10970,34 +11160,33 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
    for( x = 0; x < MAX_CLASS; x++ )
       fprintf( fp, " %d", quest->level_required[x] );
    fprintf( fp, "\n" );
-   fprintf( fp, "Class_req   " );
-   for( x = 0; x < MAX_CLASS; x++ )
-      fprintf( fp, " %d", quest->class_required[x] );
-   fprintf( fp, "\n" );
 
    for( stage = quest->first_stage; stage; stage = stage->next )
    {
       fprintf( fp, "#STAGE\n" );
+      fprintf( fp, "Name        %s~\n", stage->name );
        for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
       {
          fprintf( fp, "#TRIGGER\n" );
          fprintf( fp, "Type        %d\n", trigger->type );
+         fprintf( fp, "ToAdvance   %d\n", trigger->to_advance;
          fprintf( fp, "Script      %s~\n", strip_cr( trigger->script ) );
          fprintf( fp, "#ENDTRIGGER\n" );
       }
-      for( objective = stage->first_objective; objective; objective = objective->next )
+/*      for( objective = stage->first_objective; objective; objective = objective->next )
       {
          fprintf( fp, "#OBJECTIVE\n" );
          fprintf( fp, "Type        %d\n", objective->type );
          fprintf( fp, "Vnum        %d\n", objective->vnum );
          fprintf( fp, "Required    %d\n", objective->required );
          fprintf( fp, "#ENDOBJECTIVE\n" );
-      }
+      } */
       fprintf( fp, "#ENDSTAGE\n" );
    }
    for( path = quest->first_path; path; path = path->next )
    {
       fprintf( fp, "#PATH\n" );
+      fprintf( fp, "Name        %s~\n", path->name );
       for( reward = path->first_reward; reward; reward = reward->next )
       {
          fprintf( fp, "#REWARD\n" );

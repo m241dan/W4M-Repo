@@ -789,7 +789,8 @@ typedef enum
    SUB_HELP_EDIT, SUB_WRITING_MAP, SUB_PERSONAL_BIO, SUB_REPEATCMD,
    SUB_RESTRICTED, SUB_DEITYDESC, SUB_MORPH_DESC, SUB_MORPH_HELP,
    SUB_PROJ_DESC, SUB_NEWS_POST, SUB_NEWS_EDIT, SUB_TALK_CONTENT,
-   SUB_TALK_SCRIPT,
+   SUB_TALK_SCRIPT, SUB_QUEST_EDIT, SUB_STAGE_EDIT, SUB_PATH_EDIT,
+   SUB_TRIGGER_EDIT, SUB_OBJECTIVE_EDIT, SUB_REWARD_EDIT
    /*
     * timer types ONLY below this point
     */
@@ -1819,7 +1820,7 @@ typedef enum
    APPLY_FULL, APPLY_THIRST, APPLY_DRUNK, APPLY_BLOOD, APPLY_COOK,
    APPLY_RECURRINGSPELL, APPLY_CONTAGIOUS, APPLY_EXT_AFFECT, APPLY_ODOR,
    APPLY_ROOMFLAG, APPLY_SECTORTYPE, APPLY_ROOMLIGHT, APPLY_TELEVNUM,
-   APPLY_TELEDELAY, APPLY_PENETRATION, APPLY_RESISTANCE, MAX_APPLY_TYPE
+   APPLY_TELEDELAY, APPLY_PENETRATION, APPLY_RESISTANCE, APPLY_OBJECT, MAX_APPLY_TYPE
 } apply_types;
 
 #define REVERSE_APPLY		   1000
@@ -2321,6 +2322,7 @@ struct char_data
    void *dest_buf;   /* This one is to assign to differen things */
    const char *alloc_ptr;  /* Must str_dup and free this one */
    void *spare_ptr;
+   void *quest_edit_ptr;
    int tempnum;
    EDITOR_DATA *editor;
    TIMER *first_timer;
@@ -2794,12 +2796,12 @@ struct quest_data
    STAGE_DATA *last_stage;
    PATH_DATA *first_path;
    PATH_DATA *last_path;
+   CHAR_DATA *player_editing;
    const char *name;
    const char *description;
    int id;
    int type;
    int level_required[MAX_CLASS];
-   int class_required[MAX_CLASS];
 };
 
 struct player_quest
@@ -2815,19 +2817,24 @@ struct player_quest
 
 struct stage_data
 {
+   QUEST_DATA *stage_owner;
    STAGE_DATA *next;
    STAGE_DATA *prev;
    TRIGGER_DATA *first_trigger;
    TRIGGER_DATA *last_trigger;
    OBJECTIVE_DATA *first_objective;
    OBJECTIVE_DATA *last_objective;
+   const char *name;
 };
 
 struct trigger_data
 {
+   STAGE_DATA *trigger_owner;
    TRIGGER_DATA *next;
    TRIGGER_DATA *prev;
+   int to_advance;
    int type;
+   int vnum;
    const char *script;
 };
 
@@ -2835,12 +2842,13 @@ struct objective_tracker
 {
    OBJECTIVE_TRACKER *next;
    OBJECTIVE_TRACKER *prev;
-   OBJECTIVE_DATA *objective;
+   TRIGGER_DATA *objective;
    int progress;
 };
 
 struct objective_data
 {
+   STAGE_DATA *objective_owner;
    OBJECTIVE_DATA *next;
    OBJECTIVE_DATA *prev;
    int type;
@@ -2850,14 +2858,17 @@ struct objective_data
 
 struct path_data
 {
+   QUEST_DATA *path_owner;
    PATH_DATA *next;
    PATH_DATA *prev;
    REWARD_DATA *first_reward;
    REWARD_DATA *last_reward;
+   const char *name;
 };
 
 struct reward_data
 {
+   PATH_DATA *reward_owner;
    REWARD_DATA *next;
    REWARD_DATA *prev;
    int type;
@@ -2867,7 +2878,7 @@ struct reward_data
 
 typedef enum
 {
-   QUEST_REPEATABLE, QUEST_ONE_TIME, QUEST_ONE_PER_CLASS, MAX_QUEST_TYPE
+   QUEST_REPEATABLE, QUEST_ONE_TIME, QUEST_ONCE_PER_CLASS, MAX_QUEST_TYPE
 } quest_types;
 
 typedef enum
@@ -3850,8 +3861,9 @@ extern const char *const ex_pwater[];
 extern const char *const ex_pair[];
 extern const char *const ex_pearth[];
 extern const char *const ex_pfire[];
-extern const char * const color_flags[MAX_COLOR_FLAG];
+extern const char *const color_flags[MAX_COLOR_FLAG];
 extern const double base_class_lag[MAX_CLASS];
+extern const char *const quest_types[MAX_QUEST_TYPE];
 
 extern int const lang_array[];
 extern const char *const lang_names[];

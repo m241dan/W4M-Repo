@@ -9228,15 +9228,6 @@ QUEST_DATA *read_quest( FILE *fp )
                break;
             }
             break;
-         case 'C':
-            if( !str_cmp( word, "Class_req" ) )
-            {
-               for( x = 0; x < MAX_CLASS; x++ )
-                  quest->class_required[x] = fread_number( fp );
-               fMatch = TRUE;
-               break;
-            }
-            break;
          case 'D':
             KEY( "Description", quest->description, fread_string( fp ) );
             break;
@@ -9298,6 +9289,7 @@ void fread_fuss_stage( QUEST_DATA *quest, FILE *fp )
             if( !str_cmp( word, "#STAGE" ) && !stage )
             {
                CREATE( stage, STAGE_DATA, 1 );
+               stage->stage_owner = quest;
                LINK( stage, quest->first_stage, quest->last_stage, next, prev );
                break;
             }
@@ -9318,6 +9310,9 @@ void fread_fuss_stage( QUEST_DATA *quest, FILE *fp )
                bug( "%s: bad format", __FUNCTION__ );
                break;
             }
+            break;
+         case 'N':
+            KEY( "Name", stage->name, fread_string( fp ) );
             break;
       }
       if( !fMatch )
@@ -9362,6 +9357,7 @@ void fread_fuss_trigger( STAGE_DATA *stage, FILE *fp )
             if( !str_cmp( word, "#TRIGGER" ) && !trigger )
             {
                CREATE( trigger, TRIGGER_DATA, 1 );
+               trigger->trigger_owner = stage;
                LINK( trigger, stage->first_trigger, stage->last_trigger, next, prev );
                break;
             }
@@ -9377,6 +9373,7 @@ void fread_fuss_trigger( STAGE_DATA *stage, FILE *fp )
             KEY( "Script", trigger->script, fread_string( fp ) );
             break;
          case 'T':
+            KEY( "ToAdvance", trigger->to_advance, fread_number( fp ) );
             KEY( "Type", trigger->type, fread_number( fp ) );
             break;
       }
@@ -9422,6 +9419,7 @@ void fread_fuss_objective( STAGE_DATA *stage, FILE *fp )
             if( !str_cmp( word, "#OBJECTIVE" ) && !objective )
             {
                CREATE( objective, OBJECTIVE_DATA, 1 );
+               objective->objective_owner = stage;
                LINK( objective, stage->first_objective, stage->last_objective, next, prev );
                break;
             }
@@ -9485,6 +9483,7 @@ void fread_fuss_path( QUEST_DATA *quest, FILE *fp )
             if( !str_cmp( word, "#PATH" ) && !path )
             {
                CREATE( path, PATH_DATA, 1 );
+               path->path_owner = quest;
                LINK( path, quest->first_path, quest->last_path, next, prev );
                break;
             }
@@ -9501,6 +9500,8 @@ void fread_fuss_path( QUEST_DATA *quest, FILE *fp )
                break;
             }
             break;
+         case 'N':
+            KEY( "Name", path->name, fread_string( fp ) );
       }
       if( !fMatch )
       {
@@ -9544,6 +9545,7 @@ void fread_fuss_reward( PATH_DATA *path, FILE *fp )
             if( !str_cmp( word, "#REWARD" ) && !path )
             {
                CREATE( reward, REWARD_DATA, 1 );
+               reward->reward_owner = path;
                LINK( reward, path->first_reward, path->last_reward, next, prev );
                break;
             }
