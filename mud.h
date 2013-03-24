@@ -2825,8 +2825,7 @@ struct stage_data
    OBJECTIVE_DATA *first_objective;
    OBJECTIVE_DATA *last_objective;
    const char *name;
-};
-
+}
 struct trigger_data
 {
    STAGE_DATA *trigger_owner;
@@ -5265,6 +5264,9 @@ bool is_magical( EXT_BV *damtype );
 int get_haste( CHAR_DATA *ch );
 double get_round( CHAR_DATA *ch );
 void switch_class( CHAR_DATA *ch, int Class );
+int get_class_num( const char *argument );
+int get_questtype_num( const char *argument );
+int get_triggertype_num( const char *argument );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

@@ -1509,7 +1509,7 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       send_to_char( "  gold hp mana move practice align race\r\n", ch );
       send_to_char( "  attack armor affected level haste haste_from_magic\r\n", ch );
       send_to_char( "  thirst drunk full blood flags range\r\n", ch );
-      send_to_char( "  color\r\n", ch );
+      send_to_char( "  color damtype\r\n", ch );
       send_to_char( "  pos defpos part (see BODYPARTS)\r\n", ch );
       send_to_char( "  sav1 sav2 sav4 sav4 sav5 (see SAVINGTHROWS)\r\n", ch );
       send_to_char( "  resistant immune susceptible (see RIS)\r\n", ch );
@@ -1958,6 +1958,23 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       victim->range = URANGE( 0, value, 5 );
       if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
          victim->pIndexData->range = victim->range;
+      send_to_char( "Ok.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( arg2, "damtype" ) )
+   {
+      if( !can_mmodify( ch, victim ) )
+         return;
+
+      if( ( value = get_damtype( arg3 ) ) == -1 || ( value >= DAM_ALL && value <= DAM_PHYSICAL ) )
+      {
+         send_to_char( "&RInvalid damage type.&w\r\n&PValid Choices: &wpierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
+         return;
+      }
+      xTOGGLE_BIT( victim->damtype, value );
+      if( IS_NPC( victim && xIS_SET( victim->act, ACT_PROTOTYPE ) )
+         xTOGGLE_BIT( victim->pIndexData->damtype, value );
       send_to_char( "Ok.\r\n", ch );
       return;
    }
@@ -6459,7 +6476,14 @@ void edit_buffer( CHAR_DATA * ch, char *argument )
       }
       if( !str_cmp( cmd + 1, "s" ) )
       {
-         d->connected = CON_PLAYING;
+         if( ch->tempnum == SUB_TRIGGER_EDIT )
+         {
+            d->connected = CON_QUEST_OLC;
+            quest_olc( ch, "" );
+            return;
+         } 
+         else
+            d->connected = CON_PLAYING;
          if( !ch->last_cmd )
             return;
          ( *ch->last_cmd ) ( ch, "" );
@@ -10941,6 +10965,35 @@ void do_questolc( CHAR_DATA *ch, const char *argument )
    display_questolc( ch );
 }
 
+void exit_questolc( CHAR_DATA *ch )
+{
+   QUEST_DATA *quest;
+   ch->desc->connected = CON_PLAYING;
+   switch( ch->substate )
+   {
+      case SUB_QUEST_EDIT:
+         quest = ((QUEST_DATA *)ch->quest_edit_ptr);
+         break;
+      case SUB_STAGE_EDIT:
+         quest = ((QUEST_DATA *)ch->quest_edit_ptr)->stage_owner;
+         break;
+      case SUB_PATH_EDIT:
+         quest = ((QUEST_DATA *)ch->quest_edit_ptr)->path_owner;
+         break;
+      case SUB_TRIGGER_EDIT:
+         quest = ((QUEST_DATA *)ch->quest_edit_ptr)->trigger_owner->stage_owner;
+         break;
+      case SUB_REWARD_EDIT:
+         quest = ((QUEST_DATA *)ch->quest_edit_ptr)->reward_owner->path_owner;
+         break;
+   }
+   quest->player_editing = NULL;
+   ch->quest_edit_ptr = NULL;
+   ch->substate = SUB_NONE;
+   send_to_char( "Exiting Quest OLC...\r\n", ch );
+   return;
+}
+
 QUEST_DATA *get_quest( const char *argument )
 {
    QUEST_DATA *quest;
@@ -10973,6 +11026,75 @@ void create_quest( const char *argument )
       bug( "%s: being called to create a quest with same name as one that already exists: %s", __FUNCTION__, argument );
       return;
    }
+}
+
+void display_commands( CHAR_DATA *ch )
+{
+   send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+   send_to_pager( "Available Commands | Description of Command \r\n", ch );
+   send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+
+   switch( ch->substate )
+   {
+      case SUB_QUEST_EDIT:
+       //send_to_pager( "                   | Measuring stick
+      // send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         send_to_pager( " Description       | Change a quest's description/starting message\r\n", ch );
+         send_to_pager( " Type              | Set the Quest's Type.(help quest_types)\r\n", ch );
+         send_to_pager( " Level_Required    | Level Required takes two inputs, the first is the\r\n", ch );
+         send_to_pager( "                   | class and the second is the level. 0 in level means\r\n", ch );
+         send_to_pager( "                   | that class cannot get the quest.\r\n", ch );
+         send_to_pager( " Stage             | Without argument takes you to the first stage.\r\n", ch );
+         send_to_pager( " Path              | without argument takes you to the first path.\r\n", ch );
+         send_to_pager( "                   | If no first path or stage exists, it will create one.\r\n", ch );
+         break;
+      case SUB_STAGE_EDIT:
+         send_to_pager( " Name              | Allow you to change the stage's name.\r\n", ch );
+         send_to_pager( " Next              | Will take you to the next stage in the quest.\r\n", ch );
+         send_to_pager( "                   | If there is none, it will create it.\r\n", ch );
+         send_to_pager( " Prev              | Move back to a previous stage.\r\n", ch );
+         send_to_pager( " Trigger           | If entered without argument, will take you to the\r\n", ch );
+         send_to_pager( "                   | first trigger. If none exists, it will create one.\r\n", ch );
+         send_to_pager( " Back              | Back up to the main quest body.\r\n", ch );
+         break;
+      case SUB_PATH_EDIT:
+         send_to_pager( " Name              | Allow you to change the path's name.\r\n", ch );
+         send_to_pager( " Next              | Will take you to the next path in the quest.\r\n", ch );
+         send_to_pager( "                   | If there is none, it will create it.\r\n", ch );
+         send_to_pager( " Prev              | Navigate to a previous path.\r\n", ch );
+         send_to_pager( " Reward            | If enetered without argument, will take you to the\r\n", ch );
+         send_to_pager( "                   | first reward. If none exists, it will create one.\r\n", ch );
+         send_to_pager( " Back              | Back up to the main quest body.\r\n", ch );
+         break;
+      case SUB_TRIGGER_EDIT:
+         send_to_pager( " Type              | Allow you to set the type of your trigger.\r\n", ch );
+         send_to_pager( "                   | Help Trigger Types.\r\n", ch );
+         send_to_pager( " Vnum              | Set the vnum of the mob or object involved in the quest.\r\n", ch );
+         send_to_pager( " ToAdvance         | Set the number of times this trigger must be activated\r\n", ch );
+         send_to_pager( "                   | to advance in the quest.\r\n", ch );
+         send_to_pager( " Script            | Kick you into a buffer to write a script that will fire\r\n", ch );
+         send_to_pager( "                   | each time this trigger is activated.\r\n", ch );
+         send_to_pager( " Next              | Move to the next trigger within the stage. If it doesn't\r\n", ch );
+         send_to_pager( "                   | exist, it will create one.\r\n", ch );
+         send_to_pager( " Prev              | Move to the previous trigger within the stage.\r\n", ch );
+         send_to_pager( " Back              | Back up to the stage body this trigger belongs to.\r\n", ch );
+         break;
+      case SUB_REWARD_EDIT:
+         send_to_pager( " Type              | Allow you to set the type of reward.\r\n", ch );
+         send_to_pager( " Amount            | Set the amount of the reward to give.\r\n", ch );
+         send_to_pager( " Ovnum             | If type is object, set the vnum of object to reward with.\r\n", ch );
+         send_to_pager( " Next              | Will take you to the next reward in the path.\r\n", ch );
+         send_to_pager( "                   | If there is none, it will create it.\r\n", ch );
+         send_to_pager( " Prev              | Move to the previous reward within the path.\r\n", ch );
+         send_to_pgaer( " Back              | Back up to the path body this reward belongs to.\r\n", ch );
+         break;
+   }
+   send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+   send_to_pager( " Show              | Show the contents of what you are editing.\r\n", ch );
+   send_to_pager( " Save              | Save the quest.\r\n", ch );
+   send_to_pager( " Exit              | Exit the quest olc.\r\n", ch );
+   send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+   return;
 }
 
 void display_questolc( CHAR_DATA *ch )
@@ -11047,13 +11169,22 @@ void display_questolc( CHAR_DATA *ch )
             }
 
          }
-         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         display_commands( ch );
          break;
       case SUB_STAGE_EDIT:
          stage = (STAGE_DATA *)ch->quest_edit_ptr;
          x = 0;
 
-         pager_printf( ch, "Display Stage: %s\r\n-----------------------------------------------------------------------\r\n", stage->name );
+         pager_printf( ch, "Displaying Stage: %s\r\n-----------------------------------------------------------------------\r\n", stage->name );
+         if( stage->prev )
+            pager_printf( ch, "Previous Stage: %-20s", stage->prev->name );
+         else
+            send_to_pager( "                                    ", ch );
+         if( stage->next )
+            pager_printf( ch, "| Next Stage: %s\r\n", stage->next->name );
+         else
+            send_to_pager( "\r\n", ch );
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
          {
             x++;
@@ -11065,14 +11196,22 @@ void display_questolc( CHAR_DATA *ch )
             x++;
             pager_printf( ch, "Objective: %-3s Vnum: %-10d Required Amount: %d\r\n", objective->type == OBJECTIVE_MOB ? "Mob" : "Obj", objective->vnum, objective->required );
          } */
-         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         display_commands( ch );
          break;
       case SUB_PATH_EDIT:
          path = (PATH_DATA *)ch->quest_edit_ptr;
          x = 0;
 
-         pager_printf( ch, "Display Path: %s\r\n-----------------------------------------------------------------------\r\n", page->name );
-         x = 0;
+         pager_printf( ch, "Displaying Path: %s\r\n-----------------------------------------------------------------------\r\n", page->name );
+         if( path->prev )
+            pager_printf( ch, "Previous Path: %-20s", path->prev->name );
+         else
+            send_to_pager( "                                    ", ch );
+         if( path->next )
+            pager_printf( ch, "| Next Path: %s\r\n", path->next->name );
+         else
+            send_to_pager( "\r\n", ch );
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          for( reward = path->first_reward; reward; reward = reward->next )
          {
             x++;
@@ -11081,7 +11220,39 @@ void display_questolc( CHAR_DATA *ch )
             else
                pager_printf( ch, "Reward %2d: %-20s Amount: %d\r\n", x, a_types[reward->type], reward->amount );
          }
+         display_commands( ch );
+         break;
+      case SUB_TRIGGER_EDIT:
+         trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+         if( trigger->prev )
+            pager_printf( ch, "Previous Trigger: %-20s", trigger_types[trigger->type] );
+         else
+            send_to_pager( "                                      ", ch );
+         if( trigger->next )
+            pager_printf( ch, "| Next Trigger: %-20s\r\n", trigger_types[trigger_type] );
+         else
+            send_to_pager( "\r\n", ch );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         pager_printf( ch, "Type: %-20s Vnum: %-5d ToAdvance: %d\r\n", trigger_types[trigger->type], trigger->vnum, trigger->to_advance );
+         pager_printf( ch, "Script:\r\n%s\r\n", trigger->script );
+         display_commands( ch );
+         break;
+      case SUB_REWARD_EDIT:
+         reward = (REWARD_DATA *)ch->quest_edit_ptr;
+         if( reward->prev )
+            pager_printf( ch, "Previous Reward: %-20s", a_flags[reward->type] );
+         else
+               send_to_pager( "                                     ", ch );
+         if( reward->next )
+            pager_printf( ch, "| Next Reward: %-20s\r\n", a_flags[reward->type] );
+         else
+            send_to_pager( "\r\n", ch );
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         pager_printf( ch, "Reward Type: %s\r\n", a_flags[reward->type] );
+         pager_printf( ch, "Amount to Reward: %d\r\n", reward->amount );
+         if( reward->type == APPLY_OBJECT )
+            pager_printf( ch, "Object: Vnum- %d Name- %s Short_Descr- %s\r\n", reward->o_vnum, (get_obj_index( reward->o_vnum))->name, (get_obj_index(reward->o_vnum))->short_descr );
+         display_commands( ch );
          break;
    }
 }
@@ -11090,7 +11261,6 @@ int get_num_stages( QUEST_DATA *quest )
 {
    STAGE_DATA *stage;
    int x = 0;
-
    for( stage = quest->first_stage; stage; stage = stage->next )
       x++;
 
@@ -11110,7 +11280,562 @@ int get_num_paths( QUEST_DATA *quest )
 
 void quest_olc( CHAR_DATA *ch, const char *argument )
 {
+   QUEST_DATA *quest;
+   STAGE_DATA *stage;
+   PATH_DATA *path;
+   TRIGGER_DATA *trigger;
+   REWARD_DATA *reward;
+   char arg[MAX_STRING_LENGTH];
+   int value, x;
 
+   switch( ch->substate )
+   {
+      default:
+         break;
+
+      case SUB_TRIGGER_SCRIPT:
+         if( !ch->dest_buf )
+         {
+            bug( "%s", "quest_olct: sub_trigger_script: NULL ch->dest_buf" );
+            ch->substate = ch->tempnum;
+            return;
+         }
+         trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+         if( trigger->script )
+            STRFREE( trigger->script );
+         trigger->script = copy_buffer( ch );
+         stop_editing( ch );
+         ch->substate = ch->tempnum;
+         display_questolc( ch );
+         return;
+   }
+
+   if( argument[0] == '\0' )
+   {
+      send_to_char( "Input a proper command...\r\n", ch );
+      display_commands( ch );
+      return;
+   }
+
+   argument = one_argument( argument, arg );
+
+   if( !str_cmp( strlower( arg ), "save" ) )
+   {
+      save_quests( );
+      send_to_char( "Saving quests...Done\r\n", ch );
+      display_questolc( ch );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "exit" ) )
+   {
+      exit_questolc( ch );
+      return;
+   }
+   if( !str_cmp( strloewr( arg ), "show" ) )
+   {
+      display_questolc( ch );
+      return;
+   }
+   if( !str_cmp( strloewr( arg ), "level_required" ) )
+   {
+      int level;
+
+      if( !check_substate( ch, SUB_QUEST_EDIT ) )
+         return;
+
+      quest = (QUEST_DATA *)ch->quest_edit_ptr;
+      argument = one_argument( argument, arg );
+
+      if( is_number( arg ) )
+         value = atoi( arg );
+      else if( ( value = get_class_num( arg ) ) == -1 )
+      {
+         send_to_char( "Invalid class selection.\r\n", ch );
+         return;
+      }
+      argument = one_argument( argument, arg );
+      if( is_number( arg ) )
+         level = atoi( arg );
+      else
+      {
+         send_to_char( "Must input a number for level.\r\n", ch );
+         return;
+      }
+      quest->level_required[value] = level;
+      display_questolc( ch );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "type" ) )
+   {
+      switch( ch->substate )
+      {
+         case SUB_QUEST_EDIT:
+            argument = one_argument( argument, arg );
+            quest = (QUEST_DATA *)ch->quest_edit_ptr;
+
+            if( ( value = get_questtype_num( arg ) ) == -1 )
+            {
+                send_to_char( "Invalid quest type inputted.\r\n", ch );
+                return;
+            }
+           quest->type = value;
+           display_questolc( ch );
+           return;
+
+         case SUB_TRIGGER_EDIT:
+            argument = one_argument( argument, arg );
+            trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+
+            if( ( value = get_triggertype_num( arg ) ) == -1 )
+            {
+               send_to_char( "Invalid trigger type.\r\n", ch );
+               return;
+            }
+            trigger->type = value;
+            display_questolc( ch );
+            return;
+
+         case SUB_REWARD_EDIT:
+            argument = one_argument( argument, arg );
+            reward = (REWARD_DATA *)ch->quest_edit_ptr;
+
+            if( ( value = get_atype( arg ) ) == -1 )
+            {
+               send_to_char( "Invalid reward type.\r\n", ch );
+               return;
+            }
+            reward->type = value;
+            display_questolc( ch );
+            return;
+      }
+   }
+   if( !str_cmp( strlower( arg ), "stage" ) )
+   {
+      if( !check_substate( ch, SUB_QUEST_EDIT ) )
+         return;
+
+      quest = (QUEST_DATA *)ch->quest_edit_ptr;
+      x = 0;
+
+      if( argument[0] == '\0' )
+      {
+         if( !quest->first_stage )
+            create_stage( quest );
+         switch_stage( ch, quest->first_stage );
+         return;
+      }
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the stage command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      for( stage = quest->first_stage; stage; stage = stage->next )
+      {
+         x++;
+         if( x == value )
+            break;
+      }
+      if( stage )
+      {
+         switch_stage( ch, stage );
+         return;
+      }
+   }
+   if( !str_cmp( strlower( arg ), "path" ) )
+   {
+      if( !check_substate( ch, SUB_QUEST_EDIT ) )
+         return;
+
+      quest = (QUEST_DATA *)ch->quest_edit_ptr;
+      x = 0;
+
+      if( argument[0] == '\0' )
+      {
+         if( !quest->first_path )
+            create_path( quest );
+         switch_stage( ch, quest->first_path );
+         return;
+      }
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for path command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      for( path = quest->first_path; path; path = path->next )
+      {
+         x++;
+         if( x == value )
+            break;
+      }
+      if( path )
+      {
+         switch_path( ch, path );
+         return;
+      }
+   }
+   if( !str_cmp( strlower( arg ), "name" ) )
+   {
+      switch( ch->substate )
+      {
+         case SUB_STAGE_EDIT:
+            stage = (STAGE_DATA *)ch->quest_edit_ptr;
+
+            STRFREE( stage->name );
+            stage->name = STRALLOC( argument );
+            display_questolc( ch );
+            return;
+
+         case SUB_PATH_EDIT:
+            path = (PATH_DATA *)ch->quest_edit_ptr;
+
+            STRFREE( path->name );
+            path->name = STRALLOC( argument );
+            display_questolc( ch );
+            return;
+      }
+   }
+   if( !str_cmp( strlower( arg ), "next" ) )
+   {
+      switch( ch->substate )
+      {
+         case SUB_STAGE_EDIT:
+            stage = (STAGE_DATA *)ch->quest_edit_ptr;
+
+            if( !stage->next )
+               create_stage( stage->stage_owner );
+            switch_stage( ch, stage->next );
+            return;
+         case SUB_PATH_EDIT:
+            path = (PATH_DATA *)ch->quest_edit_ptr;
+
+            if( !path->next )
+               create_path( path->path_owner )
+            switch_path( ch, path->next );
+            return;
+         case SUB_TRIGGER_EDIT:
+            trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+
+            if( !trigger->next )
+               create_trigger( trigger->trigger_owner );
+            switch_trigger( ch, trigger->next );
+            return;
+         case SUB_REWARD_EDIT:
+            reward = (REWARD_DATA *)ch->quest_edit_ptr;
+
+            if( !reward->next )
+               create_reward( reward->reward_owner );
+            switch_reward( ch, reward->next );
+            return;
+      }
+   }
+   if( !str_cmp( strlower( arg ), "prev" ) )
+   {
+      switch( ch->substate )
+      {
+         case SUB_STAGE_EDIT:
+            stage = (STAGE_DATA *)ch->quest_edit_ptr;
+
+            if( !stage->prev )
+               return;
+            switch_stage( ch, stage->prev );
+            return;
+         case SUB_PATH_EDIT:
+            path = (PATH_DATA *)ch->quest_edit_ptr;
+
+            if( !path->prev )
+               return;
+            switch_path( ch, path->prev );
+            return;
+         case SUB_TRIGGER_EDIT:
+            trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+
+            if( !trigger->prev )
+               return;
+            switch_trigger( ch, trigger->prev );
+            return;
+         case SUB_REWARD_EDIT:
+            reward = (REWARD_DATA *)ch->quest_edit_ptr;
+
+            if( !reward->prev )
+               return;
+            switch_reward( ch, reward->prev );
+            return;
+      }
+   }
+   if( !str_cmp( strloewr( arg ), "back" ) )
+   {
+      switch( ch->substate )
+      {
+         case SUB_QUEST_EDIT:
+            send_to_char( "You're back as far as you can go.\r\n". ch );
+            return;
+         case SUB_STAGE_EDIT:
+            stage = (STAGE_DATA *)ch->quest_edit_ptr;
+            switch_quest( ch, stage->stage_owner );
+            return;
+         case SUB_PATH_EDIT:
+            path = (PATH_DTA *)ch->quest_edit_ptr;
+            switch_quest( ch, path->path_owner );
+            return;
+         case SUB_TRIGGER_EDIT:
+            trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+            switch_stage( ch, trigger->trigger_owner );
+            return;
+         case SUB_REWARD_EDIT:
+            reward = (REWARD_DATA *)ch->quest_edit_ptr;
+            switch_path( ch, reward->reward_owner );
+            return;
+      }
+   }
+   if( !str_cmp( strlower( arg ), "trigger" ) )
+   {
+      if( !check_substate( ch, SUB_STAGE_EDIT ) )
+         return;
+
+      stage = (STAGE_DATA *)ch->quest_edit_ptr;
+      x = 0;
+
+      if( argument[0] == '\0' )
+      {
+         if( !stage->first_trigger )
+            create_trigger( stage );
+         switch_trigger( ch, stage->first_trigger );
+         return;
+      }
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the trigger command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
+      {
+         x++;
+         if( x == value )
+            break;
+      }
+      if( trigger )
+      {
+         switch_trigger( ch, trigger );
+         return;
+      }
+   }
+   if( !str_cmp( strlower( arg ), "reward" ) )
+   {
+      if( !check_substate( ch, SUB_PATH_EDIT ) )
+         return;
+
+      path = (PATH_DATA *)ch->quest_edit_ptr;
+      x = 0;
+
+      if( argument[0] == '\0' )
+      {
+         if( !path->first_reward )
+            create_reward( path );
+         switch_reward( ch, path->first_reward );
+         return;
+      }
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the reward command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      for( reward = path->first_reward; reward; reward = reward->next )
+      {
+         x++;
+         if( x == value )
+            break;
+      }
+      if( reward )
+      {
+         switch_reward( ch, reward );
+         return;
+      }
+   }
+   if( !str_cmp( strlower( arg ), "vnum" ) )
+   {
+      if( !check_substate( ch, SUB_TRIGGER_EDIT ) )
+         return;
+
+      trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the vnum command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      trigger->vnum = value;
+      display_questolc( ch );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "toadvance" ) )
+   {
+      if( !check_substate( ch, SUB_TRIGGER_EDIT ) )
+         return;
+      trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the ToAdvance command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      trigger->to_advance = value;
+      display_questolc( ch );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "amount" ) )
+   {
+      if( !check_substate( ch, SUB_REWARD_EDIT ) )
+         return;
+
+      reward = (REWARD_DATA *)ch->quest_edit_ptr;
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the Amount command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      reward->amount = value;
+      display_questolc( ch ):
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "ovnum" ) )
+   {
+      if( !check_substate( ch, SUB_REWARD_EDIT ) )
+         return;
+
+      reward = (REWARD_DATA *)ch->quest_edit_ptr;
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the Ovnum command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      reward->ovnum = value;
+      display_questolc( ch );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "script" ) )
+   {
+      if( !check_substate( ch, SUB_TRIGGER_EDIT ) )
+         return;
+
+      trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+      CHECK_SUBRESTRICTED( ch );
+      ch->tempnum = SUB_TRIGGER_EDIT;
+      ch->dest_buf = trigger;
+      start_editing( ch, (char *)trigger->script );
+      return;
+   }
+
+   send_to_char( "Invalid input.\r\n", ch );
+   display_commands( ch );
+   return;
+}
+
+bool check_substate( CHAR_DATA *ch, int substate )
+{
+   if( ch->substate != substate )
+   {
+      send_to_char( "Invalid input.\r\n", ch );
+      display_commands( ch );
+      return FALSE;
+   }
+   return TRUE;
+}
+
+void switch_quest( CHAR_DATA *ch, QUEST_DATA *quest )
+{
+   ch->quest_edit_ptr = quest;
+   ch->substate = SUB_QUEST_EDIT;
+   display_questolc( ch );
+   return;
+}
+
+void create_reward( PATH_DATA *path )
+{
+   REWARD_DATA *reward;
+
+   CREATE( reward, REWARD_DATA, 1 );
+   reward->reward_owner = path;
+   LINK( reward, path->first_reward, path->last_reward, next, prev );
+   return;
+}
+
+void switch_reward( CHAR_DATA *ch, REWARD_DATA *reward )
+{
+   ch->substate = SUB_REWARD_EDIT;
+   ch->quest_edit_ptr;
+   display_questolc( ch );
+   return;
+}
+
+void create_trigger( STAGE_DATA *stage );
+{
+   TRIGGER_DATA *trigger;
+
+   CREATE( trigger, TRIGGER_DATA, 1 );
+   trigger->trigger_owner = stage;
+   trigger->script = STRALLOC( " " );
+   LINK( trigger, stage->first_trigger, stage->last_trigger, next, prev );
+   return;
+}
+
+void switch_trigger( CHAR_DATA *ch, TRIGGER_DATA *trigger );
+{
+   ch->substate = SUB_TRIGGRER_EDIT;
+   ch->quest_edit_str = trigger;
+   display_questolc( ch );
+   return;
+}
+
+void create_path( QUEST_DATA *quest )
+{
+   PATH_DATA *path;
+
+   CREATE( path, PATH_DATA, 1 );
+   path->name = STRALLOC( "no name" );
+   path->path_owner = quest;
+   LINK( path, quest->first_path, quest->lath_path, next, prev );
+   return;
+}
+
+void switch_path( CHAR_DATA *ch, PATH_DATA *path );
+{
+   ch->substate = SUB_PATH_EDIT;
+   ch->quest_edit_ptr = path;
+   display_questolc( ch );
+   return;
+}
+
+void create_stage( QUEST_DATA *quest )
+{
+   STAGE_DATA *stage;
+
+   CREATE( stage, STAGE_DATA, 1 );
+   stage->name = STRALLOC( "no name" );
+   stage->stage_owner = quest;
+   LINK( stage, quest->first_stage, quest->last_stage, next, prev );
+   return;
+}
+
+void switch_stage( CHAR_DATA *ch, STAGE_DATA *stage );
+{
+   ch->substate = SUB_STAGE_EDIT;
+   ch->quest_edit_ptr = stage;
+   display_questolc( ch );
+   return;
 }
 
 void save_quests( void )

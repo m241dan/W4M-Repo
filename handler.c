@@ -6030,3 +6030,35 @@ void switch_class( CHAR_DATA *ch, int Class )
    return;
 }
 
+int get_class_num( const char *argument )
+{
+   int x;
+   for( x = 0; x < MAX_CLASS; x++ )
+   {
+      if( nifty_is_name( class_table[x]->who_name, argument ) )
+         return x;
+   }
+   return -1;
+}
+
+int get_questtype_num( const char *argument )
+{
+   int x;
+   for( x = 0; x < MAX_QUEST_TYPE; x++ )
+   {
+      if( !str_cmp( quest_types[x], argument )
+         return x;
+   }
+   return -1;
+}
+
+int get_triggertype_num( const char *argument )
+{
+   int x;
+   for( x = 0; x < MAX_TRIGGER_TYPE; x++ )
+   {
+      if( !str_cmp( trigger_types[x], argument )
+         return x;
+   }
+   return -1;
+}

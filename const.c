@@ -49,7 +49,7 @@ const char *const color_flags[MAX_COLOR_FLAG] = {
 };
 
 const char *const quest_types[MAX_QUEST_TYPE] = {
-   "repeatable", "one-time", "once_per_class"
+   "repeatable", "one_time", "once_per_class"
 };
 
 const char *const trigger_types[MAX_TRIGGER_TYPE] = {
