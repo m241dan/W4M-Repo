@@ -6500,7 +6500,13 @@ void edit_buffer( CHAR_DATA * ch, char *argument )
             d->connected = CON_QUEST_OLC;
             quest_olc( ch, "" );
             return;
-         } 
+         }
+         else if( ch->tempnum == SUB_QUEST_EDIT )
+         {
+            d->connected = CON_QUEST_OLC;
+            quest_olc( ch, "" );
+            return;
+         }
          else
             d->connected = CON_PLAYING;
          if( !ch->last_cmd )
@@ -11310,11 +11316,25 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
    {
       default:
          break;
-
+      case SUB_QUEST_DESC:
+         if( !ch->dest_buf )
+         {
+            bug( "%s", "quest_olc: sub_quest_desc: NULL ch->dest_buf" );
+            ch->substate = ch->tempnum;
+            return;
+         }
+         quest = (QUEST_DATA *)ch->quest_edit_ptr;
+         if( quest->description )
+            STRFREE( quest->description );
+         quest->description = copy_buffer( ch );
+         stop_editing( ch );
+         ch->substate = ch->tempnum;
+         display_questolc( ch );
+         return;
       case SUB_TRIGGER_SCRIPT:
          if( !ch->dest_buf )
          {
-            bug( "%s", "quest_olct: sub_trigger_script: NULL ch->dest_buf" );
+            bug( "%s", "quest_olc: sub_trigger_script: NULL ch->dest_buf" );
             ch->substate = ch->tempnum;
             return;
          }
@@ -11755,6 +11775,19 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       ch->substate = SUB_TRIGGER_SCRIPT;
       ch->dest_buf = trigger;
       start_editing( ch, (char *)trigger->script );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "description" ) )
+   {
+      if( !check_substate( ch, SUB_QUEST_EDIT ) )
+         return;
+
+      quest = (QUEST_DATA *)ch->quest_edit_ptr;
+      CHECK_SUBRESTRICTED( ch );
+      ch->tempnum = SUB_QUEST_EDIT;
+      ch->substate = SUB_QUEST_DESC;
+      ch->dest_buf = quest;
+      start_editing( ch, (char *)quest->description );
       return;
    }
 
