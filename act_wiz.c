@@ -2145,13 +2145,13 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
    else
       pager_printf_color( ch, "&CNo one&w\r\n" );
    send_to_pager( "&cColors: ", ch );
-   if( xIS_EMPTY( ch->color ) )
+   if( xIS_EMPTY( victim->color ) )
       pager_printf_color( ch, "&Cnone...&w" );
    else
    {
       for( x = 0; x < MAX_COLOR_FLAG; x++ )
       {
-         if( xIS_SET( ch->color, x ) )
+         if( xIS_SET( victim->color, x ) )
             pager_printf_color( ch, "%s&w, ", color_flags[x] );
       }
    }
