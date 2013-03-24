@@ -1460,7 +1460,6 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
       clear_target( victim );
 
       free_threat( victim );
-      free_threat( ch, victim );
 
       stop_fighting( ch, TRUE );
 
@@ -2237,7 +2236,7 @@ void stop_fighting( CHAR_DATA * ch, bool fBoth )
 
    for( fch = first_char; fch; fch = fch->next )
    {
-      if( who_fighting( fch ) == ch )
+      if( who_fighting( fch ) == ch && fch->position == POS_DEAD )
       {
          stop_hunting( fch );
          stop_hating( fch );
@@ -3816,6 +3815,19 @@ void free_global_threat( GTHREAT_DATA *gthreat )
    gthreat->threat_attacker = NULL;
    gthreat->threat = NULL;
    DISPOSE( gthreat );
+   return;
+}
+
+void do_showglobalthreat( CHAR_DATA *ch, const char *argument )
+{
+   GTHREAT_DATA *gthreat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+   {
+      send_to_char( "---------------------------------------------------\r\n", ch );
+      ch_printf( ch, "Threat_Owner: %s\r\n", gthreat->threat_owner ? gthreat->threat_owner->name : "(null)" );
+      ch_printf( ch, "Threat_Attacker: %s\r\n", gthreat->threat_attacker ? gthreat->threat_attacker->name : "(null)" );
+   }
    return;
 }
 
