@@ -9195,7 +9195,7 @@ QUEST_DATA *read_quest( FILE *fp )
 
    for( ;; )
    {
-      word = feof( fp ) ? "#ENDQUEST" : fread_word( fp );
+      word = feof( fp ) ? "#ENDQUESTS" : fread_word( fp );
       fMatch = FALSE;
 
       switch( word[0] )
@@ -9222,6 +9222,8 @@ QUEST_DATA *read_quest( FILE *fp )
             }
             else if( !str_cmp( word, "#ENDQUEST" ) && quest )
                return quest;
+            else if( !str_cmp( word, "#ENDQUESTS" ) )
+               return NULL;
             else
             {
                bug( "%s: bad file format.", __FUNCTION__ );
