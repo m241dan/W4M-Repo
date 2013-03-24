@@ -790,7 +790,7 @@ typedef enum
    SUB_RESTRICTED, SUB_DEITYDESC, SUB_MORPH_DESC, SUB_MORPH_HELP,
    SUB_PROJ_DESC, SUB_NEWS_POST, SUB_NEWS_EDIT, SUB_TALK_CONTENT,
    SUB_TALK_SCRIPT, SUB_QUEST_EDIT, SUB_STAGE_EDIT, SUB_PATH_EDIT,
-   SUB_TRIGGER_EDIT, SUB_OBJECTIVE_EDIT, SUB_REWARD_EDIT
+   SUB_TRIGGER_EDIT, SUB_OBJECTIVE_EDIT, SUB_REWARD_EDIT, SUB_TRIGGER_SCRIPT,
    /*
     * timer types ONLY below this point
     */
@@ -2825,7 +2825,8 @@ struct stage_data
    OBJECTIVE_DATA *first_objective;
    OBJECTIVE_DATA *last_objective;
    const char *name;
-}
+};
+
 struct trigger_data
 {
    STAGE_DATA *trigger_owner;
@@ -2878,13 +2879,13 @@ struct reward_data
 typedef enum
 {
    QUEST_REPEATABLE, QUEST_ONE_TIME, QUEST_ONCE_PER_CLASS, MAX_QUEST_TYPE
-} quest_types;
+} quest_type_nums;
 
 typedef enum
 {
    TYPE_OBJ_DROP, TYPE_OBJ_RECEIVE, TYPE_OBJ_PUT, TYPE_OBJ_GIVE, TYPE_OBJ_DESTROY,
    TYPE_MOB_KILL, TYPE_MOB_TALK, TYPE_MOB_FOLLOW, MAX_TRIGGER_TYPE
-} trigger_types;
+} trigger_type_nums;
 
 typedef enum
 {
@@ -3863,6 +3864,7 @@ extern const char *const ex_pfire[];
 extern const char *const color_flags[MAX_COLOR_FLAG];
 extern const double base_class_lag[MAX_CLASS];
 extern const char *const quest_types[MAX_QUEST_TYPE];
+extern const char *const trigger_types[MAX_TRIGGER_TYPE];
 
 extern int const lang_array[];
 extern const char *const lang_names[];
@@ -4000,6 +4002,7 @@ extern struct act_prog_data *mob_act_list;
  * Command functions.
  * Defined in act_*.c (mostly).
  */
+DECLARE_DO_FUN( do_questolc );
 DECLARE_DO_FUN( do_forgive );
 DECLARE_DO_FUN( do_beta );
 DECLARE_DO_FUN( do_findexit );
@@ -4821,6 +4824,11 @@ ROOM_INDEX_DATA *get_room_at_coord( CHAR_DATA *ch, int x, int y, int z );
 REALM_DATA *get_realm_from_char( CHAR_DATA *ch );
 int get_weapontype( const char *type );
 int get_damtype( const char *type );
+QUEST_DATA *get_quest( const char *argument );
+void quest_olc( CHAR_DATA *ch, const char *argument );
+int get_num_stages( QUEST_DATA *quest );
+int get_num_paths( QUEST_DATA *quest );
+
 
 /* const.c */
 void apply_class_base_stat_mod( CHAR_DATA *ch );

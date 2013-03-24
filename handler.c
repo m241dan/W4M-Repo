@@ -6046,7 +6046,7 @@ int get_questtype_num( const char *argument )
    int x;
    for( x = 0; x < MAX_QUEST_TYPE; x++ )
    {
-      if( !str_cmp( quest_types[x], argument )
+      if( !str_cmp( quest_types[x], argument ) )
          return x;
    }
    return -1;
@@ -6057,7 +6057,7 @@ int get_triggertype_num( const char *argument )
    int x;
    for( x = 0; x < MAX_TRIGGER_TYPE; x++ )
    {
-      if( !str_cmp( trigger_types[x], argument )
+      if( !str_cmp( trigger_types[x], argument ) )
          return x;
    }
    return -1;
