@@ -1011,10 +1011,15 @@ void stop_editing( CHAR_DATA * ch )
    send_to_char( "Done.\r\n", ch );
    ch->dest_buf = NULL;
    ch->spare_ptr = NULL;
-   ch->substate = SUB_NONE;
+   ch->substate = ch->tempnum;
    if( !ch->desc )
    {
       bug( "%s", "Fatal: stop_editing: no desc" );
+      return;
+   }
+   if( ch->substate == SUB_TRIGGER_SCRIPT || ch->substate == SUB_QUEST_DESC )
+   {
+      ch->desc->connected = CON_QUEST_OLC;
       return;
    }
    ch->desc->connected = CON_PLAYING;
@@ -10977,7 +10982,7 @@ void do_questolc( CHAR_DATA *ch, const char *argument )
       return;
    }
 
-   if( quest->player_editing )
+   if( quest->player_editing && quest->player_editing != ch )
    {
       ch_printf( ch, "%s is already editing that quest, one at a time please.\r\n", quest->player_editing->name );
       return;
