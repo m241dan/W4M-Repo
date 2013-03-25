@@ -11105,6 +11105,7 @@ void display_commands( CHAR_DATA *ch )
          send_to_pager( " Level_Required    | Level Required takes two inputs, the first is the\r\n", ch );
          send_to_pager( "                   | class and the second is the level. 0 in level means\r\n", ch );
          send_to_pager( "                   | that class cannot get the quest.\r\n", ch );
+         send_to_pager( " Init_Mob          | Set the Mob that starts the quest.\r\n", ch );	
          send_to_pager( " Stage             | Without argument takes you to the first stage.\r\n", ch );
          send_to_pager( " Path              | without argument takes you to the first path.\r\n", ch );
          send_to_pager( "                   | If no first path or stage exists, it will create one.\r\n", ch );
@@ -11412,6 +11413,29 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       }
       quest->level_required[value] = level;
       ch_printf( ch, "Setting Level Requirement for %s...Done\r\n", class_table[value]->who_name );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "init_mob" ) )
+   {
+      if( !check_substate( ch, SUB_QUEST_EDIT ) )
+         return;
+      MOB_INDEX_DATA *mob_index;
+
+      quest = (QUEST_DATA *)ch->quest_edit_ptr;
+      argument = one_argument( argument, arg );
+
+      if( !is_number( arg ) )
+      {
+         send_to_char( "Enter the mobs VNUM.\r\n", ch );
+         return;
+      }
+      else if( ( mob_index = get_mob_index( atoi( arg ) ) ) == NULL )
+      {
+         send_to_char( "No mob exists with that VNUM.\r\n", ch );
+         return;
+      }
+      quest->init_mob = mob_index;
+      send_to_char( "Setting Quest Init_Mob...Done\r\n", ch );
       return;
    }
    if( !str_cmp( strlower( arg ), "type" ) )
@@ -11952,6 +11976,8 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
    fprintf( fp, "Name         %s~\n", quest->name );
    fprintf( fp, "Description  %s~\n", strip_cr( quest->description ) );
    fprintf( fp, "Type         %d\n", quest->type );
+   if( quest->init_mob )
+      fprintf( fp, "InitMob      %d\n", quest->init_mob->vnum );
    fprintf( fp, "Level_Req   " );
    for( x = 0; x < MAX_CLASS; x++ )
       fprintf( fp, " %d", quest->level_required[x] );
@@ -11997,6 +12023,19 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
    return;
 }
 
+STAGE_DATA *get_stage( QUEST_DATA *quest, int num )
+{
+   STAGE_DATA *stage;
+   int count = 0;
+
+   for( stage = quest->first_stage; stage; stage = stage->next )
+   {
+      ++count;
+      if( count == num )
+         return stage;
+   }
+   return NULL;
+}
 /* End Quest System */
 
 

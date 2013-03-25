@@ -170,6 +170,7 @@ typedef struct hit_data HIT_DATA;
 typedef struct conversation_data CONVERSATION_DATA;
 typedef struct talk_data TALK_DATA;
 typedef struct gthreat_data GTHREAT_DATA;
+typedef struct qtalk_data QTALK_DATA;
 
 /* Quest system Typedefs -Davenge */
 
@@ -2241,6 +2242,16 @@ struct conversation_data
    TALK_DATA *first_talk;
    TALK_DATA *last_talk;
    TALK_DATA *current_talk;
+   QTALK_DATA *first_qtalk;
+   QTALK_DATA *last_qtalk;
+   QTALK_DATA *on_qtalk;
+};
+
+struct qtalk_data
+{
+   QTALK_DATA *next;
+   QTALK_DATA *prev;
+   QUEST_DATA *quest;
 };
 
 struct talk_data
@@ -2789,6 +2800,8 @@ struct hit_data
 
 /* Quest structures... _davenge */
 
+#define QUEST_COMPLETE 0
+
 struct quest_data
 {
    QUEST_DATA *next;
@@ -2798,6 +2811,7 @@ struct quest_data
    PATH_DATA *first_path;
    PATH_DATA *last_path;
    CHAR_DATA *player_editing;
+   MOB_INDEX_DATA *init_mob;
    const char *name;
    const char *description;
    int id;
@@ -5275,6 +5289,12 @@ void switch_class( CHAR_DATA *ch, int Class );
 int get_class_num( const char *argument );
 int get_questtype_num( const char *argument );
 int get_triggertype_num( const char *argument );
+bool is_init_mob args( ( CHAR_DATA *mob, QUEST_DATA *quest ) );
+bool is_init_mob args( ( CHAR_DATA *mob ) );
+bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest );
+void init_quest( CHAR_DATA *ch, QUEST_DATA *quest );
+PLAYER_QUEST *player_has_quest( CHAR_DATA *ch, QUEST_DATA *quest );
+
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

@@ -9236,6 +9236,20 @@ QUEST_DATA *read_quest( FILE *fp )
          case 'D':
             KEY( "Description", quest->description, fread_string( fp ) );
             break;
+         case 'I':
+            if( !str_cmp( word, "InitMob" ) )
+            {
+               MOB_INDEX_DATA *index;
+               int vnum;
+               vnum = fread_number( fp );
+
+               if( ( index = get_mob_index( vnum ) ) == NULL )
+                  bug( "%s: No mob exists with the vnum.", __FUNCTION__ );
+               else
+                  quest->init_mob = index;
+               fMatch = TRUE;
+               break;
+            }
          case 'L':
             if( !str_cmp( word, "Level_Req" ) )
             {
