@@ -1975,6 +1975,8 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       }
       send_to_char( "Toggling bit.\r\n", ch );
       xTOGGLE_BIT( victim->color, value );
+      if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
+         xTOGGLE_BIT( victim->pIndexData->color, value );
       return;
    }
 
