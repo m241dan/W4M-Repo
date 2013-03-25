@@ -9205,19 +9205,22 @@ QUEST_DATA *read_quest( FILE *fp )
             fread_to_eol( fp );
             break;
          case '#':
-            if( !str_cmp( word, "#QUEST" ) && !quest )
+            if( !str_cmp( word, "#QUEST" ) && !quest)
             {
                CREATE( quest, QUEST_DATA, 1 );
+               fMatch = TRUE;
                break;
             }
             else if( !str_cmp( word, "#STAGE" ) && quest )
             {
                fread_fuss_stage( quest, fp );
+               fMatch = TRUE;
                break;
             }
             else if( !str_cmp( word, "#PATH" ) && quest )
             {
                fread_fuss_path( quest, fp );
+               fMatch = TRUE;
                break;
             }
             else if( !str_cmp( word, "#ENDQUEST" ) && quest )
@@ -9259,10 +9262,14 @@ QUEST_DATA *read_quest( FILE *fp )
 
 void fread_fuss_stage( QUEST_DATA *quest, FILE *fp )
 {
-   STAGE_DATA *stage = NULL;
+   STAGE_DATA *stage;
    const char *word;
    char letter;
    bool fMatch;
+
+   CREATE( stage, STAGE_DATA, 1 );
+   stage->stage_owner = quest;
+   LINK( stage, quest->first_stage, quest->last_stage, next, prev );
 
    do
    {
@@ -9288,14 +9295,7 @@ void fread_fuss_stage( QUEST_DATA *quest, FILE *fp )
             fread_to_eol( fp );
             break;
          case '#':
-            if( !str_cmp( word, "#STAGE" ) && !stage )
-            {
-               CREATE( stage, STAGE_DATA, 1 );
-               stage->stage_owner = quest;
-               LINK( stage, quest->first_stage, quest->last_stage, next, prev );
-               break;
-            }
-            else if( !str_cmp( word, "#TRIGGER" ) && stage )
+            if( !str_cmp( word, "#TRIGGER" ) && stage )
             {
                fread_fuss_trigger( stage, fp );
                break;
@@ -9314,7 +9314,7 @@ void fread_fuss_stage( QUEST_DATA *quest, FILE *fp )
             }
             break;
          case 'N':
-            KEY( "Name", stage->name, fread_string( fp ) );
+            KEY( "Name", stage->name, fread_string_nohash( fp ) );
             break;
       }
       if( !fMatch )
@@ -9331,6 +9331,10 @@ void fread_fuss_trigger( STAGE_DATA *stage, FILE *fp )
    const char *word;
    char letter;
    bool fMatch;
+
+   CREATE( trigger, TRIGGER_DATA, 1 );
+   trigger->trigger_owner = stage;
+   LINK( trigger, stage->first_trigger, stage->last_trigger, next, prev );
 
    do
    {
@@ -9356,14 +9360,7 @@ void fread_fuss_trigger( STAGE_DATA *stage, FILE *fp )
             fread_to_eol( fp );
             break;
          case '#':
-            if( !str_cmp( word, "#TRIGGER" ) && !trigger )
-            {
-               CREATE( trigger, TRIGGER_DATA, 1 );
-               trigger->trigger_owner = stage;
-               LINK( trigger, stage->first_trigger, stage->last_trigger, next, prev );
-               break;
-            }
-            else if( !str_cmp( word, "ENDTRIGGER" ) )
+            if( !str_cmp( word, "#ENDTRIGGER" ) )
                return;
             else
             {
@@ -9458,6 +9455,10 @@ void fread_fuss_path( QUEST_DATA *quest, FILE *fp )
    char letter;
    bool fMatch;
 
+   CREATE( path, PATH_DATA, 1 );
+   path->path_owner = quest;
+   LINK( path, quest->first_path, quest->last_path, next, prev );
+
    do
    {
       letter = getc( fp );
@@ -9482,14 +9483,7 @@ void fread_fuss_path( QUEST_DATA *quest, FILE *fp )
             fread_to_eol( fp );
             break;
          case '#':
-            if( !str_cmp( word, "#PATH" ) && !path )
-            {
-               CREATE( path, PATH_DATA, 1 );
-               path->path_owner = quest;
-               LINK( path, quest->first_path, quest->last_path, next, prev );
-               break;
-            }
-            else if( !str_cmp( word, "#REWARD" ) && path )
+            if( !str_cmp( word, "#REWARD" ) && path )
             {
                fread_fuss_reward( path, fp );
                break;
@@ -9520,6 +9514,11 @@ void fread_fuss_reward( PATH_DATA *path, FILE *fp )
    char letter;
    bool fMatch;
 
+   CREATE( reward, REWARD_DATA, 1 );
+   reward->reward_owner = path;
+   LINK( reward, path->first_reward, path->last_reward, next, prev );
+
+
    do
    {
       letter = getc( fp );
@@ -9544,14 +9543,7 @@ void fread_fuss_reward( PATH_DATA *path, FILE *fp )
             fread_to_eol( fp );
             break;
          case '#':
-            if( !str_cmp( word, "#REWARD" ) && !path )
-            {
-               CREATE( reward, REWARD_DATA, 1 );
-               reward->reward_owner = path;
-               LINK( reward, path->first_reward, path->last_reward, next, prev );
-               break;
-            }
-            else if( !str_cmp( word, "#ENDREWARD" ) )
+            if( !str_cmp( word, "#ENDREWARD" ) )
                return;
             else
             {

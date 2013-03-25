@@ -4003,7 +4003,6 @@ extern struct act_prog_data *mob_act_list;
  * Command functions.
  * Defined in act_*.c (mostly).
  */
-DECLARE_DO_FUN( do_questolc );
 DECLARE_DO_FUN( do_forgive );
 DECLARE_DO_FUN( do_beta );
 DECLARE_DO_FUN( do_findexit );

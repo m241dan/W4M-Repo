@@ -1017,7 +1017,7 @@ void stop_editing( CHAR_DATA * ch )
       bug( "%s", "Fatal: stop_editing: no desc" );
       return;
    }
-   if( ch->substate == SUB_TRIGGER_SCRIPT || ch->substate == SUB_QUEST_DESC )
+   if( ch->substate == SUB_TRIGGER_EDIT || ch->substate == SUB_QUEST_EDIT )
    {
       ch->desc->connected = CON_QUEST_OLC;
       return;
@@ -10967,18 +10967,49 @@ REALM_DATA *get_realm_from_char( CHAR_DATA *ch )
 
 /* Quest System Below -Davenge */
 
-void do_questolc( CHAR_DATA *ch, const char *argument )
+void do_quest( CHAR_DATA *ch, const char *argument )
 {
    QUEST_DATA *quest;
+   const char *orig_argument;
+   char arg[MAX_STRING_LENGTH];
 
    if( IS_NPC( ch ) || !IS_IMMORTAL( ch ) )
       return;
 
-   if( ( quest = get_quest( argument ) ) == NULL )
+   if( argument[0] == '\0' )
    {
-      send_to_char( "No such quest exists.\r\nCreating quest...\r\n", ch );
+      send_to_char( "Which quest do you want to edit or create?\r\n", ch );
+      return;
+   }
+
+   orig_argument = str_dup( argument );
+   argument = one_argument( argument, arg );
+
+   if( !str_cmp( arg, "create" ) )
+   {
+      if( argument[0] == '\0' )
+      {
+         send_to_char( "Quest must have a name.\r\n", ch );
+         return;
+      }
       create_quest( argument );
-      do_questolc( ch, argument );
+      send_to_char( "Quest created.\r\n", ch );
+      return;
+   }
+
+   if( !str_cmp( arg, "list" ) )
+   {
+      send_to_char( "----------------------\r\n", ch );
+      send_to_char( "| Listing all quests |\r\n", ch );
+      send_to_char( "----------------------\r\n", ch );
+      for( quest = first_quest; quest; quest = quest->next )
+         ch_printf( ch, "Quest Name: %s\r\n", quest->name );
+      return;
+   }
+
+   if( ( quest = get_quest( orig_argument ) ) == NULL )
+   {
+      send_to_char( "No such quest exists.\r\n", ch );
       return;
    }
 
@@ -11130,8 +11161,8 @@ void display_commands( CHAR_DATA *ch )
 void display_questolc( CHAR_DATA *ch )
 {
    QUEST_DATA *quest;
-   STAGE_DATA *stage;
-   PATH_DATA *path;
+   STAGE_DATA *stage, *stage_next;
+   PATH_DATA *path, *path_next;
    TRIGGER_DATA *trigger;
    REWARD_DATA *reward;
    bool lAll;
@@ -11176,11 +11207,13 @@ void display_questolc( CHAR_DATA *ch )
          x = 1;
          if( get_num_stages( quest ) > get_num_paths( quest ) )
          {
-            for( path = quest->first_path, stage = quest->first_stage; stage; stage = stage->next, path = path->next )
+            for( path = quest->first_path, stage = quest->first_stage; stage; stage = stage->next, path = path_next )
             {
-               pager_printf( ch, "Stage #%2d: %-30s |", x, stage->name );
                if( path )
-                  pager_printf( ch, "Path #%2d: %-30s\r\n", x, path->name );
+                  path_next = path->next;
+               pager_printf( ch, "Stage #%2d: %-20s |", x, stage->name );
+               if( path )
+                  pager_printf( ch, " Path #%2d: %-20s\r\n", x, path->name );
                else
                   send_to_pager( "\r\n", ch );
                x++;
@@ -11190,9 +11223,11 @@ void display_questolc( CHAR_DATA *ch )
          {
             for( path = quest->first_path, stage = quest->first_stage; path; stage = stage->next, path = path->next )
             {
-               pager_printf( ch, "Path #%2d: %-30s |", x, path->name );
                if( stage )
-                  pager_printf( ch, "Stage #%2d: %-30s\r\n", x, stage->name );
+                  stage_next = stage;
+               pager_printf( ch, "Path #%2d: %-20s |", x, path->name );
+               if( stage )
+                  pager_printf( ch, " Stage #%2d: %-20s\r\n", x, stage->name );
                else
                   send_to_pager( "\r\n", ch );
               x++;
@@ -11205,14 +11240,7 @@ void display_questolc( CHAR_DATA *ch )
          x = 0;
 
          pager_printf( ch, "Displaying Stage: %s\r\n-----------------------------------------------------------------------\r\n", stage->name );
-         if( stage->prev )
-            pager_printf( ch, "Previous Stage: %-20s", stage->prev->name );
-         else
-            send_to_pager( "                                    ", ch );
-         if( stage->next )
-            pager_printf( ch, "| Next Stage: %s\r\n", stage->next->name );
-         else
-            send_to_pager( "\r\n", ch );
+         pager_printf( ch, "Previous Stage: %-10s | Next Stage: %-10s\r\n", stage->prev ? stage->prev->name : "none", stage->next ? stage->next->name : "none" );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
          {
@@ -11232,54 +11260,35 @@ void display_questolc( CHAR_DATA *ch )
          x = 0;
 
          pager_printf( ch, "Displaying Path: %s\r\n-----------------------------------------------------------------------\r\n", path->name );
-         if( path->prev )
-            pager_printf( ch, "Previous Path: %-20s", path->prev->name );
-         else
-            send_to_pager( "                                    ", ch );
-         if( path->next )
-            pager_printf( ch, "| Next Path: %s\r\n", path->next->name );
-         else
-            send_to_pager( "\r\n", ch );
+         pager_printf( ch, "Previous Path: %-10s | Next Path: %-10s\r\n", path->prev ? path->prev->name : "none", path->next ? path->next->name : "none" );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          for( reward = path->first_reward; reward; reward = reward->next )
          {
             x++;
-            if( reward->type == APPLY_OBJECT )
-               pager_printf( ch, "Reward %2d: %-20s Amount: %d\r\n", x, (get_obj_index(reward->o_vnum))->short_descr, reward->amount );
+            if( reward->type == APPLY_OBJECT && reward->o_vnum > 0 )
+               pager_printf( ch, "Reward %2d: %-10s Amount: %d\r\n", x, (get_obj_index(reward->o_vnum))->short_descr, reward->amount );
             else
-               pager_printf( ch, "Reward %2d: %-20s Amount: %d\r\n", x, a_types[reward->type], reward->amount );
+               pager_printf( ch, "Reward %2d: %-10s Amount: %d\r\n", x, a_types[reward->type], reward->amount );
          }
          display_commands( ch );
          break;
       case SUB_TRIGGER_EDIT:
          trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
-         if( trigger->prev )
-            pager_printf( ch, "Previous Trigger: %-20s", trigger_types[trigger->type] );
-         else
-            send_to_pager( "                                      ", ch );
-         if( trigger->next )
-            pager_printf( ch, "| Next Trigger: %-20s\r\n", trigger_types[trigger->type] );
-         else
-            send_to_pager( "\r\n", ch );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
-         pager_printf( ch, "Type: %-20s Vnum: %-5d ToAdvance: %d\r\n", trigger_types[trigger->type], trigger->vnum, trigger->to_advance );
+         pager_printf( ch, "Previous Trigger: %-10s | Next Trigger: %-10s\r\n", trigger->prev ? trigger_types[trigger->prev->type] : "none", trigger->next ? trigger_types[trigger->next->type] : "none" );
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         pager_printf( ch, "Type: %-10s Vnum: %-5d ToAdvance: %d\r\n", trigger_types[trigger->type], trigger->vnum, trigger->to_advance );
          pager_printf( ch, "Script:\r\n%s\r\n", trigger->script );
          display_commands( ch );
          break;
       case SUB_REWARD_EDIT:
          reward = (REWARD_DATA *)ch->quest_edit_ptr;
-         if( reward->prev )
-            pager_printf( ch, "Previous Reward: %-20s", a_flags[reward->type] );
-         else
-               send_to_pager( "                                     ", ch );
-         if( reward->next )
-            pager_printf( ch, "| Next Reward: %-20s\r\n", a_flags[reward->type] );
-         else
-            send_to_pager( "\r\n", ch );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
-         pager_printf( ch, "Reward Type: %s\r\n", a_flags[reward->type] );
+         pager_printf( ch, "Previous Reward: %-10s | Next Reward: %-10s\r\n", reward->prev ? a_types[reward->prev->type] : "none", reward->next ? a_types[reward->next->type] : "none" );
+         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         pager_printf( ch, "Reward Type: %s\r\n", a_types[reward->type] );
          pager_printf( ch, "Amount to Reward: %d\r\n", reward->amount );
-         if( reward->type == APPLY_OBJECT )
+         if( reward->type == APPLY_OBJECT && reward->o_vnum > 0 )
             pager_printf( ch, "Object: Vnum- %d Name- %s Short_Descr- %s\r\n", reward->o_vnum, (get_obj_index( reward->o_vnum))->name, (get_obj_index(reward->o_vnum))->short_descr );
          display_commands( ch );
          break;
@@ -11333,7 +11342,6 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
             STRFREE( quest->description );
          quest->description = copy_buffer( ch );
          stop_editing( ch );
-         ch->substate = ch->tempnum;
          display_questolc( ch );
          return;
       case SUB_TRIGGER_SCRIPT:
@@ -11348,7 +11356,6 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
             STRFREE( trigger->script );
          trigger->script = copy_buffer( ch );
          stop_editing( ch );
-         ch->substate = ch->tempnum;
          display_questolc( ch );
          return;
    }
@@ -11366,7 +11373,6 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
    {
       save_quests( );
       send_to_char( "Saving quests...Done\r\n", ch );
-      display_questolc( ch );
       return;
    }
    if( !str_cmp( strlower( arg ), "exit" ) )
@@ -11405,7 +11411,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
          return;
       }
       quest->level_required[value] = level;
-      display_questolc( ch );
+      ch_printf( ch, "Setting Level Requirement for %s...Done\r\n", class_table[value]->who_name );
       return;
    }
    if( !str_cmp( strlower( arg ), "type" ) )
@@ -11422,7 +11428,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
                 return;
             }
            quest->type = value;
-           display_questolc( ch );
+           send_to_char( "Setting Quest Type...Done\r\n", ch );
            return;
 
          case SUB_TRIGGER_EDIT:
@@ -11435,7 +11441,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
                return;
             }
             trigger->type = value;
-            display_questolc( ch );
+            send_to_char( "Setting Trigger Type...Done\r\n", ch );
             return;
 
          case SUB_REWARD_EDIT:
@@ -11448,7 +11454,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
                return;
             }
             reward->type = value;
-            display_questolc( ch );
+            send_to_char( "Setting Reward Type...Done\r\n", ch );
             return;
       }
    }
@@ -11522,6 +11528,11 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
    }
    if( !str_cmp( strlower( arg ), "name" ) )
    {
+      if( argument[0] == '\0' )
+      {
+         send_to_char( "Change name to what?\r\n", ch );
+         return;
+      }
       switch( ch->substate )
       {
          case SUB_STAGE_EDIT:
@@ -11529,7 +11540,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
 
             STRFREE( stage->name );
             stage->name = STRALLOC( argument );
-            display_questolc( ch );
+            send_to_char( "Changing Stage Name...Done\r\n", ch );
             return;
 
          case SUB_PATH_EDIT:
@@ -11537,7 +11548,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
 
             STRFREE( path->name );
             path->name = STRALLOC( argument );
-            display_questolc( ch );
+            send_to_char( "Changing Path Name...Done\r\n", ch );
             return;
       }
    }
@@ -11716,7 +11727,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       value = atoi( argument );
 
       trigger->vnum = value;
-      display_questolc( ch );
+      send_to_char( "Changing Trigger Vnum...Done\r\n", ch );
       return;
    }
    if( !str_cmp( strlower( arg ), "toadvance" ) )
@@ -11732,7 +11743,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       value = atoi( argument );
 
       trigger->to_advance = value;
-      display_questolc( ch );
+      send_to_char( "Changing Trigger ToAdvance...Done\r\n", ch );
       return;
    }
    if( !str_cmp( strlower( arg ), "amount" ) )
@@ -11749,7 +11760,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       value = atoi( argument );
 
       reward->amount = value;
-      display_questolc( ch );
+      send_to_char( "Changing Reward Amount...Done\r\n", ch );
       return;
    }
    if( !str_cmp( strlower( arg ), "ovnum" ) )
@@ -11765,8 +11776,14 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       }
       value = atoi( argument );
 
+      if( !(get_obj_index( value )) )
+      {
+         send_to_char( "No such object exists.\r\n", ch );
+         return;
+      }
+
       reward->o_vnum = value;
-      display_questolc( ch );
+      send_to_char( "Changing Reward Ovnum...Done\r\n", ch );
       return;
    }
    if( !str_cmp( strlower( arg ), "script" ) )
@@ -11796,8 +11813,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       return;
    }
 
-   send_to_char( "Invalid input.\r\n", ch );
-   display_commands( ch );
+   send_to_char( "Invalid input...\r\n", ch );
    return;
 }
 
@@ -11805,8 +11821,7 @@ bool check_substate( CHAR_DATA *ch, int substate )
 {
    if( ch->substate != substate )
    {
-      send_to_char( "Invalid input.\r\n", ch );
-      display_commands( ch );
+      send_to_char( "Invalid input...\r\n", ch );
       return FALSE;
    }
    return TRUE;
@@ -11935,7 +11950,7 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
 
    fprintf( fp, "#QUEST\n" );
    fprintf( fp, "Name         %s~\n", quest->name );
-   fprintf( fp, "Description  %s~\n", quest->description );
+   fprintf( fp, "Description  %s~\n", strip_cr( quest->description ) );
    fprintf( fp, "Type         %d\n", quest->type );
    fprintf( fp, "Level_Req   " );
    for( x = 0; x < MAX_CLASS; x++ )
@@ -11978,7 +11993,7 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
       }
       fprintf( fp, "#ENDPATH\n" );
    }
-   fprintf( fp, "#ENDQUEST\n" );
+   fprintf( fp, "#ENDQUEST\n\n" );
    return;
 }
 

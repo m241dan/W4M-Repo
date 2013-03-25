@@ -713,7 +713,7 @@ void do_music( CHAR_DATA* ch, const char* argument)
    return;
 }
 
-
+/*
 void do_quest( CHAR_DATA* ch, const char* argument)
 {
    if( NOT_AUTHED( ch ) )
@@ -723,7 +723,7 @@ void do_quest( CHAR_DATA* ch, const char* argument)
    }
    talk_channel( ch, argument, CHANNEL_QUEST, "quest" );
    return;
-}
+}*/
 
 void do_ask( CHAR_DATA* ch, const char* argument)
 {
