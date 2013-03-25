@@ -5291,6 +5291,7 @@ int get_questtype_num( const char *argument );
 int get_triggertype_num( const char *argument );
 bool is_init_mob args( ( CHAR_DATA *mob, QUEST_DATA *quest ) );
 bool is_init_mob args( ( CHAR_DATA *mob ) );
+bool is_init_mob args( ( CHAR_DATA *ch, CHAR_DATA *mob ) );
 bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest );
 void init_quest( CHAR_DATA *ch, QUEST_DATA *quest );
 PLAYER_QUEST *player_has_quest( CHAR_DATA *ch, QUEST_DATA *quest );

@@ -6080,6 +6080,20 @@ bool is_init_mob( CHAR_DATA *mob )
          return TRUE;
    return FALSE;
 }
+
+bool is_init_mob( CHAR_DATA *ch, CHAR_DATA *mob )
+{
+   QUEST_DATA *quest;
+
+   for( quest = first_quest; quest; quest = quest->next )
+   {
+      if( !is_init_mob( mob, quest ) )
+         continue;
+      if( can_accept_quest( ch, quest ) )
+         return TRUE;
+   }
+   return FALSE;
+}
 /*
 bool involved_in_quest( CHAR_DATA *mob, QUEST_DATA *quest )
 {
@@ -6101,7 +6115,7 @@ bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest )
 
    if( ( pquest = player_has_quest( ch, quest ) ) != NULL && pquest->quest->type == QUEST_ONE_TIME )
       can_accept = FALSE;
-   else if( pquest->quest->type == QUEST_ONCE_PER_CLASS && pquest->times_completed[ch->Class] > 1 )
+   else if( pquest && pquest->quest->type == QUEST_ONCE_PER_CLASS && pquest->times_completed[ch->Class] > 1 )
       can_accept = FALSE;
 
    return can_accept;

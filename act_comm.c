@@ -2987,7 +2987,7 @@ void display_branch( CHAR_DATA *ch )
 {
    TALK_DATA *on_talk;
 
-   if( ( on_talk = ch->conv_data->current_talk ) == NULL )
+   if( ( on_talk = ch->conv_data->current_talk ) == NULL && !ch->conv_data->first_qtalk )
    {
       bug( "CH: %s attempting to display_branch without having one", ch->name );
       return;
@@ -3076,6 +3076,7 @@ void display_options( CHAR_DATA *ch )
    }
    if( ch->conv_data->on_qtalk )
    {
+      send_to_char( "\r\n", ch );
       send_to_char( "   Yes.) To accept\r\n", ch );
       send_to_char( "   No.) To decline\r\n", ch );
    }
@@ -3092,9 +3093,9 @@ void display_options( CHAR_DATA *ch )
          }
       }
    }
-   if( ch->conv_data->current_talk == ch->conv_data->first_talk )
+   if( ch->conv_data->current_talk == ch->conv_data->first_talk && !ch->conv_data->on_qtalk)
    {
-      send_to_char( "Quest Options:\r\n", ch );
+      send_to_char( "\r\nQuest Options:\r\n", ch );
       for( qtalk = ch->conv_data->first_qtalk; qtalk; qtalk = qtalk->next )
       {
          if( !can_accept_quest( ch, qtalk->quest ) )
@@ -3103,7 +3104,7 @@ void display_options( CHAR_DATA *ch )
          ch_printf( ch, "   %d.) %s\r\n", counter, qtalk->quest->name ); 
       }
    }
-   if( counter == 0 )
+   if( counter == 0 && !ch->conv_data->on_qtalk )
       send_to_char( "   You have no further talking points to discuss with this person.\r\n", ch );
    if( on_talk->talk_from )
       ch_printf( ch, "   Back.) %s\r\n", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );

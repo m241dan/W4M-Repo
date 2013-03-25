@@ -11188,6 +11188,8 @@ void display_questolc( CHAR_DATA *ch )
 
          pager_printf( ch, "Displaying Quest: %s\r\n", quest->name );
          pager_printf( ch, "Type: %s\r\n", quest_types[quest->type] );
+         if( quest->init_mob )
+            pager_printf( ch, "Init_Mob: %s\r\n", quest->init_mob->short_descr );
          pager_printf( ch, "Required:" );
          for( x = 0; x < MAX_CLASS; x++ )
             if( level_req != quest->level_required[x] )
