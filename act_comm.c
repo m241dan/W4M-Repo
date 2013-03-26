@@ -3135,7 +3135,7 @@ void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point )
       if( talk->talk_id == starting_point )
           conversation->current_talk = talk;
    for( quest = first_quest; quest; quest = quest->next )
-      if( is_init_mob( mob, quest ) )
+      if( is_init_mob( ch, mob, quest ) )
       {
          CREATE( qtalk, QTALK_DATA, 1 );
          qtalk->quest = quest;

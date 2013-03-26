@@ -12060,7 +12060,7 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
       }
       fprintf( fp, "#ENDPATH\n" );
    }
-   fprintf( fp, "#ENDQUEST\n\n" );
+   fprintf( fp, "#ENDQUEST\n" );
    return;
 }
 
@@ -12086,12 +12086,13 @@ void advance_quest( CHAR_DATA *ch, PLAYER_QUEST *pquest )
          send_to_char( "You've already completed this quest.\r\n", ch );
          return;
       case QUEST_JUST_COMPLETED:
+         ch_printf( ch, "Congratulations!!! You've just completed the quest '%s.'\r\n", pquest->quest->name );
          pquest->stage = 0;
          reward_player( ch, pquest->on_path );
          do_save( ch, "" );
          break;
       case QUEST_STARTED:
-         ch_printf( ch, "You have begun the quest, '%s.\r\n", pquest->quest->name );
+         ch_printf( ch, "You have begun the quest, '%s.'\r\n", pquest->quest->name );
          ch_printf( ch, "You're first objective is... %s.\r\n", stage->name );
          quest_progress_update( ch, pquest );
          break;
@@ -12208,6 +12209,7 @@ void update_quests( CHAR_DATA *ch, int type, int vnum, int vwhere )
             break;
       }
    }
+   quest_progress_update( ch, pquest );
 }
 
 void advance_objective( CHAR_DATA *ch, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective )
@@ -12256,6 +12258,7 @@ void reward_player( CHAR_DATA *ch, PATH_DATA *path )
    {
       if( reward->type != APPLY_OBJECT )
       {
+         ch_printf( ch, "You receive %d %s as a reward.\r\n", reward->amount, a_types[reward->type] );
          paf->location = reward->type;
          paf->modifier = reward->amount;
          affect_modify( ch, paf, TRUE );
@@ -12275,6 +12278,7 @@ void reward_player( CHAR_DATA *ch, PATH_DATA *path )
       }
       obj->count = reward->amount;
       obj = obj_to_char( obj, ch );
+      ch_printf( ch, "You receive %d %s as a reward.\r\n", reward->amount, obj->short_descr );
    }
 
    DISPOSE( paf );

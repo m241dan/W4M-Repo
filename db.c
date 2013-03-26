@@ -9312,20 +9312,17 @@ void fread_fuss_stage( QUEST_DATA *quest, FILE *fp )
             if( !str_cmp( word, "#TRIGGER" ) && stage )
             {
                fread_fuss_trigger( stage, fp );
+               fMatch = TRUE;
                break;
             }
             else if( !str_cmp( word, "#OBJECTIVE" ) && stage )
             {
                fread_fuss_objective( stage, fp );
+               fMatch = TRUE;
                break;
             }
             else if( !str_cmp( word, "#ENDSTAGE" ) )
                return;
-            else
-            {
-               bug( "%s: bad format", __FUNCTION__ );
-               break;
-            }
             break;
          case 'N':
             KEY( "Name", stage->name, fread_string_nohash( fp ) );
@@ -9504,6 +9501,7 @@ void fread_fuss_path( QUEST_DATA *quest, FILE *fp )
             if( !str_cmp( word, "#REWARD" ) && path )
             {
                fread_fuss_reward( path, fp );
+               fMatch = TRUE;
                break;
             }
             else if( !str_cmp( word, "#ENDPATH" ) )

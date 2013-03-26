@@ -6063,9 +6063,9 @@ int get_triggertype_num( const char *argument )
    return -1;
 }
 
-bool is_init_mob( CHAR_DATA *mob, QUEST_DATA *quest )
+bool is_init_mob( CHAR_DATA *ch, CHAR_DATA *mob, QUEST_DATA *quest )
 {
-   if( mob->pIndexData == quest->init_mob )
+   if( mob->pIndexData == quest->init_mob && can_accept_quest( ch, quest ) )
       return TRUE;
    else
       return FALSE;
@@ -6076,24 +6076,11 @@ bool is_init_mob( CHAR_DATA *mob )
    QUEST_DATA *quest;
 
    for( quest = first_quest; quest; quest = quest->next )
-      if( is_init_mob( mob, quest ) )
+      if( mob->pIndexData == quest->init_mob )
          return TRUE;
    return FALSE;
 }
 
-bool is_init_mob( CHAR_DATA *ch, CHAR_DATA *mob )
-{
-   QUEST_DATA *quest;
-
-   for( quest = first_quest; quest; quest = quest->next )
-   {
-      if( !is_init_mob( mob, quest ) )
-         continue;
-      if( can_accept_quest( ch, quest ) )
-         return TRUE;
-   }
-   return FALSE;
-}
 /*
 bool involved_in_quest( CHAR_DATA *mob, QUEST_DATA *quest )
 {
@@ -6110,12 +6097,15 @@ bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest )
    PLAYER_QUEST *pquest;
    bool can_accept = FALSE;
 
+   if( quest->level_required[ch->Class] == 0 )
+      return FALSE;
+
    if( ch->level >= quest->level_required[ch->Class] )
       can_accept = TRUE;
 
    if( ( pquest = player_has_quest( ch, quest ) ) != NULL && pquest->quest->type == QUEST_ONE_TIME )
       can_accept = FALSE;
-   else if( pquest && pquest->quest->type == QUEST_ONCE_PER_CLASS && pquest->times_completed[ch->Class] > 1 )
+   else if( pquest && pquest->quest->type == QUEST_ONCE_PER_CLASS && pquest->times_completed[ch->Class] > 0 )
       can_accept = FALSE;
 
    return can_accept;
@@ -6131,6 +6121,7 @@ void init_quest( CHAR_DATA *ch, QUEST_DATA *quest )
       CREATE( pquest, PLAYER_QUEST, 1 );
       pquest->quest = quest;
       pquest->stage = 1;
+      pquest->on_path = quest->first_path;
       for( x = 0; x < MAX_CLASS; x++ )
          pquest->times_completed[x] = 0;
       LINK( pquest, ch->first_quest, ch->last_quest, next, prev );
