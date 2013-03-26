@@ -2101,7 +2101,7 @@ void do_follow( CHAR_DATA* ch, const char* argument)
 
    add_follower( ch, victim );
    if( IS_NPC( victim ) )
-      update_quests( ch, TYPE_MOB_FOLLOW, victim->pIndexData->vnum, 0 );
+      update_quests( ch, victim, NULL, TYPE_MOB_FOLLOW, 0 );
    return;
 }
 
@@ -2981,7 +2981,7 @@ void do_talk( CHAR_DATA *ch, const char* argument )
    ch_printf( ch, "You begin talking to %s.\r\n", mob->name );
    create_conversation( ch, mob, INIT_CONVERSATION );
    ch->desc->connected = CON_TALKING;
-   update_quests( ch, TYPE_MOB_TALK_GENERAL, mob->pIndexData->vnum, 0 );
+   update_quests( ch, mob, NULL, TYPE_MOB_TALK_GENERAL, 0 );
    display_branch( ch );
    return;
 }

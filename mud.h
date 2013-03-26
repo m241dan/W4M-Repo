@@ -2903,7 +2903,7 @@ typedef enum
 
 typedef enum
 {
-   TYPE_OBJ_DROP, TYPE_OBJ_RECEIVE, TYPE_OBJ_PUT, TYPE_OBJ_GIVE, TYPE_OBJ_DESTROY,
+   TYPE_OBJ_DROP, TYPE_OBJ_GET, TYPE_OBJ_RECEIVE, TYPE_OBJ_PUT, TYPE_OBJ_GIVE, TYPE_OBJ_DESTROY,
    TYPE_MOB_KILL, TYPE_MOB_TALK_GENERAL, TYPE_MOB_TALK_SCRIPT_ADVANCE, TYPE_MOB_FOLLOW, MAX_TRIGGER_TYPE
 } trigger_type_nums;
 
@@ -4849,8 +4849,8 @@ int get_num_stages( QUEST_DATA *quest );
 int get_num_paths( QUEST_DATA *quest );
 void advance_quest( CHAR_DATA *ch, PLAYER_QUEST *pquest );
 void quest_progress_update( CHAR_DATA *ch, PLAYER_QUEST *pquest );
-void update_quests( CHAR_DATA *ch, int type, int vnum, int vwhere );
-void advance_objective( CHAR_DATA *ch, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective );
+void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int vwhere );
+void advance_objective( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective );
 void check_stage_complete( CHAR_DATA *ch, PLAYER_QUEST *pquest );
 void reward_player( CHAR_DATA *ch, PATH_DATA *path );
 
@@ -5074,6 +5074,7 @@ void rset_supermob( ROOM_INDEX_DATA * room );
 void release_supermob( void );
 void mpsleep_update( void );
 void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor, TALK_DATA *talk );
+void mprog_questsystem_trigger( CHAR_DATA *mob, CHAR_DATA * actor, OBJ_DATA *obj, TRIGGER_DATA *trigger );
 
 /* planes.c */
 PLANE_DATA *plane_lookup( const char *name );

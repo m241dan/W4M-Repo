@@ -53,7 +53,7 @@ const char *const quest_types[MAX_QUEST_TYPE] = {
 };
 
 const char *const trigger_types[MAX_TRIGGER_TYPE] = {
-   "obj_drop", "obj_receive", "obj_put", "obj_give", "obj_destroy", "mob_kill", "mob_talk_general", "mob_talk_script_advance", "mob_follow"
+   "obj_drop", "obj_get", "obj_receive", "obj_put", "obj_give", "obj_destroy", "mob_kill", "mob_talk_general", "mob_talk_script_advance", "mob_follow"
 };
 
 const double base_class_lag[MAX_CLASS] = {

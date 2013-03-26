@@ -7306,8 +7306,8 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
 
                if( Class < 0 || Class >= MAX_NPC_CLASS )
                {
-                  bug( "%s: vnum %d: Mob has invalid Class! Defaulting to warrior.", __FUNCTION__, pMobIndex->vnum );
-                  Class = get_npc_class( "warrior" );
+                  bug( "%s: vnum %d: Mob has invalid Class! Defaulting to priest.", __FUNCTION__, pMobIndex->vnum );
+                  Class = get_npc_class( "priest" );
                }
 
                pMobIndex->Class = Class;
@@ -7935,7 +7935,6 @@ void fread_fuss_realm( REALM_DATA * realm, FILE * fp )
          break;
       for( area = first_build; area; area = area->next )
       {
-         log_string( area->filename );
          if( !str_cmp( area->filename, word ) )
          {
             LINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
@@ -9226,7 +9225,10 @@ QUEST_DATA *read_quest( FILE *fp )
             else if( !str_cmp( word, "#ENDQUEST" ) && quest )
                return quest;
             else if( !str_cmp( word, "#ENDQUESTS" ) )
+            {
+               log_string( "returning NULL" );
                return NULL;
+            }
             else
             {
                bug( "%s: bad file format.", __FUNCTION__ );

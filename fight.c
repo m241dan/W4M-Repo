@@ -1456,13 +1456,12 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
    {
       OBJ_DATA *new_corpse;
       if( IS_NPC( victim ) )
-         update_quests( ch, TYPE_MOB_KILL, victim->pIndexData->vnum, 0 );
+         update_quests( ch, victim, NULL, TYPE_MOB_KILL, 0 );
 
       clear_target( ch );
       clear_target( victim );
 
       free_threat( victim );
-      free_threat( ch, victim );
 
       stop_fighting( ch, TRUE );
 

@@ -11995,7 +11995,7 @@ void save_quests( void )
    {
       for( quest = first_quest; quest; quest = quest->next )
          fwrite_fuss_quest( quest, fp );
-      fprintf( fp, "#ENDQUESTS" );
+      fprintf( fp, "%s", "#ENDQUESTS" );
    }
    fclose( fp );
    fp = NULL;
@@ -12010,7 +12010,7 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
    REWARD_DATA *reward;
    int x;
 
-   fprintf( fp, "#QUEST\n" );
+   fprintf( fp, "%s", "#QUEST\n" );
    fprintf( fp, "Name         %s~\n", quest->name );
    fprintf( fp, "Description  %s~\n", strip_cr( quest->description ) );
    fprintf( fp, "Type         %d\n", quest->type );
@@ -12023,17 +12023,17 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
 
    for( stage = quest->first_stage; stage; stage = stage->next )
    {
-      fprintf( fp, "#STAGE\n" );
+      fprintf( fp, "%s", "#STAGE\n" );
       fprintf( fp, "Name        %s~\n", stage->name );
        for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
       {
-         fprintf( fp, "#TRIGGER\n" );
+         fprintf( fp, "%s", "#TRIGGER\n" );
          fprintf( fp, "Type        %d\n", trigger->type );
          fprintf( fp, "ToAdvance   %d\n", trigger->to_advance );
          fprintf( fp, "Script      %s~\n", strip_cr( trigger->script ) );
          fprintf( fp, "Vnum        %d\n", trigger->vnum );
          fprintf( fp, "VWhere      %d\n", trigger->vwhere );
-         fprintf( fp, "#ENDTRIGGER\n" );
+         fprintf( fp, "%s", "#ENDTRIGGER\n" );
       }
 /*      for( objective = stage->first_objective; objective; objective = objective->next )
       {
@@ -12043,24 +12043,24 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
          fprintf( fp, "Required    %d\n", objective->required );
          fprintf( fp, "#ENDOBJECTIVE\n" );
       } */
-      fprintf( fp, "#ENDSTAGE\n" );
+      fprintf( fp, "%s", "#ENDSTAGE\n" );
    }
    for( path = quest->first_path; path; path = path->next )
    {
-      fprintf( fp, "#PATH\n" );
+      fprintf( fp, "%s", "#PATH\n" );
       fprintf( fp, "Name        %s~\n", path->name );
       fprintf( fp, "Gold        %d\n", path->gold );
       for( reward = path->first_reward; reward; reward = reward->next )
       {
-         fprintf( fp, "#REWARD\n" );
+         fprintf( fp, "%s", "#REWARD\n" );
          fprintf( fp, "Type        %d\n", reward->type );
          fprintf( fp, "Amount      %d\n", reward->amount );
          fprintf( fp, "Ovnum       %d\n", reward->o_vnum );
-         fprintf( fp, "#ENDREWARD\n" );
+         fprintf( fp, "%s", "#ENDREWARD\n" );
       }
-      fprintf( fp, "#ENDPATH\n" );
+      fprintf( fp, "%s", "#ENDPATH\n" );
    }
-   fprintf( fp, "#ENDQUEST\n" );
+   fprintf( fp, "%s", "#ENDQUEST\n\n" );
    return;
 }
 
@@ -12108,7 +12108,7 @@ void quest_progress_update( CHAR_DATA *ch, PLAYER_QUEST *pquest )
 
    char buf[MAX_STRING_LENGTH];
    char master[MAX_STRING_LENGTH];
-   master[0] = '\0';
+   sprintf( master, "Quest Update: " );
 
    for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
    {
@@ -12169,19 +12169,28 @@ void quest_progress_update( CHAR_DATA *ch, PLAYER_QUEST *pquest )
       }
       mudstrlcat( master, buf, MAX_STRING_LENGTH );
    }
+   send_to_char( master, ch );
    return;
 }
 
-void update_quests( CHAR_DATA *ch, int type, int vnum, int vwhere )
+void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int vwhere )
 {
    PLAYER_QUEST *pquest;
    OBJECTIVE_TRACKER *objective;
+   int vnum;
 
    if( !ch->first_quest )
       return;
 
+   if( mob )
+      vnum = mob->pIndexData->vnum;
+   if( obj )
+      vnum = obj->pIndexData->vnum;
+
    for( pquest = ch->first_quest; pquest; pquest = pquest->next )
    {
+      if( pquest->stage == 0 || pquest->stage == -1 )
+         return;
       switch( type )
       {
       /* ones without vwhere */
@@ -12191,10 +12200,11 @@ void update_quests( CHAR_DATA *ch, int type, int vnum, int vwhere )
          case TYPE_MOB_TALK_SCRIPT_ADVANCE:
          case TYPE_OBJ_DESTROY:
          case TYPE_OBJ_RECEIVE:
+         case TYPE_OBJ_GET:
             for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
             {
                if( objective->objective->type == type && objective->objective->vnum == vnum  )
-                  advance_objective( ch,  pquest, objective );
+                  advance_objective( ch, mob, obj, pquest, objective );
             }
             break;
       /* ones with vwheres */
@@ -12204,20 +12214,20 @@ void update_quests( CHAR_DATA *ch, int type, int vnum, int vwhere )
             for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
             {
                if( objective->objective->type == type && objective->objective->vnum == vnum && objective->objective->vwhere == vwhere )
-                  advance_objective( ch,  pquest, objective );
+                  advance_objective( ch, mob, obj, pquest, objective );
             }
             break;
       }
    }
-   quest_progress_update( ch, pquest );
 }
 
-void advance_objective( CHAR_DATA *ch, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective )
+void advance_objective( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective )
 {
    if( objective->progress >= objective->objective->to_advance )
       return;
    objective->progress++;
-
+   quest_progress_update( ch, pquest );
+   mprog_questsystem_trigger( mob, ch, obj, objective->objective );
    check_stage_complete( ch, pquest );
    return;
 }
@@ -12228,7 +12238,7 @@ void check_stage_complete( CHAR_DATA *ch, PLAYER_QUEST *pquest )
    bool complete = TRUE;
 
    for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
-      if( objective->progress < objective->objective->to_advance )
+      if( objective->progress < objective->objective->to_advance || objective->objective->to_advance == 0 )
          complete = FALSE;
 
    if( complete )

@@ -6107,6 +6107,8 @@ bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest )
       can_accept = FALSE;
    else if( pquest && pquest->quest->type == QUEST_ONCE_PER_CLASS && pquest->times_completed[ch->Class] > 0 )
       can_accept = FALSE;
+   else if( pquest && pquest->stage > 0 )
+      can_accept = FALSE;
 
    return can_accept;
 }
