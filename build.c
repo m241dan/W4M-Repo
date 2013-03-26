@@ -11121,6 +11121,7 @@ void display_commands( CHAR_DATA *ch )
          break;
       case SUB_PATH_EDIT:
          send_to_pager( " Name              | Allow you to change the path's name.\r\n", ch );
+         send_to_pager( " Gold              | How much gold this path awards.\r\n", ch );
          send_to_pager( " Next              | Will take you to the next path in the quest.\r\n", ch );
          send_to_pager( "                   | If there is none, it will create it.\r\n", ch );
          send_to_pager( " Prev              | Navigate to a previous path.\r\n", ch );
@@ -11132,6 +11133,7 @@ void display_commands( CHAR_DATA *ch )
          send_to_pager( " Type              | Allow you to set the type of your trigger.\r\n", ch );
          send_to_pager( "                   | Help Trigger Types.\r\n", ch );
          send_to_pager( " Vnum              | Set the vnum of the mob or object involved in the quest.\r\n", ch );
+         send_to_pager( " VWhere            | Where to place/drop/give an object to trigger quest.\r\n", ch );
          send_to_pager( " ToAdvance         | Set the number of times this trigger must be activated\r\n", ch );
          send_to_pager( "                   | to advance in the quest.\r\n", ch );
          send_to_pager( " Script            | Kick you into a buffer to write a script that will fire\r\n", ch );
@@ -11756,6 +11758,40 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       send_to_char( "Changing Trigger Vnum...Done\r\n", ch );
       return;
    }
+   if( !str_cmp( strlower( arg ), "vwhere" ) )
+   {
+      if( !check_substate( ch, SUB_TRIGGER_EDIT ) )
+         return;
+
+      trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the vwhere command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      trigger->vwhere = value;
+      send_to_char( "Changing Trigger VWhere...Done\r\n", ch );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "gold" ) )
+   {
+      if( !check_substate( ch, SUB_PATH_EDIT ) )
+         return;
+
+      path = (PATH_DATA *)ch->quest_edit_ptr;
+      if( !is_number( argument ) )
+      {
+         send_to_char( "Invalid input for the gold command.\r\n", ch );
+         return;
+      }
+      value = atoi( argument );
+
+      path->gold = value;
+      send_to_char( "Changing Path Gold...Done\r\n", ch );
+      return;
+   }
    if( !str_cmp( strlower( arg ), "toadvance" ) )
    {
       if( !check_substate( ch, SUB_TRIGGER_EDIT ) )
@@ -11995,6 +12031,8 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
          fprintf( fp, "Type        %d\n", trigger->type );
          fprintf( fp, "ToAdvance   %d\n", trigger->to_advance );
          fprintf( fp, "Script      %s~\n", strip_cr( trigger->script ) );
+         fprintf( fp, "Vnum        %d\n", trigger->vnum );
+         fprintf( fp, "VWhere      %d\n", trigger->vwhere );
          fprintf( fp, "#ENDTRIGGER\n" );
       }
 /*      for( objective = stage->first_objective; objective; objective = objective->next )
@@ -12011,6 +12049,7 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
    {
       fprintf( fp, "#PATH\n" );
       fprintf( fp, "Name        %s~\n", path->name );
+      fprintf( fp, "Gold        %d\n", path->gold );
       for( reward = path->first_reward; reward; reward = reward->next )
       {
          fprintf( fp, "#REWARD\n" );
@@ -12025,19 +12064,222 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
    return;
 }
 
-STAGE_DATA *get_stage( QUEST_DATA *quest, int num )
+void advance_quest( CHAR_DATA *ch, PLAYER_QUEST *pquest )
 {
    STAGE_DATA *stage;
-   int count = 0;
 
-   for( stage = quest->first_stage; stage; stage = stage->next )
+   if( ( stage = get_stage( pquest->quest, pquest->stage ) ) == NULL )
+      pquest->stage = QUEST_JUST_COMPLETED;
+
+   clear_trackers( pquest );
+
+   if( stage )
+      create_trackers( pquest, stage );
+
+   switch( pquest->stage )
    {
-      ++count;
-      if( count == num )
-         return stage;
+      default:
+         ch_printf( ch, "Your next objective... %s.\r\n", stage->name );
+         quest_progress_update( ch, pquest );
+         break;
+      case QUEST_COMPLETE:
+         send_to_char( "You've already completed this quest.\r\n", ch );
+         return;
+      case QUEST_JUST_COMPLETED:
+         pquest->stage = 0;
+         reward_player( ch, pquest->on_path );
+         do_save( ch, "" );
+         break;
+      case QUEST_STARTED:
+         ch_printf( ch, "You have begun the quest, '%s.\r\n", pquest->quest->name );
+         ch_printf( ch, "You're first objective is... %s.\r\n", stage->name );
+         quest_progress_update( ch, pquest );
+         break;
    }
-   return NULL;
 }
+
+void quest_progress_update( CHAR_DATA *ch, PLAYER_QUEST *pquest )
+{
+   TRIGGER_DATA *trigger;
+   OBJECTIVE_TRACKER *objective;
+   OBJ_INDEX_DATA *obj;
+   MOB_INDEX_DATA *mob;
+
+   char buf[MAX_STRING_LENGTH];
+   char master[MAX_STRING_LENGTH];
+   master[0] = '\0';
+
+   for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+   {
+      if( ( trigger = objective->objective ) == NULL )
+      {
+         bug( "%s: objective tracker with no trigger attached.\r\n", __FUNCTION__ );
+         return;
+      }
+      if( trigger->type >= TYPE_OBJ_DROP && trigger->type <= TYPE_OBJ_DESTROY )
+      {
+         if( ( obj = get_obj_index( trigger->vnum ) ) == NULL )
+         {
+            bug( "%s: bad obj vnum in trigger.", __FUNCTION__ );
+            return;
+         }
+      }
+      else if( trigger->type >= TYPE_MOB_KILL && trigger->type < MAX_TRIGGER_TYPE )
+      {
+         if( ( mob = get_mob_index( trigger->vnum ) ) == NULL )
+         {
+            bug( "%s: bad mob vnum in trigger.", __FUNCTION__ );
+            return;
+         }
+      }
+
+      switch( trigger->type )
+      {
+         case TYPE_OBJ_DROP:
+            sprintf( buf, "[Drop %s at %s] (%d/%d)\r\n", obj->name, (get_room_index(trigger->vwhere))->name,
+                                                         objective->progress, trigger->to_advance );
+            break;
+         case TYPE_OBJ_RECEIVE:
+            sprintf( buf, "[Obtain %s] (%d/%d)\r\n", obj->name, objective->progress, trigger->to_advance );
+            break;
+         case TYPE_OBJ_PUT:
+            sprintf( buf, "[Place %s in %s] (%d/%d)\r\n", obj->name, (get_obj_index(trigger->vwhere))->name,
+                                                          objective->progress, trigger->to_advance );
+            break;
+         case TYPE_OBJ_GIVE:
+            sprintf( buf, "[Give %s to %s] (%d/%d)\r\n", obj->name, (get_mob_index(trigger->vwhere))->player_name,
+                                                         objective->progress, trigger->to_advance );
+            break;
+         case TYPE_OBJ_DESTROY:
+            sprintf( buf, "[Destroy %s] (%d/%d)\r\n", obj->name, objective->progress, trigger->to_advance );
+            break;
+         case TYPE_MOB_KILL:
+            sprintf( buf, "[Kill %s] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
+            break;
+         case TYPE_MOB_TALK_GENERAL:
+            sprintf( buf, "[Talk to %s] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
+            break;
+         case TYPE_MOB_TALK_SCRIPT_ADVANCE:
+            sprintf( buf, "[Talk to %s about a specific subject] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
+            break;
+         case TYPE_MOB_FOLLOW:
+            sprintf( buf, "[Follow %s] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
+            break;
+      }
+      mudstrlcat( master, buf, MAX_STRING_LENGTH );
+   }
+   return;
+}
+
+void update_quests( CHAR_DATA *ch, int type, int vnum, int vwhere )
+{
+   PLAYER_QUEST *pquest;
+   OBJECTIVE_TRACKER *objective;
+
+   if( !ch->first_quest )
+      return;
+
+   for( pquest = ch->first_quest; pquest; pquest = pquest->next )
+   {
+      switch( type )
+      {
+      /* ones without vwhere */
+         case TYPE_MOB_KILL:
+         case TYPE_MOB_TALK_GENERAL:
+         case TYPE_MOB_FOLLOW:
+         case TYPE_MOB_TALK_SCRIPT_ADVANCE:
+         case TYPE_OBJ_DESTROY:
+         case TYPE_OBJ_RECEIVE:
+            for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+            {
+               if( objective->objective->type == type && objective->objective->vnum == vnum  )
+                  advance_objective( ch,  pquest, objective );
+            }
+            break;
+      /* ones with vwheres */
+         case TYPE_OBJ_PUT:
+         case TYPE_OBJ_GIVE:
+         case TYPE_OBJ_DROP:
+            for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+            {
+               if( objective->objective->type == type && objective->objective->vnum == vnum && objective->objective->vwhere == vwhere )
+                  advance_objective( ch,  pquest, objective );
+            }
+            break;
+      }
+   }
+}
+
+void advance_objective( CHAR_DATA *ch, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective )
+{
+   if( objective->progress >= objective->objective->to_advance )
+      return;
+   objective->progress++;
+
+   check_stage_complete( ch, pquest );
+   return;
+}
+
+void check_stage_complete( CHAR_DATA *ch, PLAYER_QUEST *pquest )
+{
+   OBJECTIVE_TRACKER *objective;
+   bool complete = TRUE;
+
+   for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+      if( objective->progress < objective->objective->to_advance )
+         complete = FALSE;
+
+   if( complete )
+   {
+      pquest->stage++;
+      advance_quest( ch, pquest );
+   }
+}
+
+void reward_player( CHAR_DATA *ch, PATH_DATA *path )
+{
+   OBJ_INDEX_DATA *index_obj;
+   OBJ_DATA *obj;
+   REWARD_DATA *reward;
+   AFFECT_DATA *paf;
+
+   //ch_printf( ch, "You receive %d quest points.\r\n", ch );
+   //adjust_qp( ch, path->qps );
+   if( path->gold > 0 )
+   {
+      ch_printf( ch, "You receive %d gold.\r\n", path->gold );
+      ch->gold += path->gold;
+   }
+   CREATE( paf, AFFECT_DATA, 1 );
+
+   for( reward = path->first_reward; reward; reward = reward->next )
+   {
+      if( reward->type != APPLY_OBJECT )
+      {
+         paf->location = reward->type;
+         paf->modifier = reward->amount;
+         affect_modify( ch, paf, TRUE );
+         continue;
+      }
+      if( reward->amount < 1 )
+         continue;
+      if( ( index_obj = get_obj_index( reward->o_vnum ) ) == NULL )
+      {
+         bug( "%s: reward item does not exist.", __FUNCTION__ );
+         continue;
+      }
+      if( ( obj = create_object( index_obj, ch->level ) ) == NULL )
+      {
+         bug( "%s: something is really messed up...", __FUNCTION__ );
+         continue;
+      }
+      obj->count = reward->amount;
+      obj = obj_to_char( obj, ch );
+   }
+
+   DISPOSE( paf );
+}
+
 /* End Quest System */
 
 

@@ -6136,6 +6136,7 @@ void init_quest( CHAR_DATA *ch, QUEST_DATA *quest )
       LINK( pquest, ch->first_quest, ch->last_quest, next, prev );
    }
    pquest->stage = 1;
+   advance_quest( ch, pquest );
    return;
 }
 
@@ -6147,4 +6148,103 @@ PLAYER_QUEST *player_has_quest( CHAR_DATA *ch, QUEST_DATA *quest )
       if( pquest->quest == quest )
          return pquest;
    return NULL;
+}
+
+PATH_DATA *get_path( QUEST_DATA *quest, const char *argument )
+{
+   PATH_DATA *path;
+
+   for( path = quest->first_path; path; path = path->next )
+   {
+      if( !str_cmp( path->name, argument ) )
+         return path;
+   }
+   return NULL;
+}
+
+STAGE_DATA *get_stage( QUEST_DATA *quest, int num )
+{
+   STAGE_DATA *stage;
+   int count = 0;
+
+   if( num < 2 )
+      return quest->first_stage;
+   else
+   {
+      for( stage = quest->first_stage; stage; stage = stage->next )
+      {
+         if( ++count == num )
+            return stage;
+      }
+   }
+   return NULL;
+}
+
+TRIGGER_DATA *get_trigger( STAGE_DATA *stage, int num )
+{
+   TRIGGER_DATA *trigger;
+   int count = 0;
+
+   if( num < 2 )
+      return stage->first_trigger;
+   else
+   {
+      for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
+      {
+         if( ++count == num )
+            return trigger;
+      }
+   }
+   return NULL;
+}
+
+OBJECTIVE_TRACKER *get_otracker( PLAYER_QUEST *pquest, int num )
+{
+   OBJECTIVE_TRACKER *objective;
+   int count = 0;
+
+   if( num < 2 )
+      return pquest->first_objective_tracker;
+   else
+   {
+      for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+      {
+         if( ++count == num )
+            return objective;
+      }
+   }
+   return NULL;
+}
+
+void create_trackers( PLAYER_QUEST *pquest, STAGE_DATA *stage )
+{
+   TRIGGER_DATA *trigger;
+   OBJECTIVE_TRACKER *objective;
+
+   for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
+   {
+      CREATE( objective, OBJECTIVE_TRACKER, 1 );
+      objective->objective = trigger;
+      LINK( objective, pquest->first_objective_tracker, pquest->last_objective_tracker, next, prev );
+      objective = NULL;
+   }
+   return;
+}
+
+void clear_trackers( PLAYER_QUEST *pquest )
+{
+   OBJECTIVE_TRACKER *objective;
+   for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+   {
+      UNLINK( objective, pquest->first_objective_tracker, pquest->last_objective_tracker, next, prev );
+      free_otracker( objective );
+   }
+   return;
+}
+
+void free_otracker( OBJECTIVE_TRACKER *objective )
+{
+   objective->objective = NULL;
+   DISPOSE( objective );
+   return;
 }

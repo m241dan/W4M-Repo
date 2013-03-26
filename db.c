@@ -9389,6 +9389,10 @@ void fread_fuss_trigger( STAGE_DATA *stage, FILE *fp )
             KEY( "ToAdvance", trigger->to_advance, fread_number( fp ) );
             KEY( "Type", trigger->type, fread_number( fp ) );
             break;
+         case 'V':
+            KEY( "Vnum", trigger->vnum, fread_number( fp ) );
+            KEY( "VWhere", trigger->vwhere, fread_number( fp ) );
+            break;
       }
       if( !fMatch )
       {
@@ -9510,6 +9514,8 @@ void fread_fuss_path( QUEST_DATA *quest, FILE *fp )
                break;
             }
             break;
+         case 'G':
+            KEY( "Gold", path->gold, fread_number( fp ) );
          case 'N':
             KEY( "Name", path->name, fread_string( fp ) );
       }

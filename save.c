@@ -555,6 +555,14 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
       for( count = 0; count < MAX_CLASS; count++ )
          fprintf( fp, " %d", pquest->times_completed[count] );
       fprintf( fp, " '%s'\n", pquest->quest->name );
+      fprintf( fp, " %s~\n", pquest->on_path->name );
+      if( pquest->first_objective_tracker )
+      {
+         OBJECTIVE_TRACKER *objective;
+         for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+            fprintf( fp, "Progress   %d\n", objective->progress );
+      }
+      fprintf( fp, "EndQuest\n" );
    }
 
    for( sn = 1; sn < num_skills; ++sn )
@@ -1727,7 +1735,36 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                for( x = 0; x < MAX_CLASS; x++ )
                   pquest->times_completed[x] = fread_number( fp );
                pquest->quest = get_quest( fread_word( fp ) );
+               pquest->on_path = get_path( pquest->quest, fread_string( fp ) );
                LINK( pquest, ch->first_quest, ch->last_quest, next, prev );
+               if( pquest->stage > QUEST_COMPLETE )
+               {
+                  STAGE_DATA *stage;
+                  if( ( stage = get_stage( pquest->quest, pquest->stage ) ) == NULL )
+                  {
+                     bug( "%s: real big problem here trying to read in the stage.", __FUNCTION__ );
+                     break;
+                  }
+                  create_trackers( pquest, stage );
+               }
+               x = 0;
+               for( ;; )
+               {
+                  word = ( feof( fp ) ? "EndQuest" : fread_word( fp ) );
+                  if( !str_cmp( word, "EndQuest" ) )
+                     break;
+                  else if( !str_cmp( word, "Progress" ) )
+                  {
+                     OBJECTIVE_TRACKER *objective;
+                     objective = get_otracker( pquest, x++ );
+                     objective->progress = fread_number( fp );
+                  }
+                  else
+                  {
+                     bug( "%s: something is fucked...", __FUNCTION__ );
+                     break;
+                  }
+               }
                fMatch = TRUE;
                break;
             }

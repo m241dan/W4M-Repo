@@ -745,6 +745,7 @@ void do_put( CHAR_DATA* ch, const char* argument)
       separate_obj( container );
       obj_from_char( obj );
       obj = obj_to_obj( obj, container );
+      update_quests( ch, TYPE_OBJ_PUT, obj->pIndexData->vnum, container->pIndexData->vnum );
       check_for_trap( ch, container, TRAP_PUT );
       if( char_died( ch ) )
          return;
@@ -832,7 +833,7 @@ void do_put( CHAR_DATA* ch, const char* argument)
             }
             obj = obj_to_obj( obj, container );
             found = TRUE;
-
+            update_quests( ch, TYPE_OBJ_PUT, obj->pIndexData->vnum, container->pIndexData->vnum );
             check_for_trap( ch, container, TRAP_PUT );
             if( char_died( ch ) )
                return;
@@ -990,6 +991,7 @@ void do_drop( CHAR_DATA* ch, const char* argument)
       obj_from_char( obj );
       obj = obj_to_room( obj, ch->in_room );
       oprog_drop_trigger( ch, obj );   /* mudprogs */
+      update_quests( ch, TYPE_OBJ_DROP, obj->pIndexData->vnum, ch->in_room->vnum );
 
       if( char_died( ch ) || obj_extracted( obj ) )
          return;
@@ -1053,6 +1055,7 @@ void do_drop( CHAR_DATA* ch, const char* argument)
             act( AT_ACTION, "$n drops $p.", ch, obj, NULL, TO_ROOM );
             act( AT_ACTION, "You drop $p.", ch, obj, NULL, TO_CHAR );
             obj = obj_to_room( obj, ch->in_room );
+            update_quests( ch, TYPE_OBJ_DROP, obj->pIndexData->vnum, ch->in_room->vnum );
             oprog_drop_trigger( ch, obj );   /* mudprogs */
             if( char_died( ch ) )
                return;
@@ -1202,6 +1205,7 @@ void do_give( CHAR_DATA* ch, const char* argument)
    act( AT_ACTION, "$n gives you $p.", ch, obj, victim, TO_VICT );
    act( AT_ACTION, "You give $p to $N.", ch, obj, victim, TO_CHAR );
    obj = obj_to_char( obj, victim );
+   update_quests( victim, TYPE_OBJ_RECEIVE, obj->pIndexData->vnum, 0 );
    mprog_give_trigger( victim, ch, obj );
    if( IS_SET( sysdata.save_flags, SV_GIVE ) && !char_died( ch ) )
       save_char_obj( ch );
@@ -2247,6 +2251,7 @@ void do_sacrifice( CHAR_DATA* ch, const char* argument)
    snprintf( buf, MAX_STRING_LENGTH, "$n sacrifices $p to %s.", name );
    act( AT_ACTION, buf, ch, obj, NULL, TO_ROOM );
    oprog_sac_trigger( ch, obj );
+   update_quests( ch, TYPE_OBJ_DESTROY, obj->pIndexData->vnum, 0 );
    if( obj_extracted( obj ) )
       return;
    if( cur_obj == obj->serial )

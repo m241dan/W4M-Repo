@@ -2800,7 +2800,9 @@ struct hit_data
 
 /* Quest structures... _davenge */
 
+#define QUEST_JUST_COMPLETED -1
 #define QUEST_COMPLETE 0
+#define QUEST_STARTED 1
 
 struct quest_data
 {
@@ -2824,6 +2826,7 @@ struct player_quest
    PLAYER_QUEST *next;
    PLAYER_QUEST *prev;
    QUEST_DATA *quest;
+   PATH_DATA *on_path;
    OBJECTIVE_TRACKER *first_objective_tracker;
    OBJECTIVE_TRACKER *last_objective_tracker;
    int stage;
@@ -2850,6 +2853,7 @@ struct trigger_data
    int to_advance;
    int type;
    int vnum;
+   int vwhere;
    const char *script;
 };
 
@@ -2879,6 +2883,7 @@ struct path_data
    REWARD_DATA *first_reward;
    REWARD_DATA *last_reward;
    const char *name;
+   int gold;
 };
 
 struct reward_data
@@ -2899,7 +2904,7 @@ typedef enum
 typedef enum
 {
    TYPE_OBJ_DROP, TYPE_OBJ_RECEIVE, TYPE_OBJ_PUT, TYPE_OBJ_GIVE, TYPE_OBJ_DESTROY,
-   TYPE_MOB_KILL, TYPE_MOB_TALK, TYPE_MOB_FOLLOW, MAX_TRIGGER_TYPE
+   TYPE_MOB_KILL, TYPE_MOB_TALK_GENERAL, TYPE_MOB_TALK_SCRIPT_ADVANCE, TYPE_MOB_FOLLOW, MAX_TRIGGER_TYPE
 } trigger_type_nums;
 
 typedef enum
@@ -4842,7 +4847,12 @@ QUEST_DATA *get_quest( const char *argument );
 void quest_olc( CHAR_DATA *ch, const char *argument );
 int get_num_stages( QUEST_DATA *quest );
 int get_num_paths( QUEST_DATA *quest );
-
+void advance_quest( CHAR_DATA *ch, PLAYER_QUEST *pquest );
+void quest_progress_update( CHAR_DATA *ch, PLAYER_QUEST *pquest );
+void update_quests( CHAR_DATA *ch, int type, int vnum, int vwhere );
+void advance_objective( CHAR_DATA *ch, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective );
+void check_stage_complete( CHAR_DATA *ch, PLAYER_QUEST *pquest );
+void reward_player( CHAR_DATA *ch, PATH_DATA *path );
 
 /* const.c */
 void apply_class_base_stat_mod( CHAR_DATA *ch );
@@ -5295,7 +5305,13 @@ bool is_init_mob args( ( CHAR_DATA *ch, CHAR_DATA *mob ) );
 bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest );
 void init_quest( CHAR_DATA *ch, QUEST_DATA *quest );
 PLAYER_QUEST *player_has_quest( CHAR_DATA *ch, QUEST_DATA *quest );
-
+PATH_DATA *get_path( QUEST_DATA *quest, const char *argument );
+STAGE_DATA *get_stage( QUEST_DATA *quest, int num );
+TRIGGER_DATA *get_trigger( STAGE_DATA *stage, int num );
+OBJECTIVE_TRACKER *get_otracker( PLAYER_QUEST *pquest, int num );
+void create_trackers( PLAYER_QUEST *pquest, STAGE_DATA *stage );
+void clear_trackers(  PLAYER_QUEST *pquest );
+void free_otracker( OBJECTIVE_TRACKER *objective );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
