@@ -11101,7 +11101,7 @@ void display_commands( CHAR_DATA *ch )
        //send_to_pager( "                   | Measuring stick
       // send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          send_to_pager( " Description       | Change a quest's description/starting message\r\n", ch );
-         send_to_pager( " Type              | Set the Quest's Type.(help quest_types)\r\n", ch );
+         send_to_pager( " Type              | Set the Quest's Type.(Type ? to list quest types)\r\n", ch );
          send_to_pager( " Level_Required    | Level Required takes two inputs, the first is the\r\n", ch );
          send_to_pager( "                   | class and the second is the level. 0 in level means\r\n", ch );
          send_to_pager( "                   | that class cannot get the quest.\r\n", ch );
@@ -11131,7 +11131,7 @@ void display_commands( CHAR_DATA *ch )
          break;
       case SUB_TRIGGER_EDIT:
          send_to_pager( " Type              | Allow you to set the type of your trigger.\r\n", ch );
-         send_to_pager( "                   | Help Trigger Types.\r\n", ch );
+         send_to_pager( "                   | (Type ? to list trigger types)\r\n", ch );
          send_to_pager( " Vnum              | Set the vnum of the mob or object involved in the quest.\r\n", ch );
          send_to_pager( " VWhere            | Where to place/drop/give an object to trigger quest.\r\n", ch );
          send_to_pager( " ToAdvance         | Set the number of times this trigger must be activated\r\n", ch );
@@ -11145,6 +11145,7 @@ void display_commands( CHAR_DATA *ch )
          break;
       case SUB_REWARD_EDIT:
          send_to_pager( " Type              | Allow you to set the type of reward.\r\n", ch );
+         send_to_pager( "                   | (Type ? to list reward types)\r\n", ch );
          send_to_pager( " Amount            | Set the amount of the reward to give.\r\n", ch );
          send_to_pager( " Ovnum             | If type is object, set the vnum of object to reward with.\r\n", ch );
          send_to_pager( " Next              | Will take you to the next reward in the path.\r\n", ch );
@@ -11448,8 +11449,16 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       {
          case SUB_QUEST_EDIT:
             argument = one_argument( argument, arg );
-            quest = (QUEST_DATA *)ch->quest_edit_ptr;
+            if( arg[0] == '?' )
+            {
+               send_to_char( "Available Quest Types: ", ch );
+               for( x = 0; x < MAX_QUEST_TYPE; x++ )
+                  ch_printf( ch, "%s, ", quest_types[x] );
+               send_to_char( "\r\n", ch );
+               return;
+            }
 
+            quest = (QUEST_DATA *)ch->quest_edit_ptr;
             if( ( value = get_questtype_num( arg ) ) == -1 )
             {
                 send_to_char( "Invalid quest type inputted.\r\n", ch );
@@ -11461,6 +11470,15 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
 
          case SUB_TRIGGER_EDIT:
             argument = one_argument( argument, arg );
+            if( arg[0] == '?' )
+            {
+               send_to_char( "Available Trigger Types: ", ch );
+               for( x = 0; x < MAX_TRIGGER_TYPE; x++ )
+                  ch_printf( ch, "%s, ", trigger_types[x] ); 
+               send_to_char( "\r\n", ch ); 
+               return;
+            }
+
             trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
 
             if( ( value = get_triggertype_num( arg ) ) == -1 )
@@ -11474,6 +11492,15 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
 
          case SUB_REWARD_EDIT:
             argument = one_argument( argument, arg );
+            if( arg[0] == '?' )
+            {
+               send_to_char( "Available Reward Types: ", ch );
+               for( x = 0; x < MAX_APPLY_TYPE; x++ )
+                  ch_printf( ch, "%s, ", a_types[x] ); 
+               send_to_char( "\r\n", ch ); 
+               return;
+            }
+
             reward = (REWARD_DATA *)ch->quest_edit_ptr;
 
             if( ( value = get_atype( arg ) ) == -1 )
@@ -12089,7 +12116,7 @@ void advance_quest( CHAR_DATA *ch, PLAYER_QUEST *pquest )
          ch_printf( ch, "Congratulations!!! You've just completed the quest '%s.'\r\n", pquest->quest->name );
          pquest->stage = 0;
          reward_player( ch, pquest->on_path );
-         do_save( ch, "" );
+         save_char_obj( ch );
          break;
       case QUEST_STARTED:
          ch_printf( ch, "You have begun the quest, '%s.'\r\n", pquest->quest->name );
@@ -12137,34 +12164,37 @@ void quest_progress_update( CHAR_DATA *ch, PLAYER_QUEST *pquest )
       switch( trigger->type )
       {
          case TYPE_OBJ_DROP:
-            sprintf( buf, "[Drop %s at %s] (%d/%d)\r\n", obj->name, (get_room_index(trigger->vwhere))->name,
+            sprintf( buf, "[Drop %s at %s] (%d/%d)\r\n", obj->short_descr, (get_room_index(trigger->vwhere))->name,
                                                          objective->progress, trigger->to_advance );
             break;
          case TYPE_OBJ_RECEIVE:
-            sprintf( buf, "[Obtain %s] (%d/%d)\r\n", obj->name, objective->progress, trigger->to_advance );
+            sprintf( buf, "[Be Given  %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_OBJ_PUT:
-            sprintf( buf, "[Place %s in %s] (%d/%d)\r\n", obj->name, (get_obj_index(trigger->vwhere))->name,
+            sprintf( buf, "[Place %s in %s] (%d/%d)\r\n", obj->short_descr, (get_obj_index(trigger->vwhere))->name,
                                                           objective->progress, trigger->to_advance );
             break;
          case TYPE_OBJ_GIVE:
-            sprintf( buf, "[Give %s to %s] (%d/%d)\r\n", obj->name, (get_mob_index(trigger->vwhere))->player_name,
+            sprintf( buf, "[Give %s to %s] (%d/%d)\r\n", obj->short_descr, (get_mob_index(trigger->vwhere))->short_descr,
                                                          objective->progress, trigger->to_advance );
             break;
+         case TYPE_OBJ_GET:
+            sprintf( buf, "[Get %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
+            break;
          case TYPE_OBJ_DESTROY:
-            sprintf( buf, "[Destroy %s] (%d/%d)\r\n", obj->name, objective->progress, trigger->to_advance );
+            sprintf( buf, "[Destroy %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_MOB_KILL:
             sprintf( buf, "[Kill %s] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
             break;
          case TYPE_MOB_TALK_GENERAL:
-            sprintf( buf, "[Talk to %s] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
+            sprintf( buf, "[Talk to %s] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_MOB_TALK_SCRIPT_ADVANCE:
-            sprintf( buf, "[Talk to %s about a specific subject] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
+            sprintf( buf, "[Talk to %s about a specific subject] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_MOB_FOLLOW:
-            sprintf( buf, "[Follow %s] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
+            sprintf( buf, "[Follow %s] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
             break;
       }
       mudstrlcat( master, buf, MAX_STRING_LENGTH );
@@ -12184,6 +12214,7 @@ void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int 
 
    if( mob )
       vnum = mob->pIndexData->vnum;
+
    if( obj )
       vnum = obj->pIndexData->vnum;
 
@@ -12227,8 +12258,9 @@ void advance_objective( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, PLAYER_QUE
       return;
    objective->progress++;
    quest_progress_update( ch, pquest );
-   mprog_questsystem_trigger( mob, ch, obj, objective->objective );
+   prog_questsystem_trigger( mob, ch, obj, objective->objective );
    check_stage_complete( ch, pquest );
+   save_char_obj( ch );
    return;
 }
 

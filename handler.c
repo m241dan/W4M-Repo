@@ -6214,6 +6214,8 @@ void create_trackers( PLAYER_QUEST *pquest, STAGE_DATA *stage )
    TRIGGER_DATA *trigger;
    OBJECTIVE_TRACKER *objective;
 
+   log_string( "creating trackers" );
+
    for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
    {
       CREATE( objective, OBJECTIVE_TRACKER, 1 );
@@ -6226,9 +6228,10 @@ void create_trackers( PLAYER_QUEST *pquest, STAGE_DATA *stage )
 
 void clear_trackers( PLAYER_QUEST *pquest )
 {
-   OBJECTIVE_TRACKER *objective;
-   for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+   OBJECTIVE_TRACKER *objective, *objective_next;
+   for( objective = pquest->first_objective_tracker; objective; objective = objective_next )
    {
+      objective_next = objective->next;
       UNLINK( objective, pquest->first_objective_tracker, pquest->last_objective_tracker, next, prev );
       free_otracker( objective );
    }

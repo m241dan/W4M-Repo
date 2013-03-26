@@ -5074,7 +5074,7 @@ void rset_supermob( ROOM_INDEX_DATA * room );
 void release_supermob( void );
 void mpsleep_update( void );
 void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor, TALK_DATA *talk );
-void mprog_questsystem_trigger( CHAR_DATA *mob, CHAR_DATA * actor, OBJ_DATA *obj, TRIGGER_DATA *trigger );
+void prog_questsystem_trigger( CHAR_DATA *mob, CHAR_DATA * actor, OBJ_DATA *obj, TRIGGER_DATA *trigger );
 
 /* planes.c */
 PLANE_DATA *plane_lookup( const char *name );
