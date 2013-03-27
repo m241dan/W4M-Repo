@@ -4518,6 +4518,9 @@ DECLARE_DO_FUN( do_mpmusic );
 DECLARE_DO_FUN( do_mpmusicaround );
 DECLARE_DO_FUN( do_mpmusicat );
 DECLARE_DO_FUN( do_mp_endconversation );
+DECLARE_DO_FUN( do_mpquestadvance );
+DECLARE_DO_FUN( do_mpchangepath );
+
 
 /*
  * Spell functions.
@@ -4836,7 +4839,7 @@ void start_editing args( ( CHAR_DATA * ch, const char *data ) );
 void stop_editing args( ( CHAR_DATA * ch ) );
 void edit_buffer args( ( CHAR_DATA * ch, char *argument ) );
 const char *copy_buffer( CHAR_DATA * ch );
-char *copy_buffer_nohash( CHAR_DATA * ch );
+const char *copy_buffer_nohash( CHAR_DATA * ch );
 void realm( CHAR_DATA * ch, const char * argument );
 void write_realm_list( void );
 ROOM_INDEX_DATA *get_room_at_coord( CHAR_DATA *ch, int x, int y, int z );

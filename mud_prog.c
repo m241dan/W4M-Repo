@@ -2916,6 +2916,8 @@ void prog_questsystem_trigger( CHAR_DATA *mob, CHAR_DATA * actor, OBJ_DATA *obj,
       set_supermob( obj );
       mprog_driver( trigger->script, supermob, actor, obj, NULL, FALSE );
    }
+   else if( mob->position == POS_DEAD )
+      mprog_driver( trigger->script, supermob, actor, NULL, NULL, FALSE );
    else
       mprog_driver( trigger->script, mob, actor, NULL, NULL, FALSE );
 

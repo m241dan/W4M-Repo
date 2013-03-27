@@ -3070,6 +3070,7 @@ void display_options( CHAR_DATA *ch )
    TALK_DATA *on_talk;
    TALK_DATA *option;
    QTALK_DATA *qtalk;
+   bool showquests = FALSE;
    int counter = 0;
 
    if( ( on_talk = ch->conv_data->current_talk ) == NULL )
@@ -3096,7 +3097,13 @@ void display_options( CHAR_DATA *ch )
          }
       }
    }
-   if( ch->conv_data->current_talk == ch->conv_data->first_talk && !ch->conv_data->on_qtalk)
+   for( qtalk = ch->conv_data->first_qtalk; qtalk; qtalk = qtalk->next )
+      if( can_accept_quest( ch, qtalk->quest ) )
+      {
+         showquests = TRUE;
+         break;
+      }
+   if( ch->conv_data->current_talk == ch->conv_data->first_talk && !ch->conv_data->on_qtalk && ch->conv_data->first_qtalk && showquests )
    {
       send_to_char( "\r\nQuest Options:\r\n", ch );
       for( qtalk = ch->conv_data->first_qtalk; qtalk; qtalk = qtalk->next )

@@ -3442,3 +3442,85 @@ void do_mp_endconversation( CHAR_DATA* ch, const char *argument )
       }
    }
 }
+
+void do_mpquestadvance( CHAR_DATA *ch, const char *argument )
+{
+   PLAYER_QUEST *pquest;
+   CHAR_DATA *victim;
+   char arg[MAX_STRING_LENGTH];
+   int quest_id;
+
+   if( !IS_NPC( ch ) )
+      return;
+
+   argument = one_argument( argument, arg );
+
+   if( !is_number( argument ) )
+   {
+      bug( "%s: trying to advance with invalid quest_id: %s", __FUNCTION__, argument );
+      return;
+   }
+   quest_id = atoi( argument );
+
+   if( ( victim = get_char_world( ch, arg ) ) != NULL )
+   {
+      if( IS_NPC( victim ) )
+         return;
+      if( !victim->first_quest )
+         return;
+
+      for( pquest = victim->first_quest; pquest; pquest = pquest->next )
+      {
+         if( pquest->quest->id == quest_id )
+         {
+            pquest->stage++;
+            advance_quest( victim, pquest );
+            break;
+         }
+      }
+   }
+}
+
+void do_mpchangepath( CHAR_DATA *ch, const char *argument )
+{
+   PLAYER_QUEST *pquest;
+   PATH_DATA *path;
+   CHAR_DATA *victim;
+   char arg[MAX_STRING_LENGTH];
+   char arg2[MAX_STRING_LENGTH];
+   int quest_id;
+
+   if( !IS_NPC( ch ) )
+      return;
+
+   argument = one_argument( argument, arg );
+   argument = one_argument( argument, arg2 );
+
+   if( !is_number( arg2 ) )
+   {
+      bug( "%s: trying to changepath with invalid quest_id.", __FUNCTION__ );
+      return;
+   }
+   quest_id = atoi( arg2 );
+
+   if( ( victim = get_char_world( ch, arg ) ) != NULL )
+   {
+      if( IS_NPC( victim ) )
+         return;
+      if( !victim->first_quest )
+         return;
+
+      for( pquest = victim->first_quest; pquest; pquest = pquest->next )
+         if( pquest->quest->id == quest_id )
+            break;
+      if( !pquest )
+         return;
+
+      if( ( path = get_path( pquest->quest, argument ) ) == NULL )
+      {
+         bug( "%s: trying to switch to a path in a quest that doesn't exist.", __FUNCTION__ );
+         return;
+      }
+      pquest->on_path = path;
+   }
+}

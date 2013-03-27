@@ -6129,6 +6129,7 @@ void init_quest( CHAR_DATA *ch, QUEST_DATA *quest )
       LINK( pquest, ch->first_quest, ch->last_quest, next, prev );
    }
    pquest->stage = 1;
+   pquest->on_path = quest->first_path;
    advance_quest( ch, pquest );
    return;
 }

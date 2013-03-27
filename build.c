@@ -930,7 +930,7 @@ void start_editing( CHAR_DATA * ch, const char *data )
    ch->desc->connected = CON_EDITING;
 }
 
-char *copy_buffer_nohash( CHAR_DATA * ch )
+const char *copy_buffer_nohash( CHAR_DATA * ch )
 {
    char buf[MAX_STRING_LENGTH];
    char tmp[100];
@@ -956,18 +956,16 @@ char *copy_buffer_nohash( CHAR_DATA * ch )
       if( tmp[len - 1] == '~' )
       {
          tmp[len - 1] = '\0';
-       send_to_char( "Doing that\r\n.", ch );
 
       }
       else
       {
-         send_to_char( "Doing this\r\n.", ch );
          mudstrlcat( tmp, "\n", 100 );
       }
       smash_tilde( tmp );
       mudstrlcat( buf, tmp, MAX_STRING_LENGTH );
    }
-   return str_dup( buf );
+   return STRALLOC( buf );
 }
 
 const char *copy_buffer( CHAR_DATA * ch )
@@ -11003,7 +11001,7 @@ void do_quest( CHAR_DATA *ch, const char *argument )
       send_to_char( "| Listing all quests |\r\n", ch );
       send_to_char( "----------------------\r\n", ch );
       for( quest = first_quest; quest; quest = quest->next )
-         ch_printf( ch, "Quest Name: %s\r\n", quest->name );
+         ch_printf( ch, "Quest ID: %d Quest Name: %s\r\n", quest->id, quest->name );
       return;
    }
 
@@ -11018,7 +11016,6 @@ void do_quest( CHAR_DATA *ch, const char *argument )
       ch_printf( ch, "%s is already editing that quest, one at a time please.\r\n", quest->player_editing->name );
       return;
    }
-
    ch->desc->connected = CON_QUEST_OLC;
    ch->quest_edit_ptr = quest;
    ch->substate = SUB_QUEST_EDIT;
@@ -11059,6 +11056,9 @@ QUEST_DATA *get_quest( const char *argument )
 {
    QUEST_DATA *quest;
 
+   if( is_number( argument ) )
+      return get_quest( atoi( argument ) );
+
    for( quest = first_quest; quest; quest = quest->next )
    {
       if( !str_cmp( quest->name, argument ) )
@@ -11084,7 +11084,7 @@ QUEST_DATA *get_quest( int id )
 void create_quest( const char *argument )
 {
    QUEST_DATA *quest, *quest_id;
-   int x = 0;
+   int x = 1;
 
    if( ( quest = get_quest( argument ) ) == NULL )
    {
@@ -11199,6 +11199,7 @@ void display_questolc( CHAR_DATA *ch )
       return;
    }
 
+   send_to_pager( "&c-----------------------------------------------------------------------\r\n", ch );
    switch( ch->substate )
    {
       case SUB_QUEST_EDIT:
@@ -11234,6 +11235,8 @@ void display_questolc( CHAR_DATA *ch )
             {
                if( path )
                   path_next = path->next;
+               else
+                  path = NULL;
                pager_printf( ch, "Stage #%2d: %-20s |", x, stage->name );
                if( path )
                   pager_printf( ch, " Path #%2d: %-20s\r\n", x, path->name );
@@ -11244,10 +11247,12 @@ void display_questolc( CHAR_DATA *ch )
          }
          else
          {
-            for( path = quest->first_path, stage = quest->first_stage; path; stage = stage->next, path = path->next )
+            for( path = quest->first_path, stage = quest->first_stage; path; stage = stage_next, path = path->next )
             {
                if( stage )
-                  stage_next = stage;
+                  stage_next = stage->next;
+               else
+                  stage = NULL;
                pager_printf( ch, "Path #%2d: %-20s |", x, path->name );
                if( stage )
                   pager_printf( ch, " Stage #%2d: %-20s\r\n", x, stage->name );
@@ -11297,7 +11302,6 @@ void display_questolc( CHAR_DATA *ch )
          break;
       case SUB_TRIGGER_EDIT:
          trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
-         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          pager_printf( ch, "Previous Trigger: %-10s | Next Trigger: %-10s\r\n", trigger->prev ? trigger_types[trigger->prev->type] : "none", trigger->next ? trigger_types[trigger->next->type] : "none" );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          pager_printf( ch, "Type: %-10s Vnum: %-5d ToAdvance: %d\r\n", trigger_types[trigger->type], trigger->vnum, trigger->to_advance );
@@ -11306,7 +11310,6 @@ void display_questolc( CHAR_DATA *ch )
          break;
       case SUB_REWARD_EDIT:
          reward = (REWARD_DATA *)ch->quest_edit_ptr;
-         send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          pager_printf( ch, "Previous Reward: %-10s | Next Reward: %-10s\r\n", reward->prev ? a_types[reward->prev->type] : "none", reward->next ? a_types[reward->next->type] : "none" );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          pager_printf( ch, "Reward Type: %s\r\n", a_types[reward->type] );
@@ -11377,7 +11380,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
          trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
          if( trigger->script )
             STRFREE( trigger->script );
-         trigger->script = copy_buffer( ch );
+         trigger->script = copy_buffer_nohash( ch );
          stop_editing( ch );
          display_questolc( ch );
          return;
@@ -11417,6 +11420,17 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
 
       quest = (QUEST_DATA *)ch->quest_edit_ptr;
       argument = one_argument( argument, arg );
+
+      if( !str_cmp( arg, "all" ) )
+      {
+         if( is_number( argument ) )
+            value = atoi( argument );
+
+         for( x = 0; x < MAX_CLASS; x++ )
+            quest->level_required[x] = value;
+         send_to_char( "Setting Level Requirement for all classes...Done\r\n", ch );
+         return;
+      }
 
       if( is_number( arg ) )
          value = atoi( arg );
@@ -12139,7 +12153,7 @@ void advance_quest( CHAR_DATA *ch, PLAYER_QUEST *pquest )
          return;
       case QUEST_JUST_COMPLETED:
          ch_printf( ch, "Congratulations!!! You've just completed the quest '%s.'\r\n", pquest->quest->name );
-         pquest->stage = 0;
+         pquest->stage = QUEST_COMPLETE;
          reward_player( ch, pquest->on_path );
          save_char_obj( ch );
          break;
@@ -12189,37 +12203,67 @@ void quest_progress_update( CHAR_DATA *ch, PLAYER_QUEST *pquest )
       switch( trigger->type )
       {
          case TYPE_OBJ_DROP:
-            sprintf( buf, "[Drop %s at %s] (%d/%d)\r\n", obj->short_descr, (get_room_index(trigger->vwhere))->name,
-                                                         objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Drop %s at %s]\r\n", obj->short_descr, (get_room_index(trigger->vwhere))->name );
+            else
+               sprintf( buf, "[Drop %s at %s] (%d/%d)\r\n", obj->short_descr, (get_room_index(trigger->vwhere))->name,
+                                                            objective->progress, trigger->to_advance );
             break;
          case TYPE_OBJ_RECEIVE:
-            sprintf( buf, "[Be Given  %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Be Given  %s]\r\n", obj->short_descr );
+            else
+               sprintf( buf, "[Be Given  %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_OBJ_PUT:
-            sprintf( buf, "[Place %s in %s] (%d/%d)\r\n", obj->short_descr, (get_obj_index(trigger->vwhere))->name,
-                                                          objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Place %s in %s]\r\n", obj->short_descr, (get_obj_index(trigger->vwhere))->name );
+            else
+               sprintf( buf, "[Place %s in %s] (%d/%d)\r\n", obj->short_descr, (get_obj_index(trigger->vwhere))->name,
+                                                             objective->progress, trigger->to_advance );
             break;
          case TYPE_OBJ_GIVE:
-            sprintf( buf, "[Give %s to %s] (%d/%d)\r\n", obj->short_descr, (get_mob_index(trigger->vwhere))->short_descr,
-                                                         objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Give %s to %s]\r\n", obj->short_descr, (get_mob_index(trigger->vwhere))->short_descr );
+            else
+               sprintf( buf, "[Give %s to %s] (%d/%d)\r\n", obj->short_descr, (get_mob_index(trigger->vwhere))->short_descr,
+                                                            objective->progress, trigger->to_advance );
             break;
          case TYPE_OBJ_GET:
-            sprintf( buf, "[Get %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Get %s]\r\n", obj->short_descr );
+            else
+               sprintf( buf, "[Get %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_OBJ_DESTROY:
-            sprintf( buf, "[Destroy %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Destroy %s]\r\n", obj->short_descr );
+            else
+               sprintf( buf, "[Destroy %s] (%d/%d)\r\n", obj->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_MOB_KILL:
-            sprintf( buf, "[Kill %s] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Kill %s]\r\n", mob->player_name );
+            else
+               sprintf( buf, "[Kill %s] (%d/%d)\r\n", mob->player_name, objective->progress, trigger->to_advance );
             break;
          case TYPE_MOB_TALK_GENERAL:
-            sprintf( buf, "[Talk to %s] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Talk to %s]\r\n", mob->short_descr );
+            else
+               sprintf( buf, "[Talk to %s] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_MOB_TALK_SCRIPT_ADVANCE:
-            sprintf( buf, "[Talk to %s about a specific subject] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Talk to %s about a specific subject]\r\n", mob->short_descr );
+            else
+               sprintf( buf, "[Talk to %s about a specific subject] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
             break;
          case TYPE_MOB_FOLLOW:
-            sprintf( buf, "[Follow %s] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
+            if( trigger->to_advance == 0 )
+               sprintf( buf, "[Follow %s]\r\n", mob->short_descr );
+            else
+               sprintf( buf, "[Follow %s] (%d/%d)\r\n", mob->short_descr, objective->progress, trigger->to_advance );
             break;
       }
       mudstrlcat( master, buf, MAX_STRING_LENGTH );
@@ -12279,10 +12323,13 @@ void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int 
 
 void advance_objective( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective )
 {
-   if( objective->progress >= objective->objective->to_advance )
+   if( objective->progress >= objective->objective->to_advance && objective->objective->to_advance != 0 )
       return;
-   objective->progress++;
-   quest_progress_update( ch, pquest );
+   if( objective->objective->to_advance != 0 )
+   {
+      objective->progress++;
+      quest_progress_update( ch, pquest );
+   }
    prog_questsystem_trigger( mob, ch, obj, objective->objective );
    check_stage_complete( ch, pquest );
    save_char_obj( ch );
@@ -12293,6 +12340,9 @@ void check_stage_complete( CHAR_DATA *ch, PLAYER_QUEST *pquest )
 {
    OBJECTIVE_TRACKER *objective;
    bool complete = TRUE;
+
+   if( !pquest->first_objective_tracker )
+      return;
 
    for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
       if( objective->progress < objective->objective->to_advance || objective->objective->to_advance == 0 )
