@@ -1733,6 +1733,21 @@ void do_rstat( CHAR_DATA* ch, const char* argument)
       }
       send_to_char( "'\r\n", ch );
    }
+
+   send_to_pager( "&cColors: ", ch );
+   if( xIS_EMPTY( location->color ) )
+      pager_printf_color( ch, "&Cnone...&w" );
+   else
+   {
+      int x;
+      for( x = 0; x < MAX_COLOR_FLAG; x++ )   
+      {
+         if( xIS_SET( location->color, x ) )
+            pager_printf_color( ch, "%s&w, ", color_flags[x] );
+      }
+   }
+   send_to_pager( "\r\n", ch );
+
    for( paf = location->first_affect; paf; paf = paf->next )
       ch_printf_color( ch, "&cAffect: &w%s &cby &w%d.\r\n", affect_loc_name( paf->location ), paf->modifier );
 
@@ -2129,6 +2144,18 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
    }
    else
       pager_printf_color( ch, "&CNo one&w\r\n" );
+   send_to_pager( "&cColors: ", ch );
+   if( xIS_EMPTY( ch->color ) )
+      pager_printf_color( ch, "&Cnone...&w" );
+   else
+   {
+      for( x = 0; x < MAX_COLOR_FLAG; x++ )
+      {
+         if( xIS_SET( ch->color, x ) )
+            pager_printf_color( ch, "%s&w, ", color_flags[x] );
+      }
+   }
+   send_to_pager( "\r\n", ch );
 
    if( IS_NPC( victim ) )
       pager_printf_color( ch,

@@ -44,8 +44,8 @@ const char *const npc_class[MAX_NPC_CLASS] = {
 };
 
 const char *const color_flags[MAX_COLOR_FLAG] = {
-   "red", "blue", "green", "yellow", "orange", "purple",
-   "no_red", "no_blue", "no_green", "no_yellow", "no_orange", "no_purple"
+   "&Rred", "&Bblue", "&Ggreen", "&Yyellow", "&oorange", "&Ppurple",
+   "&rno_red", "&bno_blue", "&gno_green", "&zno_yellow", "&Yno_orange", "&pno_purple"
 };
 
 const char *const quest_types[MAX_QUEST_TYPE] = {
