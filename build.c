@@ -12384,14 +12384,23 @@ void advance_objective( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, PLAYER_QUE
 void check_stage_complete( CHAR_DATA *ch, PLAYER_QUEST *pquest )
 {
    OBJECTIVE_TRACKER *objective;
-   bool complete = TRUE;
+   bool complete = FALSE;
 
    if( !pquest->first_objective_tracker )
       return;
 
    for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
-      if( objective->progress < objective->objective->to_advance || objective->objective->to_advance == 0 )
+   {
+      if( objective->objective->to_advance == 0 )
+         continue;
+      if( objective->progress < objective->objective->to_advance )
+      {
          complete = FALSE;
+         break;
+      }
+      else
+         complete = TRUE;
+   }
 
    if( complete )
    {
