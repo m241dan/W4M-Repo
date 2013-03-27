@@ -41,6 +41,16 @@ void mprog_read_programs( FILE * fp, MOB_INDEX_DATA * pMobIndex );
 void oprog_read_programs( FILE * fp, OBJ_INDEX_DATA * pObjIndex );
 void rprog_read_programs( FILE * fp, ROOM_INDEX_DATA * pRoomIndex );
 
+void load_quests( void );
+QUEST_DATA *read_quest( FILE *fp );
+void fread_fuss_stage( QUEST_DATA *quest, FILE *fp );
+void fread_fuss_trigger( STAGE_DATA *stage, FILE *fp );
+void fread_fuss_objective( STAGE_DATA *stage, FILE *fp );
+void fread_fuss_path( QUEST_DATA *quest, FILE *fp );
+void fread_fuss_reward( PATH_DATA *path, FILE *fp );
+
+
+
 /*
  * Globals.
  */
@@ -232,6 +242,9 @@ QTIMER *last_qtimer;
 
 GTHREAT_DATA *first_gthreat;
 GTHREAT_DATA *last_gthreat;
+
+QUEST_DATA *first_quest;
+QUEST_DATA *last_quest;
 
 int top_affect;
 int top_area;
@@ -495,7 +508,8 @@ void boot_db( bool fCopyOver )
    last_qtimer = NULL;
    first_gthreat = NULL;
    last_gthreat = NULL;
-
+   first_quest = NULL;
+   last_quest = NULL;
 
    CREATE( auction, AUCTION_DATA, 1 );
    auction->item = NULL;
@@ -753,6 +767,9 @@ void boot_db( bool fCopyOver )
 
    log_string( "Loading changs" );
    load_changes(  );
+
+   log_string( "Loading Quests" );
+   load_quests(  );
 
    log_string( "Loading clans" );
    load_clans(  );
@@ -7289,8 +7306,8 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
 
                if( Class < 0 || Class >= MAX_NPC_CLASS )
                {
-                  bug( "%s: vnum %d: Mob has invalid Class! Defaulting to warrior.", __FUNCTION__, pMobIndex->vnum );
-                  Class = get_npc_class( "warrior" );
+                  bug( "%s: vnum %d: Mob has invalid Class! Defaulting to priest.", __FUNCTION__, pMobIndex->vnum );
+                  Class = get_npc_class( "priest" );
                }
 
                pMobIndex->Class = Class;
@@ -7918,7 +7935,6 @@ void fread_fuss_realm( REALM_DATA * realm, FILE * fp )
          break;
       for( area = first_build; area; area = area->next )
       {
-         log_string( area->filename );
          if( !str_cmp( area->filename, word ) )
          {
             LINK( area, realm->first_area_in_realm, realm->last_area_in_realm, next_realm_area, prev_realm_area );
@@ -9134,6 +9150,455 @@ void load_projects( void ) /* Copied load_boards structure for simplicity */
    fp = NULL;
 
    return;
+}
+
+void load_quests( void )
+{
+   char filename[MAX_INPUT_LENGTH];
+   FILE *fp;
+   QUEST_DATA *quest;
+
+   snprintf( filename, MAX_INPUT_LENGTH, "%s", QUESTS_FILE );
+   if( !( fp = fopen( filename, "r" ) ) )
+      return;
+
+   while( ( quest = read_quest( fp ) ) != NULL )
+      LINK( quest, first_quest, last_quest, next, prev );
+
+   fclose( fp );
+   fp = NULL;
+
+   return;
+
+}
+
+QUEST_DATA *read_quest( FILE *fp )
+{
+   QUEST_DATA *quest = NULL;
+   const char *word;
+   char letter;
+   bool fMatch;
+   int x;
+
+   do
+   {
+      letter = getc( fp );
+      if( feof( fp ) )
+      {
+         fclose( fp );
+         return NULL;
+      }
+   }
+   while( isspace( letter ) );
+   ungetc( letter, fp );
+
+   for( ;; )
+   {
+      word = feof( fp ) ? "#ENDQUESTS" : fread_word( fp );
+      fMatch = FALSE;
+
+      switch( word[0] )
+      {
+         case '*':
+            fMatch = TRUE;
+            fread_to_eol( fp );
+            break;
+         case '#':
+            if( !str_cmp( word, "#QUEST" ) && !quest)
+            {
+               CREATE( quest, QUEST_DATA, 1 );
+               fMatch = TRUE;
+               break;
+            }
+            else if( !str_cmp( word, "#STAGE" ) && quest )
+            {
+               fread_fuss_stage( quest, fp );
+               fMatch = TRUE;
+               break;
+            }
+            else if( !str_cmp( word, "#PATH" ) && quest )
+            {
+               fread_fuss_path( quest, fp );
+               fMatch = TRUE;
+               break;
+            }
+            else if( !str_cmp( word, "#ENDQUEST" ) && quest )
+               return quest;
+            else if( !str_cmp( word, "#ENDQUESTS" ) )
+            {
+               log_string( "returning NULL" );
+               return NULL;
+            }
+            else
+            {
+               bug( "%s: bad file format.", __FUNCTION__ );
+               break;
+            }
+            break;
+         case 'D':
+            KEY( "Description", quest->description, fread_string( fp ) );
+            break;
+         case 'I':
+            KEY( "ID", quest->id, fread_number( fp ) );
+            if( !str_cmp( word, "InitMob" ) )
+            {
+               MOB_INDEX_DATA *index;
+               int vnum;
+               vnum = fread_number( fp );
+
+               if( ( index = get_mob_index( vnum ) ) == NULL )
+                  bug( "%s: No mob exists with the vnum.", __FUNCTION__ );
+               else
+                  quest->init_mob = index;
+               fMatch = TRUE;
+               break;
+            }
+         case 'L':
+            if( !str_cmp( word, "Level_Req" ) )
+            {
+               for( x = 0; x < MAX_CLASS; x++ )
+                  quest->level_required[x] = fread_number( fp );
+               fMatch = TRUE;
+               break;
+            }
+            break;
+         case 'P':
+            if( !str_cmp( word, "Prereq" ) )
+            {
+               PREREQ_DATA *prereq;
+
+               CREATE( prereq, PREREQ_DATA, 1 );
+               LINK( prereq, quest->first_prereq, quest->last_prereq, next, prev );
+               prereq->prereq = get_quest( fread_number( fp ) );
+               fMatch = TRUE;
+               break;
+            }
+         case 'N':
+            KEY( "Name", quest->name, fread_string( fp ) );
+            break;
+         case 'T':
+            KEY( "Type", quest->type, fread_number( fp ) );
+            break;
+      }
+      if( !fMatch )
+      {
+         bug( "%s: no match: %s", __FUNCTION__, word );
+         fread_to_eol( fp );
+      }
+   }
+}
+
+void fread_fuss_stage( QUEST_DATA *quest, FILE *fp )
+{
+   STAGE_DATA *stage;
+   const char *word;
+   char letter;
+   bool fMatch;
+
+   CREATE( stage, STAGE_DATA, 1 );
+   stage->stage_owner = quest;
+   LINK( stage, quest->first_stage, quest->last_stage, next, prev );
+
+   do
+   {
+      letter = getc( fp );
+      if( feof( fp ) )
+      {
+         fclose( fp );
+         return;
+      }
+   }
+   while( isspace( letter ) );
+   ungetc( letter, fp );
+
+   for( ;; )
+   {
+      word = feof( fp ) ? "#ENDSTAGE" : fread_word( fp );
+      fMatch = FALSE;
+
+      switch( word[0] )
+      {
+         case '*':
+            fMatch = TRUE;
+            fread_to_eol( fp );
+            break;
+         case '#':
+            if( !str_cmp( word, "#TRIGGER" ) && stage )
+            {
+               fread_fuss_trigger( stage, fp );
+               fMatch = TRUE;
+               break;
+            }
+            else if( !str_cmp( word, "#OBJECTIVE" ) && stage )
+            {
+               fread_fuss_objective( stage, fp );
+               fMatch = TRUE;
+               break;
+            }
+            else if( !str_cmp( word, "#ENDSTAGE" ) )
+               return;
+            break;
+         case 'N':
+            KEY( "Name", stage->name, fread_string_nohash( fp ) );
+            break;
+      }
+      if( !fMatch )
+      {
+         bug( "%s: no match: %s", __FUNCTION__, word );
+         fread_to_eol( fp );
+      }
+   }
+}
+
+void fread_fuss_trigger( STAGE_DATA *stage, FILE *fp )
+{
+   TRIGGER_DATA *trigger = NULL;
+   const char *word;
+   char letter;
+   bool fMatch;
+
+   CREATE( trigger, TRIGGER_DATA, 1 );
+   trigger->trigger_owner = stage;
+   LINK( trigger, stage->first_trigger, stage->last_trigger, next, prev );
+
+   do
+   {
+      letter = getc( fp );
+      if( feof( fp ) )
+      {
+         fclose( fp );
+         return;
+      }
+   }
+   while( isspace( letter ) );
+   ungetc( letter, fp );
+
+   for( ;; )
+   {
+      word = feof( fp ) ? "#ENDTRIGGER" : fread_word( fp );
+      fMatch = FALSE;
+
+      switch( word[0] )
+      {
+         case '*':
+            fMatch = TRUE;
+            fread_to_eol( fp );
+            break;
+         case '#':
+            if( !str_cmp( word, "#ENDTRIGGER" ) )
+               return;
+            else
+            {
+               bug( "%s: bad file format here", __FUNCTION__ );
+               break;
+            }
+            break;
+         case 'S':
+            KEY( "Script", trigger->script, fread_string( fp ) );
+            break;
+         case 'T':
+            KEY( "ToAdvance", trigger->to_advance, fread_number( fp ) );
+            KEY( "Type", trigger->type, fread_number( fp ) );
+            break;
+         case 'V':
+            KEY( "Vnum", trigger->vnum, fread_number( fp ) );
+            KEY( "VWhere", trigger->vwhere, fread_number( fp ) );
+            break;
+      }
+      if( !fMatch )
+      {
+         bug( "%s: no match: %s", __FUNCTION__, word );
+         fread_to_eol( fp );
+      }
+   }
+}
+
+void fread_fuss_objective( STAGE_DATA *stage, FILE *fp )
+{
+   OBJECTIVE_DATA *objective = NULL;
+   const char *word;
+   char letter;
+   bool fMatch;
+
+   do
+   {
+      letter = getc( fp );
+      if( feof( fp ) )
+      {
+         fclose( fp );
+         return;
+      }
+   }
+   while( isspace( letter ) );
+   ungetc( letter, fp );
+
+   for( ;; )
+   {
+      word = feof( fp ) ? "#ENDOBJECTIVE" : fread_word( fp );
+      fMatch = FALSE;
+
+      switch( word[0] )
+      {
+         case '*':
+            fMatch = TRUE;
+            fread_to_eol( fp );
+            break;
+         case '#':
+            if( !str_cmp( word, "#OBJECTIVE" ) && !objective )
+            {
+               CREATE( objective, OBJECTIVE_DATA, 1 );
+               objective->objective_owner = stage;
+               LINK( objective, stage->first_objective, stage->last_objective, next, prev );
+               break;
+            }
+            else if( !str_cmp( word, "#ENDOBJECTIVE" ) )
+               return;
+            else
+            {
+               bug( "%s: file real bad format", __FUNCTION__ );
+               break;
+            }
+            break;
+         case 'R':
+            KEY( "Required", objective->required, fread_number( fp ) );
+            break;
+         case 'T':
+            KEY( "Type", objective->type, fread_number( fp ) );
+            break;
+         case 'V':
+            KEY( "Vnum", objective->vnum, fread_number( fp ) );
+            break;
+      }
+      if( !fMatch )
+      {
+         bug( "%s: no match: %s", __FUNCTION__, word );
+         fread_to_eol( fp );
+      }
+   }
+}
+
+void fread_fuss_path( QUEST_DATA *quest, FILE *fp )
+{
+   PATH_DATA *path = NULL;
+   const char *word;
+   char letter;
+   bool fMatch;
+
+   CREATE( path, PATH_DATA, 1 );
+   path->path_owner = quest;
+   LINK( path, quest->first_path, quest->last_path, next, prev );
+
+   do
+   {
+      letter = getc( fp );
+      if( feof( fp ) )
+      {
+         fclose( fp );
+         return;
+      }
+   }
+   while( isspace( letter ) );
+   ungetc( letter, fp );
+
+   for( ;; )
+   {
+      word = feof( fp ) ? "#ENDPATH" : fread_word( fp );
+      fMatch = FALSE;
+
+      switch( word[0] )
+      {
+         case '*':
+            fMatch = TRUE;
+            fread_to_eol( fp );
+            break;
+         case '#':
+            if( !str_cmp( word, "#REWARD" ) && path )
+            {
+               fread_fuss_reward( path, fp );
+               fMatch = TRUE;
+               break;
+            }
+            else if( !str_cmp( word, "#ENDPATH" ) )
+               return;
+            else
+            {
+               bug( "%s: path part of quest file bad format.", __FUNCTION__ );
+               break;
+            }
+            break;
+         case 'G':
+            KEY( "Gold", path->gold, fread_number( fp ) );
+         case 'N':
+            KEY( "Name", path->name, fread_string( fp ) );
+      }
+      if( !fMatch )
+      {
+         bug( "%s: no match: %s", __FUNCTION__, word );
+         fread_to_eol( fp );
+      }
+   }
+}
+
+void fread_fuss_reward( PATH_DATA *path, FILE *fp )
+{
+   REWARD_DATA *reward = NULL;
+   const char *word;
+   char letter;
+   bool fMatch;
+
+   CREATE( reward, REWARD_DATA, 1 );
+   reward->reward_owner = path;
+   LINK( reward, path->first_reward, path->last_reward, next, prev );
+
+
+   do
+   {
+      letter = getc( fp );
+      if( feof( fp ) )
+      {
+         fclose( fp );
+         return;
+      }
+   }
+   while( isspace( letter ) );
+   ungetc( letter, fp );
+
+   for( ;; )
+   {
+      word = feof( fp ) ? "#ENDREWARD" : fread_word( fp );
+      fMatch = FALSE;
+
+      switch( word[0] )
+      {
+         case '*':
+            fMatch = TRUE;
+            fread_to_eol( fp );
+            break;
+         case '#':
+            if( !str_cmp( word, "#ENDREWARD" ) )
+               return;
+            else
+            {
+               bug( "%s: path part of quest file bad format.", __FUNCTION__ );
+               break;
+            }
+            break;
+         case 'A':
+            KEY( "Amount", reward->amount, fread_number( fp ) );
+            break;
+         case 'O':
+            KEY( "Ovnum", reward->o_vnum, fread_number( fp ) );
+            break;
+         case 'T':
+            KEY( "Type", reward->type, fread_number( fp ) );
+            break;
+      }
+      if( !fMatch )
+      {
+         bug( "%s: no match: %s", __FUNCTION__, word );
+         fread_to_eol( fp );
+      }
+   }
 }
 
 PROJECT_DATA *read_project( FILE * fp )

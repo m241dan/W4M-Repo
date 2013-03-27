@@ -48,6 +48,14 @@ const char *const color_flags[MAX_COLOR_FLAG] = {
    "&rno_red", "&bno_blue", "&gno_green", "&zno_yellow", "&Yno_orange", "&pno_purple"
 };
 
+const char *const quest_types[MAX_QUEST_TYPE] = {
+   "repeatable", "one_time", "once_per_class"
+};
+
+const char *const trigger_types[MAX_TRIGGER_TYPE] = {
+   "obj_drop", "obj_get", "obj_receive", "obj_put", "obj_give", "obj_destroy", "mob_kill", "mob_talk_general", "mob_talk_script_advance", "mob_follow"
+};
+
 const double base_class_lag[MAX_CLASS] = {
    3, 3, 3, 2.5, 2.5, 2.5, 2, 2, 2
 };

@@ -140,9 +140,10 @@ void do_worth( CHAR_DATA* ch, const char* argument)
  */
 void do_score( CHAR_DATA* ch, const char* argument )
 {
+   PLAYER_QUEST *pquest;
    char buf[MAX_STRING_LENGTH];
    AFFECT_DATA *paf;
-   int iLang, count;
+   int count;
    /*const char *suf;
    short day;
 
@@ -333,102 +334,8 @@ void do_score( CHAR_DATA* ch, const char* argument )
    pager_printf( ch, "GOLD : %-13s    Move: %-5d of %5d   Mdeaths: %-5.5d    AutoSac (%c)\r\n",
                  num_punct( ch->gold ), ch->move, ch->max_move, ch->pcdata->mdeaths, xIS_SET( ch->act,
                                                                                               PLR_AUTOSAC ) ? 'X' : ' ' );
-
-   if( !IS_NPC( ch ) && ch->pcdata->condition[COND_DRUNK] > 10 )
-      send_to_pager( "You are drunk.\r\n", ch );
-   if( !IS_NPC( ch ) && ch->pcdata->condition[COND_THIRST] == 0 )
-      send_to_pager( "You are in danger of dehydrating.\r\n", ch );
-   if( !IS_NPC( ch ) && ch->pcdata->condition[COND_FULL] == 0 )
-      send_to_pager( "You are starving to death.\r\n", ch );
-   if( ch->position != POS_SLEEPING )
-      switch ( ch->mental_state / 10 )
-      {
-         default:
-            send_to_pager( "You're completely messed up!\r\n", ch );
-            break;
-         case -10:
-            send_to_pager( "You're barely conscious.\r\n", ch );
-            break;
-         case -9:
-            send_to_pager( "You can barely keep your eyes open.\r\n", ch );
-            break;
-         case -8:
-            send_to_pager( "You're extremely drowsy.\r\n", ch );
-            break;
-         case -7:
-            send_to_pager( "You feel very unmotivated.\r\n", ch );
-            break;
-         case -6:
-            send_to_pager( "You feel sedated.\r\n", ch );
-            break;
-         case -5:
-            send_to_pager( "You feel sleepy.\r\n", ch );
-            break;
-         case -4:
-            send_to_pager( "You feel tired.\r\n", ch );
-            break;
-         case -3:
-            send_to_pager( "You could use a rest.\r\n", ch );
-            break;
-         case -2:
-            send_to_pager( "You feel a little under the weather.\r\n", ch );
-            break;
-         case -1:
-            send_to_pager( "You feel fine.\r\n", ch );
-            break;
-         case 0:
-            send_to_pager( "You feel great.\r\n", ch );
-            break;
-         case 1:
-            send_to_pager( "You feel energetic.\r\n", ch );
-            break;
-         case 2:
-            send_to_pager( "Your mind is racing.\r\n", ch );
-            break;
-         case 3:
-            send_to_pager( "You can't think straight.\r\n", ch );
-            break;
-         case 4:
-            send_to_pager( "Your mind is going 100 miles an hour.\r\n", ch );
-            break;
-         case 5:
-            send_to_pager( "You're high as a kite.\r\n", ch );
-            break;
-         case 6:
-            send_to_pager( "Your mind and body are slipping apart.\r\n", ch );
-            break;
-         case 7:
-            send_to_pager( "Reality is slipping away.\r\n", ch );
-            break;
-         case 8:
-            send_to_pager( "You have no idea what is real, and what is not.\r\n", ch );
-            break;
-         case 9:
-            send_to_pager( "You feel immortal.\r\n", ch );
-            break;
-         case 10:
-            send_to_pager( "You are a Supreme Entity.\r\n", ch );
-            break;
-      }
-   else if( ch->mental_state > 45 )
-      send_to_pager( "Your sleep is filled with strange and vivid dreams.\r\n", ch );
-   else if( ch->mental_state > 25 )
-      send_to_pager( "Your sleep is uneasy.\r\n", ch );
-   else if( ch->mental_state < -35 )
-      send_to_pager( "You are deep in a much needed sleep.\r\n", ch );
-   else if( ch->mental_state < -25 )
-      send_to_pager( "You are in deep slumber.\r\n", ch );
-   send_to_pager( "Languages: ", ch );
-   for( iLang = 0; lang_array[iLang] != LANG_UNKNOWN; iLang++ )
-      if( knows_language( ch, lang_array[iLang], ch ) || ( IS_NPC( ch ) && ch->speaks == 0 ) )
-      {
-         if( lang_array[iLang] & ch->speaking || ( IS_NPC( ch ) && !ch->speaking ) )
-            set_pager_color( AT_RED, ch );
-         send_to_pager( lang_names[iLang], ch );
-         send_to_pager( " ", ch );
-         set_pager_color( AT_SCORE, ch );
-      }
-   send_to_pager( "\r\n", ch );
+   for( pquest = ch->first_quest; pquest; pquest = pquest->next )
+      pager_printf( ch, "Quest: %-15s Stage: %s\r\n", pquest->quest->name, pquest->stage == 0 ? "Complete" : "In Progress" );
 
    if( ch->pcdata->bestowments && ch->pcdata->bestowments[0] != '\0' )
       pager_printf( ch, "You are bestowed with the command(s): %s.\r\n", ch->pcdata->bestowments );

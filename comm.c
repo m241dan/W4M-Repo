@@ -869,6 +869,9 @@ void game_loop( void )
                      case CON_TALKING:
                         converse( d->character, cmdline );
                         break;
+                     case CON_QUEST_OLC:
+                        quest_olc( d->character, cmdline );
+                        break;
                   }
             }
          }

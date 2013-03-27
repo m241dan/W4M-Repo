@@ -1455,6 +1455,8 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
    if( victim->position == POS_DEAD )
    {
       OBJ_DATA *new_corpse;
+      if( IS_NPC( victim ) )
+         update_quests( ch, victim, NULL, TYPE_MOB_KILL, 0 );
 
       clear_target( ch );
       clear_target( victim );

@@ -365,6 +365,7 @@ void fwrite_class( CHAR_DATA *ch, FILE *fp )
  */
 void fwrite_char( CHAR_DATA * ch, FILE * fp )
 {
+   PLAYER_QUEST *pquest;
    AFFECT_DATA *paf;
    int sn, track, count;
    short pos;
@@ -548,6 +549,22 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    else
       fprintf( fp, "Site         (Link-Dead)\n" );
 
+   for( pquest = ch->first_quest; pquest; pquest = pquest->next )
+   {
+      fprintf( fp, "Quest  %d %d", pquest->quest->id, pquest->stage );
+      for( count = 0; count < MAX_CLASS; count++ )
+         fprintf( fp, " %d", pquest->times_completed[count] );
+      fprintf( fp, "\n" );
+      fprintf( fp, " %s~\n", pquest->on_path->name );
+      if( pquest->first_objective_tracker )
+      {
+         OBJECTIVE_TRACKER *objective;
+         for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+            fprintf( fp, "Progress   %d\n", objective->progress );
+      }
+      fprintf( fp, "EndQuest\n" );
+   }
+
    for( sn = 1; sn < num_skills; ++sn )
    {
       if( skill_table[sn]->name && ch->pcdata->learned[sn] > 0 )
@@ -583,6 +600,7 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
          fprintf( fp, "Affect       %3d %5f %3d %3d %s\n",
                   paf->type, paf->duration, paf->modifier, paf->location, print_bitvector( &paf->bitvector ) );
    }
+
 
    track = URANGE( 2, ( ( ch->level + 3 ) * MAX_KILLTRACK ) / LEVEL_AVATAR, MAX_KILLTRACK );
    for( sn = 0; sn < track; sn++ )
@@ -1706,6 +1724,50 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             }
             break;
 
+         case 'Q':
+            if( !strcmp( word, "Quest" ) )
+            {
+               PLAYER_QUEST *pquest;
+               int x;
+
+               CREATE( pquest, PLAYER_QUEST, 1 );
+               pquest->quest = get_quest( fread_number( fp ) );
+               pquest->stage = fread_number( fp );
+               for( x = 0; x < MAX_CLASS; x++ )
+                  pquest->times_completed[x] = fread_number( fp );
+               pquest->on_path = get_path( pquest->quest, fread_string( fp ) );
+               LINK( pquest, ch->first_quest, ch->last_quest, next, prev );
+               if( pquest->stage > QUEST_COMPLETE )
+               {
+                  STAGE_DATA *stage;
+                  if( ( stage = get_stage( pquest->quest, pquest->stage ) ) == NULL )
+                  {
+                     bug( "%s: real big problem here trying to read in the stage.", __FUNCTION__ );
+                     break;
+                  }
+                  create_trackers( pquest, stage );
+               }
+               x = 0;
+               for( ;; )
+               {
+                  word = ( feof( fp ) ? "EndQuest" : fread_word( fp ) );
+                  if( !str_cmp( word, "EndQuest" ) )
+                     break;
+                  else if( !str_cmp( word, "Progress" ) )
+                  {
+                     OBJECTIVE_TRACKER *objective;
+                     objective = get_otracker( pquest, x++ );
+                     objective->progress = fread_number( fp );
+                  }
+                  else
+                  {
+                     bug( "%s: something is fucked...", __FUNCTION__ );
+                     break;
+                  }
+               }
+               fMatch = TRUE;
+               break;
+            }
          case 'R':
             KEY( "Race", ch->race, fread_number( fp ) );
             KEY( "Range", ch->range, fread_number( fp ) );

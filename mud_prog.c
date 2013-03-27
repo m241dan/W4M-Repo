@@ -2907,6 +2907,22 @@ void mprog_hour_trigger( CHAR_DATA * mob )
       mprog_time_check( mob, NULL, NULL, NULL, HOUR_PROG );
 }
 
+void prog_questsystem_trigger( CHAR_DATA *mob, CHAR_DATA * actor, OBJ_DATA *obj, TRIGGER_DATA *trigger )
+{
+   if( !trigger->script || trigger->script[0] == '\0' )
+      return;
+   if( !mob )
+   {
+      set_supermob( obj );
+      mprog_driver( trigger->script, supermob, actor, obj, NULL, FALSE );
+   }
+   else if( mob->position == POS_DEAD )
+      mprog_driver( trigger->script, supermob, actor, NULL, NULL, FALSE );
+   else
+      mprog_driver( trigger->script, mob, actor, NULL, NULL, FALSE );
+
+}
+
 void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor, TALK_DATA *talk )
 {
    if( !actor->conv_data )

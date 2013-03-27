@@ -6029,3 +6029,247 @@ void switch_class( CHAR_DATA *ch, int Class )
    }
    return;
 }
+
+int get_class_num( const char *argument )
+{
+   int x;
+   for( x = 0; x < MAX_CLASS; x++ )
+   {
+      if( nifty_is_name( class_table[x]->who_name, argument ) )
+         return x;
+   }
+   return -1;
+}
+
+int get_questtype_num( const char *argument )
+{
+   int x;
+   for( x = 0; x < MAX_QUEST_TYPE; x++ )
+   {
+      if( !str_cmp( quest_types[x], argument ) )
+         return x;
+   }
+   return -1;
+}
+
+int get_triggertype_num( const char *argument )
+{
+   int x;
+   for( x = 0; x < MAX_TRIGGER_TYPE; x++ )
+   {
+      if( !str_cmp( trigger_types[x], argument ) )
+         return x;
+   }
+   return -1;
+}
+
+bool is_init_mob( CHAR_DATA *ch, CHAR_DATA *mob, QUEST_DATA *quest )
+{
+   if( mob->pIndexData == quest->init_mob && can_accept_quest( ch, quest ) )
+      return TRUE;
+   else
+      return FALSE;
+}
+
+bool is_init_mob( CHAR_DATA *mob )
+{
+   QUEST_DATA *quest;
+
+   for( quest = first_quest; quest; quest = quest->next )
+      if( mob->pIndexData == quest->init_mob )
+         return TRUE;
+   return FALSE;
+}
+
+/*
+bool involved_in_quest( CHAR_DATA *mob, QUEST_DATA *quest )
+{
+
+}
+
+bool involved_in_quest( OBJ_DATA *obj, QUEST_DATA *quest )
+{
+
+}
+*/
+bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest )
+{
+   PREREQ_DATA *prereq;
+   PLAYER_QUEST *pquest;
+   bool can_accept = FALSE;
+
+   if( quest->level_required[ch->Class] == 0 )
+      return FALSE;
+
+   if( ch->level >= quest->level_required[ch->Class] )
+      can_accept = TRUE;
+
+   if( ( pquest = player_has_quest( ch, quest ) ) != NULL && pquest->quest->type == QUEST_ONE_TIME )
+      can_accept = FALSE;
+   else if( pquest && pquest->quest->type == QUEST_ONCE_PER_CLASS && pquest->times_completed[ch->Class] > 0 )
+      can_accept = FALSE;
+   else if( pquest && pquest->stage > 0 )
+      can_accept = FALSE;
+
+   for( prereq = quest->first_prereq; prereq; prereq = prereq->next )
+   {
+      if( !has_completed_quest( ch, prereq->prereq ) )
+      {
+         can_accept = FALSE;
+         break;
+      }
+   }
+
+   return can_accept;
+}
+
+bool has_completed_quest( CHAR_DATA *ch, QUEST_DATA *quest )
+{
+   PLAYER_QUEST *pquest;
+   int x;
+
+   if( ( pquest = player_has_quest( ch, quest ) ) == NULL )
+      return FALSE;
+
+   if( pquest->stage == QUEST_COMPLETE )
+      return TRUE;
+
+   for( x = 0; x < MAX_CLASS; x++ )
+      if( pquest->times_completed[x] > 0 )
+         return TRUE;
+
+   return FALSE;
+}
+
+void init_quest( CHAR_DATA *ch, QUEST_DATA *quest )
+{
+   PLAYER_QUEST *pquest;
+   int x;
+
+   if( ( pquest = player_has_quest( ch, quest ) ) == NULL )
+   {
+      CREATE( pquest, PLAYER_QUEST, 1 );
+      pquest->quest = quest;
+      pquest->stage = 1;
+      pquest->on_path = quest->first_path;
+      for( x = 0; x < MAX_CLASS; x++ )
+         pquest->times_completed[x] = 0;
+      LINK( pquest, ch->first_quest, ch->last_quest, next, prev );
+   }
+   pquest->stage = 1;
+   pquest->on_path = quest->first_path;
+   advance_quest( ch, pquest );
+   return;
+}
+
+PLAYER_QUEST *player_has_quest( CHAR_DATA *ch, QUEST_DATA *quest )
+{
+   PLAYER_QUEST *pquest;
+
+   for( pquest = ch->first_quest; pquest; pquest = pquest->next )
+      if( pquest->quest == quest )
+         return pquest;
+   return NULL;
+}
+
+PATH_DATA *get_path( QUEST_DATA *quest, const char *argument )
+{
+   PATH_DATA *path;
+
+   for( path = quest->first_path; path; path = path->next )
+   {
+      if( !str_cmp( path->name, argument ) )
+         return path;
+   }
+   return NULL;
+}
+
+STAGE_DATA *get_stage( QUEST_DATA *quest, int num )
+{
+   STAGE_DATA *stage;
+   int count = 0;
+
+   if( num < 2 )
+      return quest->first_stage;
+   else
+   {
+      for( stage = quest->first_stage; stage; stage = stage->next )
+      {
+         if( ++count == num )
+            return stage;
+      }
+   }
+   return NULL;
+}
+
+TRIGGER_DATA *get_trigger( STAGE_DATA *stage, int num )
+{
+   TRIGGER_DATA *trigger;
+   int count = 0;
+
+   if( num < 2 )
+      return stage->first_trigger;
+   else
+   {
+      for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
+      {
+         if( ++count == num )
+            return trigger;
+      }
+   }
+   return NULL;
+}
+
+OBJECTIVE_TRACKER *get_otracker( PLAYER_QUEST *pquest, int num )
+{
+   OBJECTIVE_TRACKER *objective;
+   int count = 0;
+
+   if( num < 2 )
+      return pquest->first_objective_tracker;
+   else
+   {
+      for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
+      {
+         if( ++count == num )
+            return objective;
+      }
+   }
+   return NULL;
+}
+
+void create_trackers( PLAYER_QUEST *pquest, STAGE_DATA *stage )
+{
+   TRIGGER_DATA *trigger;
+   OBJECTIVE_TRACKER *objective;
+
+   log_string( "creating trackers" );
+
+   for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
+   {
+      CREATE( objective, OBJECTIVE_TRACKER, 1 );
+      objective->objective = trigger;
+      LINK( objective, pquest->first_objective_tracker, pquest->last_objective_tracker, next, prev );
+      objective = NULL;
+   }
+   return;
+}
+
+void clear_trackers( PLAYER_QUEST *pquest )
+{
+   OBJECTIVE_TRACKER *objective, *objective_next;
+   for( objective = pquest->first_objective_tracker; objective; objective = objective_next )
+   {
+      objective_next = objective->next;
+      UNLINK( objective, pquest->first_objective_tracker, pquest->last_objective_tracker, next, prev );
+      free_otracker( objective );
+   }
+   return;
+}
+
+void free_otracker( OBJECTIVE_TRACKER *objective )
+{
+   objective->objective = NULL;
+   DISPOSE( objective );
+   return;
+}

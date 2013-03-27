@@ -170,6 +170,19 @@ typedef struct hit_data HIT_DATA;
 typedef struct conversation_data CONVERSATION_DATA;
 typedef struct talk_data TALK_DATA;
 typedef struct gthreat_data GTHREAT_DATA;
+typedef struct qtalk_data QTALK_DATA;
+
+/* Quest system Typedefs -Davenge */
+
+typedef struct prereq_quest PREREQ_DATA;
+typedef struct quest_data QUEST_DATA;
+typedef struct player_quest PLAYER_QUEST;
+typedef struct stage_data STAGE_DATA;
+typedef struct trigger_data TRIGGER_DATA;
+typedef struct objective_data OBJECTIVE_DATA;
+typedef struct objective_tracker OBJECTIVE_TRACKER;
+typedef struct path_data PATH_DATA;
+typedef struct reward_data REWARD_DATA;
 
 /*
  * Function types.
@@ -764,7 +777,7 @@ typedef enum
 /* Uncomment this section if using Samson's Shell Code */
 /* CON_FORKED, CON_IAFORKED, */
 
-   CON_EDITING, CON_TALKING
+   CON_EDITING, CON_TALKING, CON_QUEST_OLC
 } connection_types;
 
 /*
@@ -778,7 +791,9 @@ typedef enum
    SUB_HELP_EDIT, SUB_WRITING_MAP, SUB_PERSONAL_BIO, SUB_REPEATCMD,
    SUB_RESTRICTED, SUB_DEITYDESC, SUB_MORPH_DESC, SUB_MORPH_HELP,
    SUB_PROJ_DESC, SUB_NEWS_POST, SUB_NEWS_EDIT, SUB_TALK_CONTENT,
-   SUB_TALK_SCRIPT,
+   SUB_TALK_SCRIPT, SUB_QUEST_EDIT, SUB_STAGE_EDIT, SUB_PATH_EDIT,
+   SUB_TRIGGER_EDIT, SUB_OBJECTIVE_EDIT, SUB_REWARD_EDIT, SUB_TRIGGER_SCRIPT,
+   SUB_QUEST_DESC,
    /*
     * timer types ONLY below this point
     */
@@ -1808,7 +1823,7 @@ typedef enum
    APPLY_FULL, APPLY_THIRST, APPLY_DRUNK, APPLY_BLOOD, APPLY_COOK,
    APPLY_RECURRINGSPELL, APPLY_CONTAGIOUS, APPLY_EXT_AFFECT, APPLY_ODOR,
    APPLY_ROOMFLAG, APPLY_SECTORTYPE, APPLY_ROOMLIGHT, APPLY_TELEVNUM,
-   APPLY_TELEDELAY, APPLY_PENETRATION, APPLY_RESISTANCE, MAX_APPLY_TYPE
+   APPLY_TELEDELAY, APPLY_PENETRATION, APPLY_RESISTANCE, APPLY_OBJECT, MAX_APPLY_TYPE
 } apply_types;
 
 #define REVERSE_APPLY		   1000
@@ -2228,6 +2243,16 @@ struct conversation_data
    TALK_DATA *first_talk;
    TALK_DATA *last_talk;
    TALK_DATA *current_talk;
+   QTALK_DATA *first_qtalk;
+   QTALK_DATA *last_qtalk;
+   QTALK_DATA *on_qtalk;
+};
+
+struct qtalk_data
+{
+   QTALK_DATA *next;
+   QTALK_DATA *prev;
+   QUEST_DATA *quest;
 };
 
 struct talk_data
@@ -2310,6 +2335,7 @@ struct char_data
    void *dest_buf;   /* This one is to assign to differen things */
    const char *alloc_ptr;  /* Must str_dup and free this one */
    void *spare_ptr;
+   void *quest_edit_ptr;
    int tempnum;
    EDITOR_DATA *editor;
    TIMER *first_timer;
@@ -2425,6 +2451,8 @@ struct char_data
    CONVERSATION_DATA *conv_data;
    THREAT_DATA *first_threat;
    THREAT_DATA *last_threat;
+   PLAYER_QUEST *first_quest;
+   PLAYER_QUEST *last_quest;
 };
 
 struct gthreat_data
@@ -2771,6 +2799,128 @@ struct hit_data
 
 };
 
+/* Quest structures... _davenge */
+
+#define QUEST_JUST_COMPLETED -1
+#define QUEST_COMPLETE 0
+#define QUEST_STARTED 1
+
+struct quest_data
+{
+   QUEST_DATA *next;
+   QUEST_DATA *prev;
+   STAGE_DATA *first_stage;
+   STAGE_DATA *last_stage;
+   PREREQ_DATA *first_prereq;
+   PREREQ_DATA *last_prereq;
+   PATH_DATA *first_path;
+   PATH_DATA *last_path;
+   CHAR_DATA *player_editing;
+   MOB_INDEX_DATA *init_mob;
+   const char *name;
+   const char *description;
+   int id;
+   int type;
+   int level_required[MAX_CLASS];
+};
+
+struct prereq_quest
+{
+   PREREQ_DATA *next;
+   PREREQ_DATA *prev;
+   QUEST_DATA *prereq;
+};
+
+struct player_quest
+{
+   PLAYER_QUEST *next;
+   PLAYER_QUEST *prev;
+   QUEST_DATA *quest;
+   PATH_DATA *on_path;
+   OBJECTIVE_TRACKER *first_objective_tracker;
+   OBJECTIVE_TRACKER *last_objective_tracker;
+   int stage;
+   int times_completed[MAX_CLASS];
+};
+
+struct stage_data
+{
+   QUEST_DATA *stage_owner;
+   STAGE_DATA *next;
+   STAGE_DATA *prev;
+   TRIGGER_DATA *first_trigger;
+   TRIGGER_DATA *last_trigger;
+   OBJECTIVE_DATA *first_objective;
+   OBJECTIVE_DATA *last_objective;
+   const char *name;
+};
+
+struct trigger_data
+{
+   STAGE_DATA *trigger_owner;
+   TRIGGER_DATA *next;
+   TRIGGER_DATA *prev;
+   int to_advance;
+   int type;
+   int vnum;
+   int vwhere;
+   const char *script;
+};
+
+struct objective_tracker
+{
+   OBJECTIVE_TRACKER *next;
+   OBJECTIVE_TRACKER *prev;
+   TRIGGER_DATA *objective;
+   int progress;
+};
+
+struct objective_data
+{
+   STAGE_DATA *objective_owner;
+   OBJECTIVE_DATA *next;
+   OBJECTIVE_DATA *prev;
+   int type;
+   int vnum;
+   int required;
+};
+
+struct path_data
+{
+   QUEST_DATA *path_owner;
+   PATH_DATA *next;
+   PATH_DATA *prev;
+   REWARD_DATA *first_reward;
+   REWARD_DATA *last_reward;
+   const char *name;
+   int gold;
+};
+
+struct reward_data
+{
+   PATH_DATA *reward_owner;
+   REWARD_DATA *next;
+   REWARD_DATA *prev;
+   int type;
+   int amount;
+   int o_vnum;
+};
+
+typedef enum
+{
+   QUEST_REPEATABLE, QUEST_ONE_TIME, QUEST_ONCE_PER_CLASS, MAX_QUEST_TYPE
+} quest_type_nums;
+
+typedef enum
+{
+   TYPE_OBJ_DROP, TYPE_OBJ_GET, TYPE_OBJ_RECEIVE, TYPE_OBJ_PUT, TYPE_OBJ_GIVE, TYPE_OBJ_DESTROY,
+   TYPE_MOB_KILL, TYPE_MOB_TALK_GENERAL, TYPE_MOB_TALK_SCRIPT_ADVANCE, TYPE_MOB_FOLLOW, MAX_TRIGGER_TYPE
+} trigger_type_nums;
+
+typedef enum
+{
+   OBJECTIVE_MOB, OBJECTIVE_ITEM, MAX_OBJECTIVE_TYPE
+} objective_types;
 /*
  * Creating a timer that is queued and runs every pulse of the CPU
  * Basically, this is giving us more accuracy in our ability to generate
@@ -3741,8 +3891,10 @@ extern const char *const ex_pwater[];
 extern const char *const ex_pair[];
 extern const char *const ex_pearth[];
 extern const char *const ex_pfire[];
-extern const char * const color_flags[MAX_COLOR_FLAG];
+extern const char *const color_flags[MAX_COLOR_FLAG];
 extern const double base_class_lag[MAX_CLASS];
+extern const char *const quest_types[MAX_QUEST_TYPE];
+extern const char *const trigger_types[MAX_TRIGGER_TYPE];
 
 extern int const lang_array[];
 extern const char *const lang_names[];
@@ -3864,7 +4016,8 @@ extern SPEC_LIST *first_specfun;
 extern SPEC_LIST *last_specfun;
 extern GTHREAT_DATA *first_gthreat;
 extern GTHREAT_DATA *last_gthreat;
-
+extern QUEST_DATA *first_quest;
+extern QUEST_DATA *last_quest;
 
 extern time_t current_time;
 extern bool fLogAll;
@@ -4376,6 +4529,9 @@ DECLARE_DO_FUN( do_mpmusic );
 DECLARE_DO_FUN( do_mpmusicaround );
 DECLARE_DO_FUN( do_mpmusicat );
 DECLARE_DO_FUN( do_mp_endconversation );
+DECLARE_DO_FUN( do_mpquestadvance );
+DECLARE_DO_FUN( do_mpchangepath );
+
 
 /*
  * Spell functions.
@@ -4543,7 +4699,7 @@ DECLARE_SPELL_FUN( spell_sacral_divinity );
 #define COMMAND_FILE	SYSTEM_DIR "commands.dat"  /* Commands      */
 #define PROJECTS_FILE	SYSTEM_DIR "projects.txt"  /* For projects  */
 #define PLANE_FILE	SYSTEM_DIR "planes.dat" /* For planes       */
-
+#define QUESTS_FILE     SYSTEM_DIR "quest.dat" /* For Quests */
 /*
  * Our function prototypes.
  * One big lump ... this is every function in Merc.
@@ -4694,13 +4850,24 @@ void start_editing args( ( CHAR_DATA * ch, const char *data ) );
 void stop_editing args( ( CHAR_DATA * ch ) );
 void edit_buffer args( ( CHAR_DATA * ch, char *argument ) );
 const char *copy_buffer( CHAR_DATA * ch );
-char *copy_buffer_nohash( CHAR_DATA * ch );
+const char *copy_buffer_nohash( CHAR_DATA * ch );
 void realm( CHAR_DATA * ch, const char * argument );
 void write_realm_list( void );
 ROOM_INDEX_DATA *get_room_at_coord( CHAR_DATA *ch, int x, int y, int z );
 REALM_DATA *get_realm_from_char( CHAR_DATA *ch );
 int get_weapontype( const char *type );
 int get_damtype( const char *type );
+QUEST_DATA *get_quest args( ( const char *argument ) );
+QUEST_DATA *get_quest args( ( int id ) );
+void quest_olc( CHAR_DATA *ch, const char *argument );
+int get_num_stages( QUEST_DATA *quest );
+int get_num_paths( QUEST_DATA *quest );
+void advance_quest( CHAR_DATA *ch, PLAYER_QUEST *pquest );
+void quest_progress_update( CHAR_DATA *ch, PLAYER_QUEST *pquest );
+void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int vwhere );
+void advance_objective( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, PLAYER_QUEST *pquest, OBJECTIVE_TRACKER *objective );
+void check_stage_complete( CHAR_DATA *ch, PLAYER_QUEST *pquest );
+void reward_player( CHAR_DATA *ch, PATH_DATA *path );
 
 /* const.c */
 void apply_class_base_stat_mod( CHAR_DATA *ch );
@@ -4922,6 +5089,7 @@ void rset_supermob( ROOM_INDEX_DATA * room );
 void release_supermob( void );
 void mpsleep_update( void );
 void mprog_talksystem_trigger( CHAR_DATA * mob, CHAR_DATA * actor, TALK_DATA *talk );
+void prog_questsystem_trigger( CHAR_DATA *mob, CHAR_DATA * actor, OBJ_DATA *obj, TRIGGER_DATA *trigger );
 
 /* planes.c */
 PLANE_DATA *plane_lookup( const char *name );
@@ -5144,6 +5312,22 @@ bool is_magical( EXT_BV *damtype );
 int get_haste( CHAR_DATA *ch );
 double get_round( CHAR_DATA *ch );
 void switch_class( CHAR_DATA *ch, int Class );
+int get_class_num( const char *argument );
+int get_questtype_num( const char *argument );
+int get_triggertype_num( const char *argument );
+bool is_init_mob args( ( CHAR_DATA *ch, CHAR_DATA *mob, QUEST_DATA *quest ) );
+bool is_init_mob args( ( CHAR_DATA *mob ) );
+bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest );
+void init_quest( CHAR_DATA *ch, QUEST_DATA *quest );
+PLAYER_QUEST *player_has_quest( CHAR_DATA *ch, QUEST_DATA *quest );
+PATH_DATA *get_path( QUEST_DATA *quest, const char *argument );
+STAGE_DATA *get_stage( QUEST_DATA *quest, int num );
+TRIGGER_DATA *get_trigger( STAGE_DATA *stage, int num );
+OBJECTIVE_TRACKER *get_otracker( PLAYER_QUEST *pquest, int num );
+void create_trackers( PLAYER_QUEST *pquest, STAGE_DATA *stage );
+void clear_trackers(  PLAYER_QUEST *pquest );
+void free_otracker( OBJECTIVE_TRACKER *objective );
+bool has_completed_quest( CHAR_DATA *ch, QUEST_DATA *quest );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

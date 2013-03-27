@@ -1645,8 +1645,9 @@ void drunk_randoms( CHAR_DATA * ch )
    short drunk;
    short position;
 
-   if( IS_NPC( ch ) || ch->pcdata->condition[COND_DRUNK] <= 0 )
+   if( IS_NPC( ch ) )
       return;
+   return;
 
    if( number_percent(  ) < 30 )
       return;

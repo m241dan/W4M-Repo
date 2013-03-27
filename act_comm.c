@@ -713,7 +713,7 @@ void do_music( CHAR_DATA* ch, const char* argument)
    return;
 }
 
-
+/*
 void do_quest( CHAR_DATA* ch, const char* argument)
 {
    if( NOT_AUTHED( ch ) )
@@ -723,7 +723,7 @@ void do_quest( CHAR_DATA* ch, const char* argument)
    }
    talk_channel( ch, argument, CHANNEL_QUEST, "quest" );
    return;
-}
+}*/
 
 void do_ask( CHAR_DATA* ch, const char* argument)
 {
@@ -2100,6 +2100,8 @@ void do_follow( CHAR_DATA* ch, const char* argument)
       stop_follower( ch );
 
    add_follower( ch, victim );
+   if( IS_NPC( victim ) )
+      update_quests( ch, victim, NULL, TYPE_MOB_FOLLOW, 0 );
    return;
 }
 
@@ -2979,6 +2981,7 @@ void do_talk( CHAR_DATA *ch, const char* argument )
    ch_printf( ch, "You begin talking to %s.\r\n", mob->name );
    create_conversation( ch, mob, INIT_CONVERSATION );
    ch->desc->connected = CON_TALKING;
+   update_quests( ch, mob, NULL, TYPE_MOB_TALK_GENERAL, 0 );
    display_branch( ch );
    return;
 }
@@ -2987,7 +2990,7 @@ void display_branch( CHAR_DATA *ch )
 {
    TALK_DATA *on_talk;
 
-   if( ( on_talk = ch->conv_data->current_talk ) == NULL )
+   if( ( on_talk = ch->conv_data->current_talk ) == NULL && !ch->conv_data->first_qtalk )
    {
       bug( "CH: %s attempting to display_branch without having one", ch->name );
       return;
@@ -2996,6 +2999,12 @@ void display_branch( CHAR_DATA *ch )
    {
       ch_printf( ch, "You are too far from %s to have a conversation with them.\r\n", ch->conv_data->mobile->name );
       stop_talking( ch );
+   }
+   if( ch->conv_data->on_qtalk )
+   {
+      ch_printf( ch, "____________________________________________________________________________\r\n%s\r\n", ch->conv_data->on_qtalk->quest->description );
+      display_options( ch );
+      return;
    }
    ch_printf( ch, "____________________________________________________________________________\r\n%s\r\n", on_talk->content ? on_talk->content : "Nothing..." );
    mprog_talksystem_trigger( ch->conv_data->mobile, ch, on_talk );
@@ -3060,6 +3069,8 @@ void display_options( CHAR_DATA *ch )
 {
    TALK_DATA *on_talk;
    TALK_DATA *option;
+   QTALK_DATA *qtalk;
+   bool showquests = FALSE;
    int counter = 0;
 
    if( ( on_talk = ch->conv_data->current_talk ) == NULL )
@@ -3067,20 +3078,43 @@ void display_options( CHAR_DATA *ch )
       bug( "CH: %s attempting to display_options without being on a current_talk", ch->name );
       return;
    }
-   if( ch->conv_data->first_talk )
+   if( ch->conv_data->on_qtalk )
+   {
+      send_to_char( "\r\n", ch );
+      send_to_char( "   Yes.) To accept\r\n", ch );
+      send_to_char( "   No.) To decline\r\n", ch );
+   }
+   else if( ch->conv_data->first_talk )
    {
       for( option = ch->conv_data->first_talk; option; option = option->next )
       {
          if( option->talk_from == on_talk )
          {
             counter++;
-            ch_printf( ch, "   %d. %s", counter, option->content ? option->content : "No Content" );
+            ch_printf( ch, "   %d.) %s", counter, option->content ? option->content : "No Content" );
             if( nifty_is_name( option->content, "(blank)" ) )
                send_to_char( "\r\n", ch );
          }
       }
    }
-   if( counter == 0 )
+   for( qtalk = ch->conv_data->first_qtalk; qtalk; qtalk = qtalk->next )
+      if( can_accept_quest( ch, qtalk->quest ) )
+      {
+         showquests = TRUE;
+         break;
+      }
+   if( ch->conv_data->current_talk == ch->conv_data->first_talk && !ch->conv_data->on_qtalk && ch->conv_data->first_qtalk && showquests )
+   {
+      send_to_char( "\r\nQuest Options:\r\n", ch );
+      for( qtalk = ch->conv_data->first_qtalk; qtalk; qtalk = qtalk->next )
+      {
+         if( !can_accept_quest( ch, qtalk->quest ) )
+            continue;
+         counter++;
+         ch_printf( ch, "   %d.) %s\r\n", counter, qtalk->quest->name ); 
+      }
+   }
+   if( counter == 0 && !ch->conv_data->on_qtalk )
       send_to_char( "   You have no further talking points to discuss with this person.\r\n", ch );
    if( on_talk->talk_from )
       ch_printf( ch, "   Back.) %s\r\n", on_talk->talk_from->content ? on_talk->talk_from->content : "No Content" );
@@ -3094,6 +3128,8 @@ void display_options( CHAR_DATA *ch )
 void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point )
 {
    CONVERSATION_DATA *conversation;
+   QUEST_DATA *quest;
+   QTALK_DATA *qtalk;
    TALK_DATA *talk;
 
    CREATE( conversation, CONVERSATION_DATA, 1 );
@@ -3105,6 +3141,15 @@ void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point )
    for( talk = conversation->first_talk; talk; talk = talk->next )
       if( talk->talk_id == starting_point )
           conversation->current_talk = talk;
+   for( quest = first_quest; quest; quest = quest->next )
+      if( is_init_mob( ch, mob, quest ) )
+      {
+         CREATE( qtalk, QTALK_DATA, 1 );
+         qtalk->quest = quest;
+         LINK( qtalk, conversation->first_qtalk, conversation->last_qtalk, next, prev );
+         qtalk = NULL;
+      }
+
    if( conversation->current_talk == NULL )
    {
       bug( "%s: No starting point with %d ID exists, called by %s.", __FUNCTION__, starting_point, ch->name );
@@ -3117,6 +3162,7 @@ void create_conversation( CHAR_DATA *ch, CHAR_DATA *mob, int starting_point )
 void free_conversation( CHAR_DATA *ch )
 {
    CONVERSATION_DATA *conv;
+   QTALK_DATA *qtalk, *qtalk_next;
 
    conv = ch->conv_data;
    ch->conv_data = NULL;
@@ -3125,6 +3171,14 @@ void free_conversation( CHAR_DATA *ch )
    conv->first_talk = NULL;
    conv->last_talk = NULL;
    conv->current_talk = NULL;
+
+   for( qtalk = conv->first_qtalk; qtalk; qtalk = qtalk_next )
+   {
+      qtalk_next = qtalk->next;
+      qtalk->quest = NULL;
+      UNLINK( qtalk, conv->first_qtalk, conv->last_qtalk, next, prev );
+      DISPOSE( qtalk );
+   }
    DISPOSE( conv );
 }
 
@@ -3132,6 +3186,7 @@ void converse( CHAR_DATA *ch, const char *argument )
 {
    CONVERSATION_DATA *conv;
    TALK_DATA *option;
+   QTALK_DATA *qtalk;
    char arg[MAX_STRING_LENGTH];
    int choice, count;
 
@@ -3221,6 +3276,33 @@ void converse( CHAR_DATA *ch, const char *argument )
             return;
          }
       }
+      if( conv->first_qtalk && conv->current_talk == conv->first_talk )
+         for( qtalk = conv->first_qtalk; qtalk; qtalk = qtalk->next )
+         {
+            if( can_accept_quest( ch, qtalk->quest ) )
+               ++count;
+            if( count == choice )
+               conv->on_qtalk = qtalk;
+            else
+               continue;
+            display_branch( ch );
+            return;
+         }
+   }
+   else if( !str_cmp( strlower( arg ), "yes" ) && conv->on_qtalk )
+   {
+      send_to_char( "You accept the quest!\r\n", ch );
+      init_quest( ch, conv->on_qtalk->quest );
+      conv->on_qtalk = NULL;
+      display_branch( ch );
+      return;
+   }
+   else if( !str_cmp( strlower( arg ), "no" ) && conv->on_qtalk )
+   {
+      send_to_char( "You decline.\r\n", ch );
+      conv->on_qtalk = NULL;
+      display_branch( ch );
+      return;
    }
    else
    {
