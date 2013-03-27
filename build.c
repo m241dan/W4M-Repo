@@ -11122,7 +11122,8 @@ void display_commands( CHAR_DATA *ch )
          send_to_pager( " Level_Required    | Level Required takes two inputs, the first is the\r\n", ch );
          send_to_pager( "                   | class and the second is the level. 0 in level means\r\n", ch );
          send_to_pager( "                   | that class cannot get the quest.\r\n", ch );
-         send_to_pager( " Init_Mob          | Set the Mob that starts the quest.\r\n", ch );	
+         send_to_pager( " Prereq            | Set any number of quests as a prereq for this one.\r\n", ch );
+         send_to_pager( " Init_Mob          | Set the Mob that starts the quest.\r\n", ch );
          send_to_pager( " Stage             | Without argument takes you to the first stage.\r\n", ch );
          send_to_pager( " Path              | without argument takes you to the first path.\r\n", ch );
          send_to_pager( "                   | If no first path or stage exists, it will create one.\r\n", ch );
@@ -11186,6 +11187,7 @@ void display_questolc( CHAR_DATA *ch )
    PATH_DATA *path, *path_next;
    TRIGGER_DATA *trigger;
    REWARD_DATA *reward;
+   PREREQ_DATA *prereq;
    bool lAll;
    int level_req;
    int x;
@@ -11226,6 +11228,12 @@ void display_questolc( CHAR_DATA *ch )
             }
             send_to_pager( "\r\n", ch );
          }
+         pager_printf( ch, "Prerequisite Quests%s", quest->first_prereq ? ":" : ": none" );
+         for( prereq = quest->first_prereq; prereq; prereq = prereq->next )
+         {
+            pager_printf( ch, " %s,", prereq->prereq->name );
+         }
+         send_to_pager( "\r\n", ch );
          pager_printf( ch, "-----------------------------------------------------------------------\r\n%s\r\n", quest->description );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          x = 1;
@@ -11449,6 +11457,40 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       }
       quest->level_required[value] = level;
       ch_printf( ch, "Setting Level Requirement for %s...Done\r\n", class_table[value]->who_name );
+      return;
+   }
+   if( !str_cmp( strlower( arg ), "prereq" ) )
+   {
+      PREREQ_DATA *prereq;
+      QUEST_DATA *prequest;
+
+      if( !check_substate( ch, SUB_QUEST_EDIT ) )
+         return;
+
+      quest = (QUEST_DATA *)ch->quest_edit_ptr;
+      argument = one_argument( argument, arg );
+
+      if( ( prequest = get_quest( arg ) ) == NULL )
+      {
+         send_to_char( "No such quest exists.\r\n", ch );
+         return;
+      }
+      for( prereq = quest->first_prereq; prereq; prereq = prereq->next )
+      {
+         if( prequest == prereq->prereq )
+         {
+            send_to_char( "Removing Prerequisite Quest...Done\r\n", ch );
+            UNLINK( prereq, quest->first_prereq, quest->last_prereq, next, prev );
+            prereq->prereq = NULL;
+            DISPOSE( prereq );
+            return;
+         }
+      }
+      prereq = NULL;
+      CREATE( prereq, PREREQ_DATA, 1 );
+      LINK( prereq, quest->first_prereq, quest->last_prereq, next, prev );
+      prereq->prereq = prequest;
+      send_to_char( "Setting prerequisite Quest...Done\r\n", ch );
       return;
    }
    if( !str_cmp( strlower( arg ), "init_mob" ) )
@@ -12073,6 +12115,7 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
    TRIGGER_DATA *trigger;
    PATH_DATA *path;
    REWARD_DATA *reward;
+   PREREQ_DATA *prereq;
    int x;
 
    fprintf( fp, "%s", "#QUEST\n" );
@@ -12087,6 +12130,8 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
       fprintf( fp, " %d", quest->level_required[x] );
    fprintf( fp, "\n" );
 
+   for( prereq = quest->first_prereq; prereq; prereq = prereq->next )
+      fprintf( fp, "Prereq       %d\n", prereq->prereq->id );
    for( stage = quest->first_stage; stage; stage = stage->next )
    {
       fprintf( fp, "%s", "#STAGE\n" );

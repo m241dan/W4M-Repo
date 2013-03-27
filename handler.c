@@ -6094,6 +6094,7 @@ bool involved_in_quest( OBJ_DATA *obj, QUEST_DATA *quest )
 */
 bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest )
 {
+   PREREQ_DATA *prereq;
    PLAYER_QUEST *pquest;
    bool can_accept = FALSE;
 
@@ -6110,7 +6111,34 @@ bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest )
    else if( pquest && pquest->stage > 0 )
       can_accept = FALSE;
 
+   for( prereq = quest->first_prereq; prereq; prereq = prereq->next )
+   {
+      if( !has_completed_quest( ch, prereq->prereq ) )
+      {
+         can_accept = FALSE;
+         break;
+      }
+   }
+
    return can_accept;
+}
+
+bool has_completed_quest( CHAR_DATA *ch, QUEST_DATA *quest )
+{
+   PLAYER_QUEST *pquest;
+   int x;
+
+   if( ( pquest = player_has_quest( ch, quest ) ) == NULL )
+      return FALSE;
+
+   if( pquest->stage == QUEST_COMPLETE )
+      return TRUE;
+
+   for( x = 0; x < MAX_CLASS; x++ )
+      if( pquest->times_completed[x] > 0 )
+         return TRUE;
+
+   return FALSE;
 }
 
 void init_quest( CHAR_DATA *ch, QUEST_DATA *quest )

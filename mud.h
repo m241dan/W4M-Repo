@@ -174,6 +174,7 @@ typedef struct qtalk_data QTALK_DATA;
 
 /* Quest system Typedefs -Davenge */
 
+typedef struct prereq_quest PREREQ_DATA;
 typedef struct quest_data QUEST_DATA;
 typedef struct player_quest PLAYER_QUEST;
 typedef struct stage_data STAGE_DATA;
@@ -2810,6 +2811,8 @@ struct quest_data
    QUEST_DATA *prev;
    STAGE_DATA *first_stage;
    STAGE_DATA *last_stage;
+   PREREQ_DATA *first_prereq;
+   PREREQ_DATA *last_prereq;
    PATH_DATA *first_path;
    PATH_DATA *last_path;
    CHAR_DATA *player_editing;
@@ -2819,6 +2822,13 @@ struct quest_data
    int id;
    int type;
    int level_required[MAX_CLASS];
+};
+
+struct prereq_quest
+{
+   PREREQ_DATA *next;
+   PREREQ_DATA *prev;
+   QUEST_DATA *prereq;
 };
 
 struct player_quest
@@ -5316,6 +5326,7 @@ OBJECTIVE_TRACKER *get_otracker( PLAYER_QUEST *pquest, int num );
 void create_trackers( PLAYER_QUEST *pquest, STAGE_DATA *stage );
 void clear_trackers(  PLAYER_QUEST *pquest );
 void free_otracker( OBJECTIVE_TRACKER *objective );
+bool has_completed_quest( CHAR_DATA *ch, QUEST_DATA *quest );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

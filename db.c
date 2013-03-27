@@ -9262,6 +9262,17 @@ QUEST_DATA *read_quest( FILE *fp )
                break;
             }
             break;
+         case 'P':
+            if( !str_cmp( word, "Prereq" ) )
+            {
+               PREREQ_DATA *prereq;
+
+               CREATE( prereq, PREREQ_DATA, 1 );
+               LINK( prereq, quest->first_prereq, quest->last_prereq, next, prev );
+               prereq->prereq = get_quest( fread_number( fp ) );
+               fMatch = TRUE;
+               break;
+            }
          case 'N':
             KEY( "Name", quest->name, fread_string( fp ) );
             break;
