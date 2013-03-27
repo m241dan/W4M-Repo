@@ -9239,6 +9239,7 @@ QUEST_DATA *read_quest( FILE *fp )
             KEY( "Description", quest->description, fread_string( fp ) );
             break;
          case 'I':
+            KEY( "ID", quest->id, fread_number( fp ) );
             if( !str_cmp( word, "InitMob" ) )
             {
                MOB_INDEX_DATA *index;

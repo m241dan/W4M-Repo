@@ -551,10 +551,10 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
 
    for( pquest = ch->first_quest; pquest; pquest = pquest->next )
    {
-      fprintf( fp, "Quest  %d", pquest->stage );
+      fprintf( fp, "Quest  %d %d", pquest->quest->id, pquest->stage );
       for( count = 0; count < MAX_CLASS; count++ )
          fprintf( fp, " %d", pquest->times_completed[count] );
-      fprintf( fp, " '%s'\n", pquest->quest->name );
+      fprintf( fp, "\n" );
       fprintf( fp, " %s~\n", pquest->on_path->name );
       if( pquest->first_objective_tracker )
       {
@@ -1731,10 +1731,10 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                int x;
 
                CREATE( pquest, PLAYER_QUEST, 1 );
+               pquest->quest = get_quest( fread_number( fp ) );
                pquest->stage = fread_number( fp );
                for( x = 0; x < MAX_CLASS; x++ )
                   pquest->times_completed[x] = fread_number( fp );
-               pquest->quest = get_quest( fread_word( fp ) );
                pquest->on_path = get_path( pquest->quest, fread_string( fp ) );
                LINK( pquest, ch->first_quest, ch->last_quest, next, prev );
                if( pquest->stage > QUEST_COMPLETE )

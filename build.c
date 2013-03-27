@@ -11069,13 +11069,29 @@ QUEST_DATA *get_quest( const char *argument )
    return NULL;
 }
 
-void create_quest( const char *argument )
+QUEST_DATA *get_quest( int id )
 {
    QUEST_DATA *quest;
+
+   for( quest = first_quest; quest; quest = quest->next )
+   {
+      if( quest->id == id )
+         return quest;
+   }
+   return NULL;
+}
+
+void create_quest( const char *argument )
+{
+   QUEST_DATA *quest, *quest_id;
+   int x = 0;
 
    if( ( quest = get_quest( argument ) ) == NULL )
    {
       CREATE( quest, QUEST_DATA, 1 );
+      for( quest_id = first_quest; quest_id; quest_id = quest_id->next )
+         x++;
+      quest->id = x;
       quest->name = str_dup( argument );
       quest->description = STRALLOC( "" );
       LINK( quest, first_quest, last_quest, next, prev );
@@ -11100,6 +11116,7 @@ void display_commands( CHAR_DATA *ch )
       case SUB_QUEST_EDIT:
        //send_to_pager( "                   | Measuring stick
       // send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         send_to_pager( " Name              | Change the name of a quest.\r\n", ch );
          send_to_pager( " Description       | Change a quest's description/starting message\r\n", ch );
          send_to_pager( " Type              | Set the Quest's Type.(Type ? to list quest types)\r\n", ch );
          send_to_pager( " Level_Required    | Level Required takes two inputs, the first is the\r\n", ch );
@@ -11590,6 +11607,13 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
       }
       switch( ch->substate )
       {
+         case SUB_QUEST_EDIT:
+            quest = (QUEST_DATA *)ch->quest_edit_ptr;
+
+            STRFREE( quest->name );
+            quest->name = STRALLOC( argument );
+            send_to_char( "Changing Quest Name...Done\r\n", ch );
+            return;
          case SUB_STAGE_EDIT:
             stage = (STAGE_DATA *)ch->quest_edit_ptr;
 
@@ -12041,6 +12065,7 @@ void fwrite_fuss_quest( QUEST_DATA *quest, FILE *fp )
    fprintf( fp, "Name         %s~\n", quest->name );
    fprintf( fp, "Description  %s~\n", strip_cr( quest->description ) );
    fprintf( fp, "Type         %d\n", quest->type );
+   fprintf( fp, "ID           %d\n", quest->id );
    if( quest->init_mob )
       fprintf( fp, "InitMob      %d\n", quest->init_mob->vnum );
    fprintf( fp, "Level_Req   " );
