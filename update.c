@@ -943,7 +943,6 @@ void char_update( void )
           */
          check_alignment( ch );
          gain_condition( ch, COND_DRUNK, -1 );
-         gain_condition( ch, COND_FULL, -1 + race_table[ch->race]->hunger_mod );
 
          if( ch->Class == CLASS_VAMPIRE && ch->level >= 10 )
          {
