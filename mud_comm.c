@@ -3471,7 +3471,7 @@ void do_mpquestadvance( CHAR_DATA *ch, const char *argument )
 
       for( pquest = victim->first_quest; pquest; pquest = pquest->next )
       {
-         if( pquest->quest->id == quest_id )
+         if( pquest->quest->id == quest_id && pquest->stage > QUEST_COMPLETE )
          {
             pquest->stage++;
             advance_quest( victim, pquest );

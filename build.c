@@ -8917,7 +8917,7 @@ void do_mpedit( CHAR_DATA* ch, const char* argument)
          mprog = ( MPROG_DATA * ) ch->dest_buf;
          if( mprog->comlist )
             STRFREE( mprog->comlist );
-         mprog->comlist = copy_buffer( ch );
+         mprog->comlist = copy_buffer_nohash( ch );
          stop_editing( ch );
          return;
    }
@@ -9240,7 +9240,7 @@ void do_opedit( CHAR_DATA* ch, const char* argument)
          mprog = ( MPROG_DATA * ) ch->dest_buf;
          if( mprog->comlist )
             STRFREE( mprog->comlist );
-         mprog->comlist = copy_buffer( ch );
+         mprog->comlist = copy_buffer_nohash( ch );
          stop_editing( ch );
          return;
    }
@@ -9543,7 +9543,7 @@ void do_rpedit( CHAR_DATA* ch, const char* argument)
          mprog = ( MPROG_DATA * ) ch->dest_buf;
          if( mprog->comlist )
             STRFREE( mprog->comlist );
-         mprog->comlist = copy_buffer( ch );
+         mprog->comlist = copy_buffer_nohash( ch );
          stop_editing( ch );
          return;
    }
