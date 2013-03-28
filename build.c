@@ -11302,6 +11302,7 @@ void display_questolc( CHAR_DATA *ch )
          pager_printf( ch, "Displaying Path: %s\r\n-----------------------------------------------------------------------\r\n", path->name );
          pager_printf( ch, "Previous Path: %-10s | Next Path: %-10s\r\n", path->prev ? path->prev->name : "none", path->next ? path->next->name : "none" );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
+         pager_printf( ch, "Gold: %d\r\n", path->gold );
          for( reward = path->first_reward; reward; reward = reward->next )
          {
             x++;
@@ -11316,7 +11317,7 @@ void display_questolc( CHAR_DATA *ch )
          trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
          pager_printf( ch, "Previous Trigger: %-10s | Next Trigger: %-10s\r\n", trigger->prev ? trigger_types[trigger->prev->type] : "none", trigger->next ? trigger_types[trigger->next->type] : "none" );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
-         pager_printf( ch, "Type: %-10s Vnum: %-5d ToAdvance: %d\r\n", trigger_types[trigger->type], trigger->vnum, trigger->to_advance );
+         pager_printf( ch, "Type: %-10s Vnum: %-5d VWhere: %-5d ToAdvance: %d\r\n", trigger_types[trigger->type], trigger->vnum, trigger->vwhere, trigger->to_advance );
          pager_printf( ch, "Script:\r\n%s\r\n", trigger->script );
          display_commands( ch );
          break;
