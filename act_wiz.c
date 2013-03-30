@@ -1885,12 +1885,12 @@ void do_ostat( CHAR_DATA* ch, const char* argument)
    }
    for( paf = obj->first_affect; paf; paf = paf->next )
    {
-      if( paf->location == APPLY_PENETRATION || paf->location == APPLY_RESISTANCE )
+      if( paf->location == APPLY_PENETRATION || paf->location == APPLY_RESISTANCE || paf->location == APPLY_DTYPEPOTENCY )
       {
          int damtype, amount;
 
-         damtype = abs( paf->modifier / 10000 );
-         amount = paf->modifier % 10000;
+         damtype = get_value_one( paf->modifier );
+         amount = get_value_two( paf->modifier );
 
          ch_printf_color( ch, "&cAffects &w%s &c%s &cby &w%d. (extra)\r\n", damage_table[damtype], a_types[paf->location],  amount );
       }

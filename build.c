@@ -4189,7 +4189,12 @@ void do_oset( CHAR_DATA* ch, const char* argument)
       argument = one_argument( argument, arg2 );
       if( arg2[0] == '\0' || !argument || argument[0] == 0 )
       {
+         int x;
          send_to_char( "Usage: oset <object> affect <field> <value>\r\n", ch );
+         send_to_char( "Field Being:\r\n", ch );
+         for( x = 0; x < MAX_APPLY_TYPE; x++ )
+            ch_printf( ch, " %s,", a_types[x] );
+         send_to_char( "\r\n", ch );
          return;
       }
       loc = get_atype( arg2 );

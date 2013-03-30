@@ -4531,8 +4531,8 @@ void showaffect( CHAR_DATA * ch, AFFECT_DATA * paf )
          case APPLY_RESISTANCE:
             int damtype, amount;
 
-            damtype = abs( paf->modifier / 10000 );
-            amount = paf->modifier % 10000;
+            damtype = get_value_one( paf->modifier );
+            amount = get_value_two( paf->modifier );
             snprintf( buf, MAX_STRING_LENGTH,  "&cAffects &w%s &c%s &cby &w%d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
             break;
 
