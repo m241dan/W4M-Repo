@@ -1810,7 +1810,7 @@ typedef enum
 {
    APPLY_NONE, APPLY_STR, APPLY_DEX, APPLY_INT, APPLY_WIS, APPLY_CON,
    APPLY_SEX, APPLY_CLASS, APPLY_LEVEL, APPLY_AGE, APPLY_HEIGHT, APPLY_WEIGHT,
-   APPLY_MANA, APPLY_HIT, APPLY_MOVE, APPLY_GOLD, APPLY_EXP, APPLY_AC,
+   APPLY_MANA, APPLY_HIT, APPLY_MOVE, APPLY_GOLD, APPLY_EXP, APPLY_ARMOR,
    APPLY_ATTACK, APPLY_SAVING_POISON, APPLY_SAVING_ROD,
    APPLY_SAVING_PARA, APPLY_SAVING_BREATH, APPLY_SAVING_SPELL, APPLY_CHA,
    APPLY_AFFECT, APPLY_RESISTANT, APPLY_IMMUNE, APPLY_SUSCEPTIBLE,
@@ -1823,7 +1823,18 @@ typedef enum
    APPLY_FULL, APPLY_THIRST, APPLY_DRUNK, APPLY_BLOOD, APPLY_COOK,
    APPLY_RECURRINGSPELL, APPLY_CONTAGIOUS, APPLY_EXT_AFFECT, APPLY_ODOR,
    APPLY_ROOMFLAG, APPLY_SECTORTYPE, APPLY_ROOMLIGHT, APPLY_TELEVNUM,
-   APPLY_TELEDELAY, APPLY_PENETRATION, APPLY_RESISTANCE, APPLY_OBJECT, MAX_APPLY_TYPE
+   APPLY_TELEDELAY, APPLY_PENETRATION, APPLY_RESISTANCE, APPLY_OBJECT,
+   APPLY_ALIGN, APPLY_BARENUMDIE, APPLY_BARESIZEDIE, APPLY_WEPNUMDIE,
+   APPLY_WEPSIZEDIE, APPLY_MAGICATTACK, APPLY_HASTE, APPLY_MAGICDEFENSE,
+   APPLY_THREAT, APPLY_PERMSTR, APPLY_PERMDEX, APPLY_PERMINT,
+   APPLY_PERMCON, APPLY_PERMWIS, APPLY_PERMPAS, APPLY_GRANTSKILL,
+   APPLY_POTENCY, APPLY_SKILLPOTENCY, APPLY_COOLDOWNS, APPLY_RANGE, APPLY_SKILLCOOLDOWN,
+   APPLY_SKILLRANGE, APPLY_REGEN, APPLY_REFRESH, APPLY_DTYPEPOTENCY,
+   APPLY_FEEDBACKPOTENCY, APPLY_DURATIONS,
+   APPLY_SKILLDURATION, APPLY_DOUBLEATTACK, APPLY_CRITCHANCE,
+   APPLY_CRITDAMAGE, APPLY_COUNTER, APPLY_PHASE, APPLY_BLOCK, APPLY_COMBODMG,
+   APPLY_CHARMEDDMGBOOST, APPLY_CHARMEDDEFBOOST,
+   MAX_APPLY_TYPE
 } apply_types;
 
 #define REVERSE_APPLY		   1000
@@ -2435,7 +2446,6 @@ struct char_data
    int home_vnum; /* hotboot tracker */
    int resetvnum;
    int resetnum;
-   int range;
    TARGET_DATA *target;
    CHAR_DATA *first_targetedby;
    CHAR_DATA *last_targetedby;
@@ -2447,12 +2457,34 @@ struct char_data
    CD_DATA *last_cooldown;
    short resistance[MAX_DAMTYPE];
    short penetration[MAX_DAMTYPE];
+   short damtype_potency[MAX_DAMTYPE];
    double next_round;
    CONVERSATION_DATA *conv_data;
    THREAT_DATA *first_threat;
    THREAT_DATA *last_threat;
    PLAYER_QUEST *first_quest;
    PLAYER_QUEST *last_quest;
+   int wepnumdie;
+   int wepsizedie;
+   EXT_BV granted_skills;
+   int potency;
+   int cooldowns;
+   int range;
+   int durations;
+   int regen;
+   int refresh;
+   int double_attack;
+   int crit_chance;
+   int crit_dam;
+   int dodge;
+   int parry;
+   int counter;
+   int phase;
+   int block;
+   int combo_dmg;
+   int charmed_dmg;
+   int charmed_def;
+   int feedback_potency;
 };
 
 struct gthreat_data
@@ -2476,6 +2508,8 @@ struct threat_data
 struct class_data
 {
    short level;
+   AFFECT_DATA *first_quest_affect;
+   AFFECT_DATA *last_quest_affect;
 };
 
 struct target_data
@@ -2544,6 +2578,10 @@ struct pc_data
    short min_snoop;  /* minimum snoop level */
    short condition[MAX_CONDS];
    short learned[MAX_SKILL];
+   short potency[MAX_SKILL];
+   short range[MAX_SKILL];
+   short cooldown[MAX_SKILL];
+   short duration[MAX_SKILL];
    short quest_number;  /* current *QUEST BEING DONE* DON'T REMOVE! */
    short quest_curr; /* current number of quest points */
    int quest_accum;  /* quest points accumulated in players life */
@@ -5345,6 +5383,9 @@ void start_timer args( ( struct timeval * sttime ) );
 time_t end_timer args( ( struct timeval * sttime ) );
 void send_timer args( ( struct timerset * vtime, CHAR_DATA * ch ) );
 void update_userec args( ( struct timeval * time_used, struct timerset * userec ) );
+int store_two_value( int v1, int v2 );
+int get_value_one( int value );
+int get_value_two( int value );
 
 /* magic.c */
 bool process_spell_components( CHAR_DATA * ch, int sn );

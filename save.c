@@ -61,7 +61,7 @@ static OBJ_DATA *rgObjNest[MAX_NEST];
 void fwrite_char( CHAR_DATA * ch, FILE * fp );
 void fwrite_class( CHAR_DATA * ch, FILE * fp );
 void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover );
-void fread_class( CHAR_DATA * ch, FILE * fp );
+void fread_class( CHAR_DATA * ch, FILE * fp, bool preload );
 void write_corpses( CHAR_DATA * ch, char *name, OBJ_DATA * objrem );
 
 #ifdef WIN32   /* NJG */
@@ -349,6 +349,7 @@ void save_char_obj( CHAR_DATA * ch )
 
 void fwrite_class( CHAR_DATA *ch, FILE *fp )
 {
+   AFFECT_DATA *paf;
    int class_id;
 
    fprintf( fp, "#CLASS\n" );
@@ -357,6 +358,9 @@ void fwrite_class( CHAR_DATA *ch, FILE *fp )
    {
       fprintf( fp, "ClassID      %d\n", class_id ); //Just incase -Davenge
       fprintf( fp, "Level        %d\n", ch->class_data[class_id]->level );
+      for( paf = ch->class_data[class_id]->first_quest_affect; paf; paf = paf->next )
+         fprintf( fp, "Affect       %3d %5f %3d %3d %s\n",
+                  paf->type, paf->duration, paf->modifier, paf->location, print_bitvector( &paf->bitvector ) );
    }
    fprintf( fp, "\nEnd\n\n" );
 }
@@ -434,8 +438,30 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "MagicDefense %d\n", ch->magic_defense );
    fprintf( fp, "Haste        %d\n", ch->haste );
    fprintf( fp, "HasFroMag    %d\n", ch->haste_from_magic );
-   if( ch->threat )
-      fprintf( fp, "Threat       %d\n", ch->threat );
+   fprintf( fp, "Threat       %d\n", ch->threat );
+   fprintf( fp, "WepNumDie    %d\n", ch->wepnumdie );
+   fprintf( fp, "WepSizeDoe   %d\n", ch->wepsizedie );
+   if( !xIS_EMPTY( ch->granted_skills ) )
+      for( sn = 1; sn < num_skills; sn++ )
+         if( xIS_SET( ch->granted_skills, sn ) )
+            fprintf( fp, "Granted   '%s'\n", skill_table[sn]->name );
+   fprintf( fp, "Potency      %d\n", ch->potency );
+   fprintf( fp, "Cooldowns    %d\n", ch->cooldowns );
+   fprintf( fp, "Range        %d\n", ch->range );
+   fprintf( fp, "Durations    %d\n", ch->durations );
+   fprintf( fp, "Regen        %d\n", ch->regen );
+   fprintf( fp, "Refresh      %d\n", ch->refresh );
+   fprintf( fp, "DoubleAttack %d\n", ch->double_attack );
+   fprintf( fp, "CritChance   %d\n", ch->crit_chance );
+   fprintf( fp, "CritDamage   %d\n", ch->crit_dam );
+   fprintf( fp, "Dodge        %d\n", ch->dodge );
+   fprintf( fp, "Parry        %d\n", ch->parry );
+   fprintf( fp, "Counter      %d\n", ch->phase );
+   fprintf( fp, "Block        %d\n", ch->block );
+   fprintf( fp, "ComboDamage  %d\n", ch->combo_dmg );
+   fprintf( fp, "CharmedDam   %d\n", ch->charmed_dmg );
+   fprintf( fp, "CharmedDef   %d\n", ch->charmed_def );
+   fprintf( fp, "FeedBackPot  %d\n", ch->feedback_potency );
    if( ch->wimpy )
       fprintf( fp, "Wimpy        %d\n", ch->wimpy );
    if( ch->deaf )
@@ -542,6 +568,10 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    for( count = 0; count < MAX_DAMTYPE; count++ )
       fprintf( fp, " %d", ch->penetration[count] );
    fprintf( fp, "\n" );
+   fprintf( fp, "DamTypePotency " );
+   for( count = 0; count < MAX_DAMTYPE; count++ )
+      fprintf( fp, " %d", ch->damtype_potency[count] );
+   fprintf( fp, "\n" );
    fprintf( fp, "Condition    %d %d %d %d\n",
             ch->pcdata->condition[0], ch->pcdata->condition[1], ch->pcdata->condition[2], ch->pcdata->condition[3] );
    if( ch->desc && ch->desc->host )
@@ -571,13 +601,13 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
          switch ( skill_table[sn]->type )
          {
             default:
-               fprintf( fp, "Skill        %d '%s'\n", ch->pcdata->learned[sn], skill_table[sn]->name );
+               fprintf( fp, "Skill        %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], skill_table[sn]->name );
                break;
             case SKILL_RACIAL:
-               fprintf( fp, "Ability      %d '%s'\n", ch->pcdata->learned[sn], skill_table[sn]->name );
+               fprintf( fp, "Ability      %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], skill_table[sn]->name );
                break;
             case SKILL_SPELL:
-               fprintf( fp, "Spell        %d '%s'\n", ch->pcdata->learned[sn], skill_table[sn]->name );
+               fprintf( fp, "Spell        %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], skill_table[sn]->name );
                break;
             case SKILL_WEAPON:
                fprintf( fp, "Weapon       %d '%s'\n", ch->pcdata->learned[sn], skill_table[sn]->name );
@@ -945,7 +975,7 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
                break;
          }
          else if( !strcmp( word, "CLASS" ) )
-            fread_class( ch, fp );
+            fread_class( ch, fp, preload );
          else if( !strcmp( word, "OBJECT" ) )   /* Objects  */
             fread_obj( ch, fp, OS_CARRY );
          else if( !strcmp( word, "MorphData" ) )   /* Morphs */
@@ -1075,7 +1105,7 @@ bool load_char_obj( DESCRIPTOR_DATA * d, char *name, bool preload, bool copyover
 /*
  * Read in a class. -Davenge
  */
-void fread_class( CHAR_DATA *ch, FILE * fp )
+void fread_class( CHAR_DATA *ch, FILE * fp, bool preload )
 {
    const char *word;
    int class_id = -1;
@@ -1098,6 +1128,33 @@ void fread_class( CHAR_DATA *ch, FILE * fp )
             fMatch = TRUE;
             fread_to_eol( fp );
             break;
+         case 'A':
+            if( !strcmp( word, "Affect" ) )
+            {
+               AFFECT_DATA *paf;
+
+               if( preload )
+               {
+                  fMatch = TRUE;
+                  fread_to_eol( fp );
+                  break;
+               }
+
+               CREATE( paf, AFFECT_DATA, 1 );
+               paf->type = fread_number( fp );
+               paf->duration = fread_float( fp );
+               paf->modifier = fread_number( fp );
+               paf->location = fread_number( fp );
+               if( paf->location == APPLY_WEAPONSPELL
+                   || paf->location == APPLY_WEARSPELL
+                   || paf->location == APPLY_REMOVESPELL
+                   || paf->location == APPLY_STRIPSN || paf->location == APPLY_RECURRINGSPELL )
+                  paf->modifier = slot_lookup( paf->modifier );
+               paf->bitvector = fread_bitvector( fp );
+               LINK( paf, ch->class_data[class_id]->first_quest_affect, ch->class_data[class_id]->last_quest_affect, next, prev );
+               fMatch = TRUE;
+               break;
+            }
          case 'E':
             if( !strcmp( word, "End" ) )
                return;
@@ -1132,6 +1189,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
    char *line;
    const char *word;
    int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14;
+   int potency, range, cooldown, duration;
    short killcnt;
    bool fMatch;
    int max_colors = 0;  /* Color code */
@@ -1177,6 +1235,10 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                else
                {
                   value = fread_number( fp );
+                  potency = fread_number( fp );
+                  range = fread_number( fp );
+                  cooldown = fread_number( fp );
+                  duration = fread_number( fp );
                   if( file_ver < 3 )
                      sn = skill_lookup( fread_word( fp ) );
                   else
@@ -1187,6 +1249,10 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   else
                   {
                      ch->pcdata->learned[sn] = value;
+                     ch->pcdata->potency[sn] = potency;
+                     ch->pcdata->range[sn] = range;
+                     ch->pcdata->cooldown[sn] = cooldown;
+                     ch->pcdata->duration[sn] = duration;
                      if( ch->level < LEVEL_IMMORTAL )
                      {
                         if( skill_table[sn]->race_level[ch->race] >= LEVEL_IMMORTAL )
@@ -1309,9 +1375,12 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             KEY( "Bamfout", ch->pcdata->bamfout, fread_string_nohash( fp ) );
             KEY( "Bestowments", ch->pcdata->bestowments, fread_string_nohash( fp ) );
             KEY( "Bio", ch->pcdata->bio, fread_string( fp ) );
+            KEY( "Block", ch->block, fread_number( fp ) );
             break;
 
          case 'C':
+            KEY( "CharmedDam", ch->charmed_dmg, fread_number( fp ) );
+            KEY( "CharmedDef", ch->charmed_def, fread_number( fp ) );
             if( !strcmp( word, "Clan" ) )
             {
                ch->pcdata->clan_name = fread_string( fp );
@@ -1344,7 +1413,8 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                fMatch = TRUE;
                break;
             }
-
+            KEY( "ComboDamage", ch->combo_dmg, fread_number( fp ) );
+            KEY( "Cooldowns", ch->cooldowns, fread_number( fp ) );
             if( !str_cmp( word, "Condition" ) )
             {
                line = fread_line( fp );
@@ -1373,10 +1443,35 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                fMatch = TRUE;
                break;
             }
+            KEY( "Counter", ch->counter, fread_number( fp ) );
+            KEY( "CritChance", ch->crit_chance, fread_number( fp ) );
+            KEY( "CritDamage", ch->crit_dam, fread_number( fp ) );
             break;
 
          case 'D':
             KEY( "Damtype", ch->damtype, fread_bitvector( fp ) ); 
+            if( !strcmp( word, "DamTypePotency" ) )
+            {
+               line = fread_line( fp );
+               x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = x9 = x10 = x11 = x12 = x13 = x14 = 0;
+               sscanf( line, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", &x1, &x2, &x3, &x4, &x5, &x6, &x7, &x8, &x9, &x10, &x11, &x12, &x13, &x14 );
+               ch->damtype_potency[0] = x1;
+               ch->damtype_potency[1] = x2;
+               ch->damtype_potency[2] = x3;
+               ch->damtype_potency[3] = x4;
+               ch->damtype_potency[4] = x5;
+               ch->damtype_potency[5] = x6;
+               ch->damtype_potency[6] = x7;
+               ch->damtype_potency[7] = x8;
+               ch->damtype_potency[8] = x9;
+               ch->damtype_potency[9] = x10;
+               ch->damtype_potency[10] = x11;
+               ch->damtype_potency[11] = x12;
+               ch->damtype_potency[12] = x13;
+               ch->damtype_potency[13] = x14;
+               fMatch = TRUE;
+               break;
+            }
             KEY( "Deaf", ch->deaf, fread_number( fp ) );
             if( !strcmp( word, "Deity" ) )
             {
@@ -1395,6 +1490,9 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                break;
             }
             KEY( "Description", ch->description, fread_string( fp ) );
+            KEY( "Dodge", ch->dodge, fread_number( fp ) );
+            KEY( "DoubleAttack", ch->double_attack, fread_number( fp ) );
+            KEY( "Durations", ch->durations, fread_number( fp ) );
             break;
 
             /*
@@ -1411,6 +1509,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                fMatch = TRUE;
                break;
             }
+            KEY( "FeedBackPot", ch->feedback_potency, fread_number( fp ) );
             KEY( "FightChatter", ch->pcdata->fight_chatter, fread_bitvector( fp ) );
             KEY( "Flags", ch->pcdata->flags, fread_number( fp ) );
             KEY( "FPrompt", ch->pcdata->fprompt, fread_string( fp ) );
@@ -1435,6 +1534,30 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   STRFREE( ch->pcdata->clan_name );
                   ch->pcdata->clan_name = STRALLOC( "" );
                }
+               fMatch = TRUE;
+               break;
+            }
+            if( !strcmp( word, "Granted" ) )
+            {
+               int sn;
+               const char *skill;
+
+               if( preload )
+                  word = "End";
+               else
+               {
+                  skill = fread_word( fp );
+                  if( file_ver < 3 )
+                     sn = skill_lookup( skill );
+                  else
+                     sn = find_skill( NULL, skill, FALSE );
+
+                  if( sn < 0 )
+                     bug( "%s: unknown skill: %s", __FUNCTION__, skill );
+                  else
+                     xSET_BIT( ch->granted_skills, sn );
+               }
+
                fMatch = TRUE;
                break;
             }
@@ -1638,6 +1761,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
 
          case 'P':
             KEY( "Pagerlen", ch->pcdata->pagerlen, fread_number( fp ) );
+            KEY( "Parry", ch->parry, fread_number( fp ) );
             KEY( "Password", ch->pcdata->pwd, fread_string_nohash( fp ) );
             KEY( "PDeaths", ch->pcdata->pdeaths, fread_number( fp ) );
             if( !strcmp( word, "Penetration" ) )
@@ -1714,6 +1838,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                }
                break;
             }
+            KEY( "Potency", ch->potency, fread_number( fp ) );
             KEY( "Practice", ch->practice, fread_number( fp ) );
             KEY( "Prompt", ch->pcdata->prompt, fread_string( fp ) );
             if( !strcmp( word, "PTimer" ) )
@@ -1772,6 +1897,8 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             KEY( "Race", ch->race, fread_number( fp ) );
             KEY( "Range", ch->range, fread_number( fp ) );
             KEY( "Rank", ch->pcdata->rank, fread_string_nohash( fp ) );
+            KEY( "Refresh", ch->refresh, fread_number( fp ) );
+            KEY( "Regen", ch->regen, fread_number( fp ) );
             KEY( "Resistant", ch->resistant, fread_number( fp ) );
             if( !strcmp( word, "Resistance" ) )
             {
@@ -1865,6 +1992,10 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                else
                {
                   value = fread_number( fp );
+                  potency = fread_number( fp );
+                  range = fread_number( fp );
+                  cooldown = fread_number( fp );
+                  duration = fread_number( fp );
                   if( file_ver < 3 )
                      sn = skill_lookup( fread_word( fp ) );
                   else
@@ -1875,6 +2006,10 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   else
                   {
                      ch->pcdata->learned[sn] = value;
+                     ch->pcdata->potency[sn] = potency;
+                     ch->pcdata->range[sn] = range;
+                     ch->pcdata->cooldown[sn] = cooldown;
+                     ch->pcdata->duration[sn] = duration;
                      /*
                       * Take care of people who have stuff they shouldn't     *
                       * * Assumes class and level were loaded before. -- Altrag *
@@ -1903,6 +2038,10 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                else
                {
                   value = fread_number( fp );
+                  potency = fread_number( fp );
+                  range = fread_number( fp );
+                  cooldown = fread_number( fp );
+                  duration = fread_number( fp );
 
                   sn = find_spell( NULL, fread_word( fp ), FALSE );
                   if( sn < 0 )
@@ -1910,6 +2049,10 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   else
                   {
                      ch->pcdata->learned[sn] = value;
+                     ch->pcdata->potency[sn] = potency;
+                     ch->pcdata->range[sn] = range;
+                     ch->pcdata->cooldown[sn] = cooldown;
+                     ch->pcdata->duration[sn] = duration;
                      if( ch->level < LEVEL_IMMORTAL )
                         if( skill_table[sn]->skill_level[ch->Class] >= LEVEL_IMMORTAL )
                         {
@@ -2066,7 +2209,6 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
             break;
 
          case 'W':
-            KEY( "Weight", ch->weight, fread_number( fp ) );
             if( !strcmp( word, "Weapon" ) )
             {
                int sn, value;
@@ -2094,6 +2236,9 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                }
                break;
             }
+            KEY( "Weight", ch->weight, fread_number( fp ) );
+            KEY( "WepNumDie", ch->wepnumdie, fread_number( fp ) );
+            KEY( "WepSizeDie", ch->wepsizedie, fread_number( fp ) );
             KEY( "Wimpy", ch->wimpy, fread_number( fp ) );
             KEY( "WizInvis", ch->pcdata->wizinvis, fread_number( fp ) );
             break;

@@ -3033,7 +3033,7 @@ ch_ret spell_faerie_fire( int sn, int level, CHAR_DATA * ch, void *vo )
    }
    af.type = sn;
    af.duration = ( int )( level * DUR_CONV );
-   af.location = APPLY_AC;
+   af.location = APPLY_ARMOR;
    af.modifier = 2 * level;
    af.bitvector = meb( AFF_FAERIE_FIRE );
    affect_to_char( victim, &af );
