@@ -11280,7 +11280,7 @@ void display_questolc( CHAR_DATA *ch )
          x = 0;
 
          pager_printf( ch, "Displaying Stage: %s\r\n-----------------------------------------------------------------------\r\n", stage->name );
-         pager_printf( ch, "Previous Stage: %-10s | Next Stage: %-10s\r\n", stage->prev ? stage->prev->name : "none", stage->next ? stage->next->name : "none" );
+         pager_printf( ch, "Previous Stage: %-10.10s | Next Stage: %-10s\r\n", stage->prev ? stage->prev->name : "none", stage->next ? stage->next->name : "none" );
          send_to_pager( "-----------------------------------------------------------------------\r\n", ch );
          for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
          {
