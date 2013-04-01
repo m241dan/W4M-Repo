@@ -965,7 +965,7 @@ void modify_skill( CHAR_DATA * ch, int sn, int mod, bool fAdd )
 void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
 {
    OBJ_DATA *wield;
-   int mod;
+   int mod, sn;
    struct skill_type *skill;
    ch_ret retcode;
 
@@ -1097,7 +1097,7 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_MOVE:
          ch->max_move += mod;
          break;
-      case APPLY_AC:
+      case APPLY_ARMOR:
          ch->armor += mod;
          break;
       case APPLY_ATTACK:
@@ -1241,9 +1241,6 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_DETRAP:
          modify_skill( ch, gsn_detrap, mod, fAdd );
          break;
-      case APPLY_DODGE:
-         modify_skill( ch, gsn_dodge, mod, fAdd );
-         break;
       case APPLY_PEEK:
          modify_skill( ch, gsn_peek, mod, fAdd );
          break;
@@ -1267,9 +1264,6 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
          break;
       case APPLY_KICK:
          modify_skill( ch, gsn_kick, mod, fAdd );
-         break;
-      case APPLY_PARRY:
-         modify_skill( ch, gsn_parry, mod, fAdd );
          break;
       case APPLY_BASH:
          modify_skill( ch, gsn_bash, mod, fAdd );
@@ -1310,8 +1304,8 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
           * Undo our little hack to get two sets of varying info from one variable
           * Don't doubt, just trust -Davenge
           */
-         damtype = abs( mod / 10000 );
-         amount = mod % 10000;
+         damtype = get_value_one( mod );
+         amount = get_value_two( mod );
 
          ch->penetration[damtype] += amount;
          break;
@@ -1320,12 +1314,136 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
           * Undo our little hack to get two sets of varying info from one variable
           * Don't doubt, just trust -Davenge
           */
-         damtype = abs( mod / 10000 );
-         amount = mod % 10000;
+         damtype = get_value_one( mod );
+         amount = get_value_two( mod );
 
          ch->resistance[damtype] += amount;
          break;
-
+      case APPLY_DTYPEPOTENCY:
+         damtype = get_value_one( mod );
+         amount = get_value_two( mod );
+         ch->damtype_potency[damtype] += amount;
+         break;
+      case APPLY_SKILLPOTENCY:
+         sn = get_value_one( mod );
+         amount = get_value_two( mod );
+         ch->pcdata->potency[sn] += amount;
+         break;
+      case APPLY_SKILLRANGE:
+         sn = get_value_one( mod );
+         amount = get_value_two( mod );
+         ch->pcdata->range[sn] += amount;
+         break;
+      case APPLY_SKILLCOOLDOWN:
+         sn = get_value_one( mod );
+         amount = get_value_two( mod );
+         ch->pcdata->cooldown[sn] += amount;
+         break;
+      case APPLY_SKILLDURATION:
+         sn = get_value_one( mod );
+         amount = get_value_two( mod );
+         ch->pcdata->cooldown[sn] += amount;
+         break;
+      case APPLY_GRANTSKILL:
+         if( IS_VALID_SN( mod ) )
+            xSET_BIT( ch->granted_skills, mod );
+         break;
+      case APPLY_BARENUMDIE:
+         ch->barenumdie += mod;
+         break;
+      case APPLY_BARESIZEDIE:
+         ch->baresizedie += mod;
+         break;
+      case APPLY_WEPNUMDIE:
+         ch->wepnumdie += mod;
+         break;
+      case APPLY_WEPSIZEDIE:
+         ch->wepsizedie +=  mod;
+         break;
+      case APPLY_MAGICATTACK:
+         ch->magic_attack += mod;
+         break;
+      case APPLY_HASTE:
+         ch->haste += mod;
+         break;
+      case APPLY_MAGICDEFENSE:
+         ch->magic_defense += mod;
+         break;
+      case APPLY_THREAT:
+         ch->threat += mod;
+         break;
+      case APPLY_PERMSTR:
+         ch->perm_str += mod;
+         break;
+      case APPLY_PERMDEX:
+         ch->perm_dex += mod;
+         break;
+      case APPLY_PERMCON:
+         ch->perm_con += mod;
+         break;
+      case APPLY_PERMINT:
+         ch->perm_int += mod;
+         break;
+      case APPLY_PERMWIS:
+         ch->perm_wis += mod;
+         break;
+      case APPLY_PERMPAS:
+         ch->perm_pas += mod;
+         break;
+      case APPLY_POTENCY:
+         ch->potency += mod;
+         break;
+      case APPLY_RANGE:
+         ch->range += mod;
+         break;
+      case APPLY_COOLDOWNS:
+         ch->cooldowns += mod;
+         break;
+      case APPLY_DURATIONS:
+         ch->durations += mod;
+         break;
+      case APPLY_REGEN:
+         ch->regen += mod;
+         break;
+      case APPLY_REFRESH:
+         ch->refresh += mod;
+         break;
+      case APPLY_FEEDBACKPOTENCY:
+         ch->feedback_potency += mod;
+         break;
+      case APPLY_DOUBLEATTACK:
+         ch->double_attack += mod;
+         break;
+      case APPLY_CRITCHANCE:
+         ch->crit_chance += mod;
+         break;
+      case APPLY_CRITDAMAGE:
+         ch->crit_dam += mod;
+         break;
+      case APPLY_COUNTER:
+         ch->counter += mod;
+         break;
+      case APPLY_PHASE:
+         ch->phase += mod;
+         break;
+      case APPLY_BLOCK:
+         ch->block += mod;
+         break;
+      case APPLY_DODGE:
+         ch->dodge += mod;
+         break;
+      case APPLY_PARRY:
+         ch->parry += mod;
+         break;
+      case APPLY_COMBODMG:
+         ch->combo_dmg += mod;
+         break;
+      case APPLY_CHARMEDDMGBOOST:
+         ch->charmed_dmg += mod;
+         break;
+      case APPLY_CHARMEDDEFBOOST:
+         ch->charmed_def += mod;
+         break; 
          /*
           * Object apply types
           */
@@ -3415,18 +3533,24 @@ const char *affect_loc_name( int location )
       case APPLY_NONE:
          return "none";
       case APPLY_STR:
+      case APPLY_PERMSTR:
          return "strength";
       case APPLY_DEX:
+      case APPLY_PERMDEX:
          return "dexterity";
       case APPLY_INT:
+      case APPLY_PERMINT:
          return "intelligence";
       case APPLY_WIS:
+      case APPLY_PERMWIS:
          return "wisdom";
       case APPLY_CON:
+      case APPLY_PERMCON:
          return "constitution";
       case APPLY_CHA:
          return "charisma";
       case APPLY_PAS:
+      case APPLY_PERMPAS:
          return "passion";
       case APPLY_SEX:
          return "sex";
@@ -3446,7 +3570,7 @@ const char *affect_loc_name( int location )
          return "gold";
       case APPLY_EXP:
          return "experience";
-      case APPLY_AC:
+      case APPLY_ARMOR:
          return "armor class";
       case APPLY_ATTACK:
          return "attack";
@@ -3562,6 +3686,57 @@ const char *affect_loc_name( int location )
          return "teleport vnum";
       case APPLY_TELEDELAY:
          return "teleport delay";
+      case APPLY_ALIGN:
+         return "alignment";
+      case APPLY_BARENUMDIE:
+         return "bare hand numdie";
+      case APPLY_BARESIZEDIE:
+         return "bare hand sizedie";
+      case APPLY_WEPNUMDIE:
+         return "weapon numdie";
+      case APPLY_WEPSIZEDIE:
+         return "weapon sizedie";
+      case APPLY_MAGICATTACK:
+         return "magic attack";
+      case APPLY_HASTE:
+         return "haste";
+      case APPLY_MAGICDEFENSE:
+         return "magic defense";
+      case APPLY_THREAT:
+         return "threat";
+      case APPLY_POTENCY:
+         return "all ability potencies";
+      case APPLY_COOLDOWNS:
+         return "all cooldowns";
+      case APPLY_RANGE:
+         return "all auto-attack range";
+      case APPLY_REGEN:
+         return "regen";
+      case APPLY_REFRESH:
+         return "refresh";
+      case APPLY_FEEDBACKPOTENCY:
+         return "sorceror feedback potency";
+      case APPLY_DURATIONS:
+         return "all ability durations";
+      case APPLY_DOUBLEATTACK:
+         return "double attack";
+      case APPLY_CRITCHANCE:
+         return "critical chance(percent)";
+      case APPLY_CRITDAMAGE:
+         return "critical hit damage(percent)";
+      case APPLY_COUNTER:
+         return "counter";
+      case APPLY_PHASE:
+         return "phase";
+      case APPLY_BLOCK:
+         return "block";
+      case APPLY_COMBODMG:
+         return "increases combo damage";
+      case APPLY_CHARMEDDMGBOOST:
+         return "charmed damage";
+      case APPLY_CHARMEDDEFBOOST:
+         return "charmed defense";
+
    };
 
    bug( "Affect_location_name: unknown location %d.", location );
@@ -4413,11 +4588,25 @@ void showaffect( CHAR_DATA * ch, AFFECT_DATA * paf )
          case APPLY_RESISTANCE:
             int damtype, amount;
 
-            damtype = abs( paf->modifier / 10000 );
-            amount = paf->modifier % 10000;
-            snprintf( buf, MAX_STRING_LENGTH,  "&cAffects &w%s &c%s &cby &w%d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
+            damtype = get_value_one( paf->modifier );
+            amount = get_value_two( paf->modifier );
+            snprintf( buf, MAX_STRING_LENGTH,  "Affects %s %s by %d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
             break;
-
+         case APPLY_GRANTSKILL:
+            snprintf( buf, MAX_STRING_LENGTH, "Grants wearer access to the '%s' skill.\r\n", skill_table[paf->modifier]->name );
+            break;
+         case APPLY_SKILLPOTENCY:
+            snprintf( buf, MAX_STRING_LENGTH, "Boosts '%s' potency by %d percent.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
+         case APPLY_SKILLRANGE:
+            snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' range by %droom(s).\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
+         case APPLY_SKILLCOOLDOWN:
+            snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' cooldown by %d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
+         case APPLY_SKILLDURATION:
+            snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' duration by %d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
       }
       send_to_char( buf, ch );
    }
@@ -5886,7 +6075,7 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
 {
    OBJ_DATA *obj;
    HIT_DATA *hit_data;
-   int str, dex, amount, counter;
+   int str, dex, amount, counter, weight;
 
    str = get_curr_str( victim );
    dex = get_curr_dex( victim );
@@ -5897,9 +6086,10 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
    {
       if( ( obj->wear_loc >= WEAR_BODY && obj->wear_loc <= WEAR_ARMS ) || obj->wear_loc == WEAR_WAIST )
       {
+         weight = ( obj->weight + body_part_weight[obj->wear_loc] );
          if( obj->weight > 0 )
          {
-            amount = weight_ratio_str( str, obj->weight );
+            amount = weight_ratio_str( str, weight );
             for( counter = 0; counter < amount; counter++ )
             {
                hit_data->locations[hit_data->max_locations] = obj->wear_loc;
@@ -5909,10 +6099,10 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
          }
          else if( obj->weight < 0 )
          {
-            amount = weight_ratio_dex( dex, obj->weight );
+            amount = weight_ratio_dex( dex, weight );
             for( counter = 0; counter < amount; counter++ )
             {
-               hit_data->locations[hit_data->max_locations] = ( obj->wear_loc + MAX_WEAR );
+               hit_data->locations[hit_data->max_locations] = ( obj->wear_loc * -1);
                hit_data->miss_locs++;
                hit_data->max_locations++;
             }
@@ -5995,7 +6185,7 @@ double get_round( CHAR_DATA *ch )
 void switch_class( CHAR_DATA *ch, int Class )
 {
    OBJ_DATA *obj;
-   AFFECT_DATA *paf;
+   AFFECT_DATA *paf, *paf_next;
    int counter;
 
    if( ch->class_data[ch->Class]->level != ch->level )
@@ -6005,11 +6195,22 @@ void switch_class( CHAR_DATA *ch, int Class )
       if( obj->wear_loc > -1 && obj->wear_loc < MAX_WEAR )
          unequip_char( ch, obj );
 
-   for( paf = ch->first_affect; paf; paf = paf->next )
+   /* Remove all Affects */
+
+   for( paf = ch->first_affect; paf; paf = paf_next )
+   {
+      paf_next = paf->next;
       affect_modify( ch, paf, FALSE );
+      UNLINK( paf, ch->first_affect, ch->last_affect, next, prev );
+   }
+
+   /* Re-Add any room affets */
 
    for( paf = ch->in_room->first_affect; paf; paf = paf->next )
+   {
       affect_modify( ch, paf, TRUE );
+      LINK( paf, ch->first_affect, ch->last_affect, next, prev );
+   }
 
    ch->level = 1;
    ch->Class = Class;
@@ -6026,6 +6227,13 @@ void switch_class( CHAR_DATA *ch, int Class )
    {
       ch->level++;
       advance_level( ch, TRUE );
+   }
+   /* Add Quest Affects from Quests done on the new class */
+
+   for( paf = ch->class_data[ch->Class]->first_quest_affect; paf; paf = paf->next )
+   {
+      LINK( paf, ch->first_affect, ch->last_affect, next, prev );
+      affect_modify( ch, paf, TRUE );
    }
    return;
 }
@@ -6273,3 +6481,24 @@ void free_otracker( OBJECTIVE_TRACKER *objective )
    DISPOSE( objective );
    return;
 }
+
+int store_two_value( int v1, int v2 )
+{
+   int value = v1;
+
+   value *= 10000;
+   value += v2;
+
+   return value;
+}
+
+int get_value_one( int value )
+{
+   return abs( value / 10000 );
+}
+
+int get_value_two( int value )
+{
+   return ( value % 10000 );
+}
+

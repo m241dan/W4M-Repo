@@ -526,8 +526,8 @@ const char *tiny_affect_loc_name( int location )
          return " GOLD ";
       case APPLY_EXP:
          return " EXP  ";
-      case APPLY_AC:
-         return " AC   ";
+      case APPLY_ARMOR:
+         return " ARMOR";
       case APPLY_ATTACK:
          return " ATK";
       case APPLY_SAVING_POISON:

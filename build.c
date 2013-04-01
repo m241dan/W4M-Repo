@@ -152,7 +152,15 @@ const char *const a_types[] = {
    "grip", "scribe", "brew", "wearspell", "removespell", "emotion", "mentalstate",
    "stripsn", "remove", "dig", "full", "thirst", "drunk", "blood", "cook",
    "recurringspell", "contagious", "xaffected", "odor", "roomflag", "sectortype",
-   "roomlight", "televnum", "teledelay", "penetration", "resistance", "object"
+   "roomlight", "televnum", "teledelay", "penetration", "resistance", "object",
+   "align", "barenumdie", "baresizedie", "weaponnumdie", "weaponsizedie",
+   "magic_attack", "haste", "magic_defense", "threat", "perm_strength",
+   "perm_dexterity", "perm_intelligence", "perm_constitution", "perm_wisdom",
+   "perm_passion", "grant_skill", "potency", "skill_potency", "cooldowns",
+   "range", "skill_cooldown", "skill_range", "regen", "refresh", "damtype_potency",
+   "feedback_potency", " duration", "skill_duration",
+   "double_attack", "crit_chance", "crit_damage", "counter", "phase", "block",
+   "combo_dmg", "charmed_dmg_boost", "charmed_def_boost"
 };
 
 const char *const a_flags[] = {
@@ -4173,13 +4181,20 @@ void do_oset( CHAR_DATA* ch, const char* argument)
       AFFECT_DATA *paf;
       short loc;
       int bitv;
+      int value2;
+
 
       if( !can_omodify( ch, obj ) )
          return;
       argument = one_argument( argument, arg2 );
       if( arg2[0] == '\0' || !argument || argument[0] == 0 )
       {
+         int x;
          send_to_char( "Usage: oset <object> affect <field> <value>\r\n", ch );
+         send_to_char( "Field Being:\r\n", ch );
+         for( x = 0; x < MAX_APPLY_TYPE; x++ )
+            ch_printf( ch, " %s,", a_types[x] );
+         send_to_char( "\r\n", ch );
          return;
       }
       loc = get_atype( arg2 );
@@ -4207,10 +4222,8 @@ void do_oset( CHAR_DATA* ch, const char* argument)
             return;
          value = bitv;
       }
-      else if( loc == APPLY_PENETRATION || loc == APPLY_RESISTANCE )
+      else if( loc == APPLY_PENETRATION || loc == APPLY_RESISTANCE || loc == APPLY_DTYPEPOTENCY )
       {
-         int value2;
-
          argument = one_argument( argument, arg3 );
 
          if( ( value = get_damtype( arg3 ) ) == -1 )
@@ -4229,12 +4242,41 @@ void do_oset( CHAR_DATA* ch, const char* argument)
             send_to_char( "Amount entered can only be between -100 and 100\r\n", ch );
             return;
          }
-         /*
-          * This is a fancy hack to get two bits of data on one variable that change(ie cant use bitvectors)
-          * Don't question it -Davenge
-          */
-         value *= 10000;
-         value += value2;
+         value = store_two_value( value, value2 );
+      }
+      else if( loc == APPLY_SKILLPOTENCY || loc == APPLY_SKILLRANGE || loc == APPLY_SKILLDURATION || loc == APPLY_SKILLCOOLDOWN )
+      {
+         argument = one_argument( argument, arg3 );
+
+         if( !is_number( arg3 ) )
+         {
+            ch_printf( ch, "&PProper Usage: oset <object> affect %s <amount> <skill>&w\r\n", a_types[loc] );
+            return;
+         }
+         value2 = atoi( argument );
+         if( ( value = skill_lookup( argument ) ) == -1 )
+         {
+            ch_printf( ch, "&PProper Usage: oset <object> affect %s <amount> <skill>&w\r\n", a_types[loc] );
+            return;
+         }
+         value2 = atoi( argument );
+         if( value2 > 100 || value2 < -100 )
+         {
+            send_to_char( "Amount entered can only be between -100 and 100\r\n", ch );
+            return;
+         }
+         value = store_two_value( value, value2 );
+
+      }
+      else if( loc == APPLY_GRANTSKILL ) 
+      {
+         argument = one_argument( argument, arg3 );
+
+         if( ( value = skill_lookup( arg3 ) ) == -1 )
+         {
+            ch_printf( ch, "&PProper Usage: oset <object> affect %s <skill>&w\r\n", a_types[loc] );
+            return;
+         }
       }
       else
       {
@@ -11364,6 +11406,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
    REWARD_DATA *reward;
    char arg[MAX_STRING_LENGTH];
    int value, x;
+   int value2;
 
    switch( ch->substate )
    {
@@ -11926,6 +11969,75 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
          return;
 
       reward = (REWARD_DATA *)ch->quest_edit_ptr;
+
+      if( reward->type == 0 )
+      {
+         send_to_char( "Must enter a reward type first.\r\n", ch );
+         return;
+      }
+      else if( reward->type == APPLY_PENETRATION || reward->type == APPLY_RESISTANCE || reward->type == APPLY_DTYPEPOTENCY )
+      {
+         argument = one_argument( argument, arg );
+
+         if( ( value = get_damtype( arg ) ) == -1 )
+         {
+            send_to_char( "Proper Usage: amount <damtype> <amount>&w\r\n", ch );
+            return;
+         }
+         if( !is_number( argument ) )
+         {
+            ch_printf( ch, "Proper Usage: amount %s <amount>&w\r\n", damage_table[value] );
+            return;
+         }
+         value2 = atoi( argument );
+         if( value2 > 100 || value2 < -100 )
+         {
+            send_to_char( "Amount entered can only be between -100 and 100\r\n", ch );
+            return;
+         }
+         reward->amount = store_two_value( value, value2 );
+         send_to_char( "Changing Reward Amount...Done\r\n", ch );
+         return;
+      }
+      else if( reward->type == APPLY_SKILLPOTENCY || reward->type == APPLY_SKILLRANGE || reward->type == APPLY_SKILLCOOLDOWN
+              || reward->type == APPLY_SKILLDURATION )
+      {
+         argument = one_argument( argument, arg );
+
+         if( !is_number( arg ) )
+         {
+            send_to_char( "Proper Usage: amount <amount> <skill>&w\r\n", ch );
+            return;
+         }
+         value2 = atoi( arg );
+         if( ( value = skill_lookup( argument ) ) == -1 )
+         {
+            send_to_char( "Proper Usage: amount <amount> <skill>&w\r\n", ch );
+            return;
+         }
+         if( value2 > 100 || value2 < -100 )
+         {
+            send_to_char( "Amount entered can only be between -100 and 100\r\n", ch );
+            return;
+         }
+         reward->amount = store_two_value( value, value2 );
+         send_to_char( "Changing Reward Amount...Done\r\n", ch );
+         return;
+      }
+      else if( reward->type == APPLY_GRANTSKILL )
+      {
+         argument = one_argument( argument, arg );
+
+         if( ( value = skill_lookup( arg ) ) == -1 )
+         {
+            send_to_char( "Not a valid skill.\r\n", ch );
+            return;
+         }
+         reward->amount = value;
+         send_to_char( "Changing Reward Amount...Done\r\n", ch );
+         return;
+      }
+
       if( !is_number( argument ) )
       {
          send_to_char( "Invalid input for the Amount command.\r\n", ch );
@@ -12428,16 +12540,17 @@ void reward_player( CHAR_DATA *ch, PATH_DATA *path )
       ch_printf( ch, "You receive %d gold.\r\n", path->gold );
       ch->gold += path->gold;
    }
-   CREATE( paf, AFFECT_DATA, 1 );
-
    for( reward = path->first_reward; reward; reward = reward->next )
    {
       if( reward->type != APPLY_OBJECT )
       {
+         CREATE( paf, AFFECT_DATA, 1 );
          ch_printf( ch, "You receive %d %s as a reward.\r\n", reward->amount, a_types[reward->type] );
          paf->location = reward->type;
          paf->modifier = reward->amount;
+         LINK( paf, ch->class_data[ch->Class]->first_quest_affect, ch->class_data[ch->Class]->last_quest_affect, next, prev );
          affect_modify( ch, paf, TRUE );
+         paf = NULL;
          continue;
       }
       if( reward->amount < 1 )
@@ -12456,8 +12569,7 @@ void reward_player( CHAR_DATA *ch, PATH_DATA *path )
       obj = obj_to_char( obj, ch );
       ch_printf( ch, "You receive %d %s as a reward.\r\n", reward->amount, obj->short_descr );
    }
-
-   DISPOSE( paf );
+   return;
 }
 
 /* End Quest System */
