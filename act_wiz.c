@@ -1928,7 +1928,6 @@ void do_ostat( CHAR_DATA* ch, const char* argument)
          ch_printf_color( ch, "&cAffects '&w%s&c' cooldown by &w%d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
       else if( paf->location == APPLY_SKILLDURATION )
          ch_printf_color( ch, "&cAffects '&w%s&c' duration by &w%d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
-
       else
          ch_printf_color( ch, "&cAffects &w%s &cby &w%d.\r\n", affect_loc_name( paf->location ), paf->modifier );
    }

@@ -33,6 +33,13 @@ int align_compute( CHAR_DATA * gch, CHAR_DATA * victim );
 ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt );
 void show_condition( CHAR_DATA * ch, CHAR_DATA * victim );
 
+const char *const hit_locations[WEAR_WAIST+1] = {
+   "light", "left finger", "right finger", "top of the neck",
+   "bottom of the neck", "body", "head", "legs", "feet", "hands",
+   "arms", "shield", "about", "waist"
+};
+
+
 bool loot_coins_from_corpse( CHAR_DATA * ch, OBJ_DATA * corpse )
 {
    OBJ_DATA *content, *content_next;
@@ -510,7 +517,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 
       vic_eq = get_eq_char( victim, abs(hit_wear) );
 
-      if( hit_wear == MISS_GENERAL )
+      if( hit_wear == MISS_GENERAL || ( hit_wear < 0 && wield->weight > 0 ) )
       {
          //Miss -Davenge
          damage( ch, victim, 0, dt, hit_wear, FALSE, damtype );
@@ -518,7 +525,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
          DISPOSE( hit_data );
          return rNONE;
       }
-      if( hit_wear < 0 && wield->weight < 0 )
+      else if( hit_wear < 0 && wield->weight < 0 )
       {
          int counter, did_it_hit;
 
@@ -555,7 +562,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
           */
          wpnroll = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
       else
-         wpnroll = number_range( wield->value[1], wield->value[2] );
+         wpnroll = number_range( ( wield->value[1] + ch->wepnumdie ), ( wield->value[2] + ch->wepsizedie ));
       /*
        * STR v. CON calculation, flat addition/subtraction to weapon roll -Davenge
        */
@@ -2753,9 +2760,9 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
        * Handle the doer and the taker -Davenge
        */
       if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
-         ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, w_flags[hit_wear], dam );
+         ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, hit_locations[hit_wear], dam );
       if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
-         ch_printf( victim, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, w_flags[hit_wear], dam );
+         ch_printf( victim, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, hit_locations[hit_wear], dam );
       /*
        * Now everyone in the room who might care about the ch -Davenge
        */
@@ -2777,7 +2784,7 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
             continue;
          if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes
             continue;
-         ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
+         ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
       }
       if( ch->in_room != victim->in_room )
       {
@@ -2799,7 +2806,7 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
                continue;
             if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes 
                continue;
-            ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, w_flags[hit_wear], dam );
+            ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
          }
       }
    }
@@ -3471,9 +3478,9 @@ int calc_weight_mod( CHAR_DATA *ch, CHAR_DATA *victim, int hit_wear, int dam, bo
     * If we crit and we are getting penalized, just make no mod -Davenge
     */
    if( crit && mod > 1 )
-      mod += .25;
+      mod += .25 + ( ch->crit_dam / 100 );
    else if( crit && mod < 1 )
-      return dam;
+      return (int)( dam * ( 1 + ( ch->crit_dam / 100 ) ) );
    /*
     * Multiply the dam passed by our mod
     * -Davenge
@@ -3566,6 +3573,7 @@ bool get_crit( CHAR_DATA *ch, int dt )
       }
       chance = URANGE( 0, (int) chance, 75 );
    }
+   chance = URANGE( 0, (int)( chance + ch->crit_chance ), 75 );
 
    if( number_percent( ) > chance )
       return FALSE;
@@ -3915,3 +3923,4 @@ void do_forgive( CHAR_DATA *ch, const char *argument )
    }
    return;
 }
+

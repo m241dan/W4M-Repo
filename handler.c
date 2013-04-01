@@ -3721,9 +3721,9 @@ const char *affect_loc_name( int location )
       case APPLY_DOUBLEATTACK:
          return "double attack";
       case APPLY_CRITCHANCE:
-         return "critical chance";
+         return "critical chance(percent)";
       case APPLY_CRITDAMAGE:
-         return "critical hit damage";
+         return "critical hit damage(percent)";
       case APPLY_COUNTER:
          return "counter";
       case APPLY_PHASE:
@@ -6075,7 +6075,7 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
 {
    OBJ_DATA *obj;
    HIT_DATA *hit_data;
-   int str, dex, amount, counter;
+   int str, dex, amount, counter, weight;
 
    str = get_curr_str( victim );
    dex = get_curr_dex( victim );
@@ -6086,9 +6086,10 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
    {
       if( ( obj->wear_loc >= WEAR_BODY && obj->wear_loc <= WEAR_ARMS ) || obj->wear_loc == WEAR_WAIST )
       {
+         weight = ( obj->weight + body_part_weight[obj->wear_loc] );
          if( obj->weight > 0 )
          {
-            amount = weight_ratio_str( str, obj->weight );
+            amount = weight_ratio_str( str, weight );
             for( counter = 0; counter < amount; counter++ )
             {
                hit_data->locations[hit_data->max_locations] = obj->wear_loc;
@@ -6098,10 +6099,10 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
          }
          else if( obj->weight < 0 )
          {
-            amount = weight_ratio_dex( dex, obj->weight );
+            amount = weight_ratio_dex( dex, weight );
             for( counter = 0; counter < amount; counter++ )
             {
-               hit_data->locations[hit_data->max_locations] = ( obj->wear_loc + MAX_WEAR );
+               hit_data->locations[hit_data->max_locations] = ( obj->wear_loc * -1);
                hit_data->miss_locs++;
                hit_data->max_locations++;
             }
