@@ -3533,18 +3533,24 @@ const char *affect_loc_name( int location )
       case APPLY_NONE:
          return "none";
       case APPLY_STR:
+      case APPLY_PERMSTR:
          return "strength";
       case APPLY_DEX:
+      case APPLY_PERMDEX:
          return "dexterity";
       case APPLY_INT:
+      case APPLY_PERMINT:
          return "intelligence";
       case APPLY_WIS:
+      case APPLY_PERMWIS:
          return "wisdom";
       case APPLY_CON:
+      case APPLY_PERMCON:
          return "constitution";
       case APPLY_CHA:
          return "charisma";
       case APPLY_PAS:
+      case APPLY_PERMPAS:
          return "passion";
       case APPLY_SEX:
          return "sex";
@@ -3680,6 +3686,57 @@ const char *affect_loc_name( int location )
          return "teleport vnum";
       case APPLY_TELEDELAY:
          return "teleport delay";
+      case APPLY_ALIGN:
+         return "alignment";
+      case APPLY_BARENUMDIE:
+         return "bare hand numdie";
+      case APPLY_BARESIZEDIE:
+         return "bare hand sizedie";
+      case APPLY_WEPNUMDIE:
+         return "weapon numdie";
+      case APPLY_WEPSIZEDIE:
+         return "weapon sizedie";
+      case APPLY_MAGICATTACK:
+         return "magic attack";
+      case APPLY_HASTE:
+         return "haste";
+      case APPLY_MAGICDEFENSE:
+         return "magic defense";
+      case APPLY_THREAT:
+         return "threat";
+      case APPLY_POTENCY:
+         return "all ability potencies";
+      case APPLY_COOLDOWNS:
+         return "all cooldowns";
+      case APPLY_RANGE:
+         return "all auto-attack range";
+      case APPLY_REGEN:
+         return "regen";
+      case APPLY_REFRESH:
+         return "refresh";
+      case APPLY_FEEDBACKPOTENCY:
+         return "sorceror feedback potency";
+      case APPLY_DURATIONS:
+         return "all ability durations";
+      case APPLY_DOUBLEATTACK:
+         return "double attack";
+      case APPLY_CRITCHANCE:
+         return "critical chance";
+      case APPLY_CRITDAMAGE:
+         return "critical hit damage";
+      case APPLY_COUNTER:
+         return "counter";
+      case APPLY_PHASE:
+         return "phase";
+      case APPLY_BLOCK:
+         return "block";
+      case APPLY_COMBODMG:
+         return "increases combo damage";
+      case APPLY_CHARMEDDMGBOOST:
+         return "charmed damage";
+      case APPLY_CHARMEDDEFBOOST:
+         return "charmed defense";
+
    };
 
    bug( "Affect_location_name: unknown location %d.", location );
@@ -4533,9 +4590,23 @@ void showaffect( CHAR_DATA * ch, AFFECT_DATA * paf )
 
             damtype = get_value_one( paf->modifier );
             amount = get_value_two( paf->modifier );
-            snprintf( buf, MAX_STRING_LENGTH,  "&cAffects &w%s &c%s &cby &w%d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
+            snprintf( buf, MAX_STRING_LENGTH,  "Affects %s %s by %d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
             break;
-
+         case APPLY_GRANTSKILL:
+            snprintf( buf, MAX_STRING_LENGTH, "Grants wearer access to the '%s' skill.\r\n", skill_table[paf->modifier]->name );
+            break;
+         case APPLY_SKILLPOTENCY:
+            snprintf( buf, MAX_STRING_LENGTH, "Boosts '%s' potency by %d percent.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
+         case APPLY_SKILLRANGE:
+            snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' range by %droom(s).\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
+         case APPLY_SKILLCOOLDOWN:
+            snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' cooldown by %d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
+         case APPLY_SKILLDURATION:
+            snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' duration by %d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
       }
       send_to_char( buf, ch );
    }

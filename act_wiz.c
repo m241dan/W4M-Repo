@@ -1894,20 +1894,41 @@ void do_ostat( CHAR_DATA* ch, const char* argument)
 
          ch_printf_color( ch, "&cAffects &w%s &c%s &cby &w%d. (extra)\r\n", damage_table[damtype], a_types[paf->location],  amount );
       }
+      else if( paf->location == APPLY_GRANTSKILL )
+         ch_printf_color( ch, "&cGrants wearer access to the '&w%s&c' skill. (extra)\r\n", skill_table[paf->modifier]->name );
+      else if( paf->location == APPLY_SKILLPOTENCY )
+         ch_printf_color( ch, "&cAffects '&w%s&c' potency by &w%d &cpercent. (extra)\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+      else if( paf->location == APPLY_SKILLRANGE )
+         ch_printf_color( ch, "&cAffects '&w%s&c' range by &w%d&croom(s). (extra)\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+      else if( paf->location == APPLY_SKILLCOOLDOWN )
+         ch_printf_color( ch, "&cAffects '&w%s&c' cooldown by &w%d &cseconds. (extra)\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+      else if( paf->location == APPLY_SKILLDURATION )
+         ch_printf_color( ch, "&cAffects '&w%s&c' duration by &w%d &cseconds. (extra)\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
       else
          ch_printf_color( ch, "&cAffects &w%s &cby &w%d. (extra)\r\n", affect_loc_name( paf->location ), paf->modifier );
    }
    for( paf = obj->pIndexData->first_affect; paf; paf = paf->next )
    {
-      if( paf->location == APPLY_PENETRATION || paf->location == APPLY_RESISTANCE )
+      if( paf->location == APPLY_PENETRATION || paf->location == APPLY_RESISTANCE || paf->location == APPLY_DTYPEPOTENCY )
       {
          int damtype, amount;
 
-         damtype = abs( paf->modifier / 10000 );
-         amount = paf->modifier % 10000;
+         damtype = get_value_one( paf->modifier );
+         amount = get_value_two( paf->modifier );
 
          ch_printf_color( ch, "&cAffects &w%s &c%s &cby &w%d.\r\n", damage_table[damtype], a_types[paf->location],  amount );
       }
+      else if( paf->location == APPLY_GRANTSKILL )
+         ch_printf_color( ch, "&cGrants wearer access to the '&w%s&c' skill.\r\n", skill_table[paf->modifier]->name );
+      else if( paf->location == APPLY_SKILLPOTENCY )
+         ch_printf_color( ch, "&cAffects '&w%s&c' potency by &w%d &cpercent.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+      else if( paf->location == APPLY_SKILLRANGE )
+         ch_printf_color( ch, "&cAffects '&w%s&c' range by &w%d&croom(s).\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+      else if( paf->location == APPLY_SKILLCOOLDOWN )
+         ch_printf_color( ch, "&cAffects '&w%s&c' cooldown by &w%d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+      else if( paf->location == APPLY_SKILLDURATION )
+         ch_printf_color( ch, "&cAffects '&w%s&c' duration by &w%d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+
       else
          ch_printf_color( ch, "&cAffects &w%s &cby &w%d.\r\n", affect_loc_name( paf->location ), paf->modifier );
    }
