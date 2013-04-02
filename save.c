@@ -440,7 +440,7 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "HasFroMag    %d\n", ch->haste_from_magic );
    fprintf( fp, "Threat       %d\n", ch->threat );
    fprintf( fp, "WepNumDie    %d\n", ch->wepnumdie );
-   fprintf( fp, "WepSizeDoe   %d\n", ch->wepsizedie );
+   fprintf( fp, "WepSizeDie   %d\n", ch->wepsizedie );
    if( !xIS_EMPTY( ch->granted_skills ) )
       for( sn = 1; sn < num_skills; sn++ )
          if( xIS_SET( ch->granted_skills, sn ) )
