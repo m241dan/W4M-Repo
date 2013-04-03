@@ -3983,14 +3983,18 @@ void do_oset( CHAR_DATA* ch, const char* argument)
          send_to_char( "Non-weapons cannot have damage types.\r\n", ch );
          return;
       }
-      if( ( value = get_damtype( arg3 ) ) == -1 || ( value >= DAM_ALL && value <= DAM_PHYSICAL ) )
+      while( argument[0] != '\0' )
       {
-         send_to_char( "&RInvalid damage type.&w\r\n&PValid Choices: &wpierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
-         return;
+         argument = one_argument( argument, arg3 );
+         if( ( value = get_damtype( arg3 ) ) == -1 || ( value >= DAM_ALL && value <= DAM_PHYSICAL ) )
+         {
+            ch_printf( ch, "%s is an invalid damtype.\r\n", arg3 );
+            continue;
+         }
+         xTOGGLE_BIT( obj->damtype, value );
+         if( IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) )
+            xTOGGLE_BIT( obj->pIndexData->damtype, value );
       }
-      xTOGGLE_BIT( obj->damtype, value );
-      if( IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) )
-         xTOGGLE_BIT( obj->pIndexData->damtype, value );
       send_to_char( "Ok.\r\n", ch );
       return;
    }
@@ -4170,6 +4174,31 @@ void do_oset( CHAR_DATA* ch, const char* argument)
          STRFREE( obj->pIndexData->action_desc );
          obj->pIndexData->action_desc = QUICKLINK( obj->action_desc );
       }
+      return;
+   }
+
+   if( !str_cmp( arg2, "class" ) )
+   {
+      if( !can_omodify( ch, obj ) )
+         return;
+      if( !argument || argument[0] == '\0' )
+      {
+         send_to_char( "Usage: oset <object> class <classes...>\r\n", ch );
+         return;
+      }
+      while( argument[0] != '\0' )
+      {
+         argument = one_argument( argument, arg2 );
+         if( ( value = get_class_num( arg2 ) ) == -1 )
+         {
+            ch_printf( ch, "%s not a valid class.\r\n", arg2 );
+            continue;
+         }
+         xTOGGLE_BIT( obj->Class, value );
+         if( IS_OBJ_STAT( obj, ITEM_PROTOTYPE ) )
+            xTOGGLE_BIT( obj->pIndexData->Class, value );
+      }
+      send_to_char( "Ok.\r\n", ch );
       return;
    }
 

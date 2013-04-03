@@ -1800,6 +1800,7 @@ void do_ostat( CHAR_DATA* ch, const char* argument)
    char arg[MAX_INPUT_LENGTH];
    AFFECT_DATA *paf;
    OBJ_DATA *obj;
+   int x;
 
    set_char_color( AT_CYAN, ch );
 
@@ -1820,6 +1821,15 @@ void do_ostat( CHAR_DATA* ch, const char* argument)
    ch_printf_color( ch, "&cName: &C%s\r\n", obj->name );
    ch_printf_color( ch, "&cVnum: &w%d  ", obj->pIndexData->vnum );
    ch_printf_color( ch, "&cType: &w%s  ", item_type_name( obj ) );
+   ch_printf_color( ch, "\r\n&cIndex Classes:" );
+   for( x = 0; x < MAX_CLASS; x++ )
+      if( xIS_SET( obj->pIndexData->Class, x ) )
+         ch_printf_color( ch, " &w%s&c,", class_table[x]->who_name );
+   ch_printf_color( ch, "\r\n&cObject Classes:" );
+   for( x = 0; x < MAX_CLASS; x++ )
+      if( xIS_SET( obj->Class, x ) )
+         ch_printf_color( ch, " &w%s&c,", class_table[x]->who_name );
+   ch_printf_color( ch, "\r\n" );
    ch_printf_color( ch, "&cCount:  &w%d  ", obj->pIndexData->count );
    ch_printf_color( ch, "&cGcount: &w%d\r\n", obj->count );
    ch_printf_color( ch, "&cSerial#: &w%d  ", obj->serial );
@@ -1997,7 +2007,6 @@ void do_vstat( CHAR_DATA* ch, const char* argument)
                   char buf[MAX_STRING_LENGTH];
                   int started = 0;
                   int x;
-
                   buf[0] = '\0';
                   for( x = MAX_BITS; x > 0; --x )
                   {

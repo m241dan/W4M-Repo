@@ -3115,7 +3115,7 @@ ch_ret spell_identify( int sn, int level, CHAR_DATA * ch, void *vo )
    SKILLTYPE *sktmp;
    SKILLTYPE *skill = get_skilltype( sn );
    const char *name;
-
+   int x;
    if( target_name[0] == '\0' )
    {
       send_to_char( "What should the spell be cast upon?\r\n", ch );
@@ -3135,6 +3135,11 @@ ch_ret spell_identify( int sn, int level, CHAR_DATA * ch, void *vo )
          ch_printf( ch, ", with wear location:  %s\r\n", flag_string( obj->wear_flags, w_flags ) );
       else
          send_to_char( ".\r\n", ch );
+      ch_printf( ch, "Class To Use:" );
+      for( x = 0; x < MAX_CLASS; x++ )
+         if( xIS_SET( obj->Class, x ) )
+            ch_printf( ch, " %s,", class_table[x]->who_name );
+      send_to_char( "\r\n", ch );
       ch_printf( ch,
                  "Special properties:  %s\r\nIts weight is %d, value is %d, and level is %d.\r\n",
                  extra_bit_name( &obj->extra_flags ),
