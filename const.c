@@ -753,12 +753,12 @@ void apply_class_base_stat_mod( CHAR_DATA *ch )
          ch->mod_int = -1;
          return;
       case CLASS_DRUID:
-         ch->mod_str = -1;
-         ch->mod_dex = 1;
-         ch->mod_con = 1;
-         ch->mod_int = -2;
+         ch->mod_str = -2;
+         ch->mod_dex = 2;
+         ch->mod_con = 2;
+         ch->mod_int = -3;
          ch->mod_wis = 2;
-         ch->mod_pas = 2;
+         ch->mod_pas = -1;
          return;
    }
 }
