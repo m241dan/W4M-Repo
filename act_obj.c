@@ -1445,10 +1445,14 @@ void wear_obj( CHAR_DATA * ch, OBJ_DATA * obj, bool fReplace, short wear_bit )
    short bit, tmp;
 
    separate_obj( obj );
-   if( get_trust( ch ) < obj->level )
+   if( !IS_IMMORTAL( ch ) && !xIS_SET( obj->Class, ch->Class ) )
    {
-      ch_printf( ch, "You must be level %d to use this object.\r\n", obj->level );
-      act( AT_ACTION, "$n tries to use $p, but is too inexperienced.", ch, obj, NULL, TO_ROOM );
+      send_to_char( "You can't wear that.\r\n", ch );
+      return;
+   }
+   if( !IS_IMMORTAL( ch ) && ch->level < obj->level )
+   {
+      send_to_char( "You can't wear that yet.\r\n", ch );
       return;
    }
 
@@ -1881,13 +1885,13 @@ void wear_obj( CHAR_DATA * ch, OBJ_DATA * obj, bool fReplace, short wear_bit )
             {
                if( !can_dual( ch ) )
                   return;
-
+/*
                if( get_obj_weight( obj ) + get_obj_weight( tmpobj ) > str_app[get_curr_str( ch )].wield )
                {
                   send_to_char( "It is too heavy for you to wield.\r\n", ch );
                   return;
                }
-
+*/
                if( mw || dw )
                {
                   send_to_char( "You're already wielding two weapons.\r\n", ch );

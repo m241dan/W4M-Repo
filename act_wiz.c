@@ -3319,48 +3319,30 @@ void do_minvoke( CHAR_DATA* ch, const char* argument)
 
 void do_oinvoke( CHAR_DATA* ch, const char* argument)
 {
-   char arg1[MAX_INPUT_LENGTH], arg2[MAX_INPUT_LENGTH], arg3[MAX_INPUT_LENGTH];
+   char arg1[MAX_INPUT_LENGTH], arg2[MAX_INPUT_LENGTH];
    OBJ_INDEX_DATA *pObjIndex;
    OBJ_DATA *obj;
-   int vnum, level, quantity = 1;
+   int vnum, quantity = 1;
 
    set_char_color( AT_IMMORT, ch );
 
    argument = one_argument( argument, arg1 );
    argument = one_argument( argument, arg2 );
-   argument = one_argument( argument, arg3 );
    if( arg1[0] == '\0' )
    {
-      send_to_char( "Syntax: oinvoke <vnum> <level> <quantity>\r\n", ch );
+      send_to_char( "Syntax: oinvoke <vnum> <quantity>\r\n", ch );
       return;
    }
 
-   if( arg2[0] == '\0' )
-      level = get_trust( ch );
-   else
+   if( arg2[0] != '\0' )
    {
       if( !is_number( arg2 ) )
       {
-         send_to_char( "Syntax: oinvoke <vnum> <level>\r\n", ch );
-         return;
-      }
-      level = atoi( arg2 );
-      if( level < 0 || level > get_trust( ch ) )
-      {
-         send_to_char( "Limited to your trust level.\r\n", ch );
-         return;
-      }
-   }
-
-   if( arg3[0] != '\0' )
-   {
-      if( !is_number( arg3 ) )
-      {
-         send_to_char( "Syntax: oinvoke <vnum> <level> <quantity>\r\n", ch );
+         send_to_char( "Syntax: oinvoke <vnum> <quantity>\r\n", ch );
          return;
       }
 
-      quantity = atoi( arg3 );
+      quantity = atoi( arg2 );
 
       if( quantity < 1 || quantity > MAX_OINVOKE_QUANTITY )
       {
@@ -3419,20 +3401,7 @@ void do_oinvoke( CHAR_DATA* ch, const char* argument)
       return;
    }
 
-   if( level == 0 )
-   {
-      AREA_DATA *temp_area;
-
-      if( ( temp_area = get_area_obj( pObjIndex ) ) == NULL )
-         level = ch->level;
-      else
-      {
-         level = generate_itemlevel( temp_area, pObjIndex );
-         level = URANGE( 0, level, LEVEL_AVATAR );
-      }
-   }
-
-   obj = create_object( pObjIndex, level );
+   obj = create_object( pObjIndex, pObjIndex->level );
 
    if( quantity > 1 && ( !IS_OBJ_STAT( obj, ITEM_MULTI_INVOKE ) ) )
    {

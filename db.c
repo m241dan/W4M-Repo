@@ -2825,6 +2825,7 @@ OBJ_DATA *create_object( OBJ_INDEX_DATA * pObjIndex, int level )
    obj->pIndexData = pObjIndex;
    obj->in_room = NULL;
    obj->level = level;
+   obj->Class = pObjIndex->Class;
    obj->wear_loc = -1;
    obj->count = 1;
    cur_obj_serial = UMAX( ( cur_obj_serial + 1 ) & ( BV30 - 1 ), 1 );

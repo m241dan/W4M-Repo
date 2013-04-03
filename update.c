@@ -436,28 +436,6 @@ void check_alignment( CHAR_DATA * ch )
       send_to_char( "Your actions have been incompatible with the ideals of your race.  This troubles you.", ch );
    }
 
-   /*
-    * Paladins need some restrictions, this is where we crunch 'em -h 
-    */
-   if( ch->Class == CLASS_PALADIN )
-   {
-      if( ch->alignment < 250 )
-      {
-         set_char_color( AT_BLOOD, ch );
-         send_to_char( "You are wracked with guilt and remorse for your craven actions!\r\n", ch );
-         act( AT_BLOOD, "$n prostrates $mself, seeking forgiveness from $s Lord.", ch, NULL, NULL, TO_ROOM );
-         worsen_mental_state( ch, 15 );
-         return;
-      }
-      if( ch->alignment < 500 )
-      {
-         set_char_color( AT_BLOOD, ch );
-         send_to_char( "As you betray your faith, your mind begins to betray you.\r\n", ch );
-         act( AT_BLOOD, "$n shudders, judging $s actions unworthy of a Paladin.", ch, NULL, NULL, TO_ROOM );
-         worsen_mental_state( ch, 6 );
-         return;
-      }
-   }
 }
 
 /*
