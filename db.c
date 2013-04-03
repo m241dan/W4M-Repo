@@ -6751,7 +6751,10 @@ void fread_fuss_object( FILE * fp, AREA_DATA * tarea )
                break;
             }
             break;
-
+         case 'C':
+            KEY( "Class", pObjIndex->Class, fread_bitvector( fp ) );
+         case 'D':
+            KEY( "DamType", pObjIndex->damtype, fread_bitvector( fp ) );
          case 'F':
             if( !str_cmp( word, "Flags" ) )
             {

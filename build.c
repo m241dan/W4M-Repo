@@ -7108,7 +7108,8 @@ void fwrite_fuss_object( FILE * fpout, OBJ_INDEX_DATA * pObjIndex, bool install 
       fprintf( fpout, "Flags    %s~\n", ext_flag_string( &pObjIndex->extra_flags, o_flags ) );
    if( pObjIndex->wear_flags )
       fprintf( fpout, "WFlags   %s~\n", flag_string( pObjIndex->wear_flags, w_flags ) );
-
+   if( !xIS_EMPTY( pObjIndex->Class ) )
+      fprintf( fpout, "Class    %s\n", print_bitvector( &pObjIndex->Class ) );
    val0 = pObjIndex->value[0];
    val1 = pObjIndex->value[1];
    val2 = pObjIndex->value[2];
@@ -7187,6 +7188,7 @@ void fwrite_fuss_object( FILE * fpout, OBJ_INDEX_DATA * pObjIndex, bool install 
          break;
       case ITEM_WEAPON:
          fprintf( fpout, "Range   %d\n", pObjIndex->range );
+         fprintf( fpout, "DamType %s\n", print_bitvector( &pObjIndex->damtype ) );
          break;
    }
 

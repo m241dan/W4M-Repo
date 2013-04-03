@@ -2680,6 +2680,7 @@ struct obj_index_data
    short item_type;
    int range;
    EXT_BV damtype;
+   EXT_BV Class;
 };
 
 /*
@@ -2724,6 +2725,7 @@ struct obj_data
    int serial; /* serial number         */
    int room_vnum; /* hotboot tracker */
    EXT_BV damtype;
+   EXT_BV Class;
 };
 
 /*

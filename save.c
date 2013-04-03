@@ -737,6 +737,8 @@ void fwrite_obj( CHAR_DATA * ch, OBJ_DATA * obj, FILE * fp, int iNest, short os_
       fprintf( fp, "ExtraFlags   %s\n", print_bitvector( &obj->extra_flags ) );
    if( obj->wear_flags != obj->pIndexData->wear_flags )
       fprintf( fp, "WearFlags    %d\n", obj->wear_flags );
+   if( !xIS_EMPTY( obj->Class ) )
+      fprintf( fp, "Class    %s\n", print_bitvector( &obj->Class ) );
    wear_loc = -1;
    for( wear = 0; wear < MAX_WEAR; wear++ )
    {
@@ -2333,6 +2335,7 @@ void fread_obj( CHAR_DATA * ch, FILE * fp, short os_type )
             break;
 
          case 'C':
+            KEY( "Class", obj->Class, fread_bitvector( fp ) );
             KEY( "Cost", obj->cost, fread_number( fp ) );
             KEY( "Count", obj->count, fread_number( fp ) );
             break;
