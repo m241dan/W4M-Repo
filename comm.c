@@ -793,14 +793,14 @@ void game_loop( void )
          {
             FD_CLR( d->descriptor, &in_set );
             FD_CLR( d->descriptor, &out_set );
-            if( d->character && ( d->connected == CON_PLAYING || d->connected == CON_EDITING ) )
+            if( d->character && ( d->connected == CON_PLAYING || d->connected == CON_EDITING || d->connected == CON_QUEST_OLC || d->connected == CON_TALKING ) )
                save_char_obj( d->character );
             d->outtop = 0;
             close_socket( d, TRUE );
             continue;
          }
-         else if( ( !d->character && d->idle > 360 )  /* 2 mins */
-                  || ( d->connected != CON_PLAYING && d->idle > 1200 )  /* 5 mins */
+         else if( ( !d->character && d->idle > 720 )  /* 2 mins */
+                  || ( d->connected != CON_PLAYING && d->idle > 2400 )  /* 5 mins */
                   || d->idle > 28800 ) /* 2 hrs  */
          {
             write_to_descriptor( d, "Idle timeout... disconnecting.\r\n", 0 );
