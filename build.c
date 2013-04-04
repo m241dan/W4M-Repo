@@ -1539,7 +1539,7 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       send_to_char( "  gold hp mana move practice align race\r\n", ch );
       send_to_char( "  attack armor affected level haste haste_from_magic\r\n", ch );
       send_to_char( "  thirst drunk full blood flags range\r\n", ch );
-      send_to_char( "  color damtype\r\n", ch );
+      send_to_char( "  color damtype addloot remloot\r\n", ch );
       send_to_char( "  pos defpos part (see BODYPARTS)\r\n", ch );
       send_to_char( "  sav1 sav2 sav4 sav4 sav5 (see SAVINGTHROWS)\r\n", ch );
       send_to_char( "  resistant immune susceptible (see RIS)\r\n", ch );
@@ -2024,6 +2024,8 @@ void do_mset( CHAR_DATA* ch, const char* argument)
          return;
       }
 
+       argument = one_argument( argument, arg3 );
+       value = atoi( arg3 );
        argument = one_argument( argument, arg3 );
        percent = atoi( arg3 );
        amount = atoi( argument );
@@ -7071,7 +7073,7 @@ void fwrite_loot_data( FILE *fpout, LOOT_DATA * loot )
 {
    fprintf( fpout, "%s", "#LOOTDATA\n\n" );
    fprintf( fpout, "Vnum        %d\n", loot->vnum );
-   fprintf( fpout, "Perecent    %d\n", loot->percent );
+   fprintf( fpout, "Percent     %d\n", loot->percent );
    fprintf( fpout, "Amount      %d\n", loot->amount );
    fprintf( fpout, "%s", "#ENDLOOTDATA\n\n" );
    return;

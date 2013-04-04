@@ -2286,8 +2286,12 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
       pager_printf_color( ch, "&cSusceptible: &w%s\r\n", flag_string( victim->susceptible, ris_flags ) );
    if( IS_NPC( victim ) )
    {
+      LOOT_DATA *loot;
       pager_printf_color( ch, "&cAttacks    : &w%s\r\n", ext_flag_string( &victim->attacks, attack_flags ) );
       pager_printf_color( ch, "&cDefenses   : &w%s\r\n", ext_flag_string( &victim->defenses, defense_flags ) );
+
+      for( loot = victim->pIndexData->first_loot; loot; loot = loot->next )
+         pager_printf_color( ch, "&cLoot: Vnum &w%d &cPercent &w%d &cAmount &w%d\r\n", loot->vnum, loot->percent, loot->amount );
    }
 
    for( paf = victim->first_affect; paf; paf = paf->next )
