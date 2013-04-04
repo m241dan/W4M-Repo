@@ -103,6 +103,8 @@ void advance_level( CHAR_DATA * ch, bool change_class )
       set_char_color( AT_WHITE, ch );
       send_to_char( buf, ch );
    }
+   if( ( ch->level % 2 ) == 0 )
+      send_to_char( "You gain a stat point!\r\n", ch );
 }
 
 void gain_exp( CHAR_DATA * ch, int gain )

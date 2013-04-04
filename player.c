@@ -1144,7 +1144,15 @@ void do_stat( CHAR_DATA* ch, const char* argument)
    }
 
    if( increase )
-      ch->class_data[ch->Class]->stat[value]++;
+   {
+      if( available_points > 0 )
+         ch->class_data[ch->Class]->stat[value]++;
+      else
+      {
+         send_to_char( "You don't have any available points!\r\n", ch );
+         return;
+      }
+   }
    else
       ch->class_data[ch->Class]->stat[value]--;
    reset_stats( ch );
