@@ -1820,26 +1820,9 @@ void do_mset( CHAR_DATA* ch, const char* argument)
 
    if( !str_cmp( arg2, "class" ) )
    {
-      int x;
       if( !can_mmodify( ch, victim ) )
          return;
-      if( value == -1 )
-      {
-         for( x = 0; x < MAX_CLASS; x++ )
-         {
-            if( !str_cmp( arg3, npc_class[x] ) )
-            {
-               value = x;
-               break;
-            }
-            if( x == MAX_CLASS )
-            {
-               send_to_char( "Not a valid class name.\r\n", ch );
-               return;
-            }
-         }
-      }
-      else if( value < 0 || value > MAX_CLASS )
+      if( ( value = get_class_num( arg3 ) ) == -1 )
       {
          send_to_char( "Not a valid class number.\r\n", ch );
          return;
@@ -12665,6 +12648,7 @@ void reward_player( CHAR_DATA *ch, PATH_DATA *path )
          CREATE( paf, AFFECT_DATA, 1 );
          ch_printf( ch, "You receive %d %s as a reward.\r\n", reward->amount, a_types[reward->type] );
          paf->location = reward->type;
+         paf->type = -1;
          paf->modifier = reward->amount;
          LINK( paf, ch->class_data[ch->Class]->first_quest_affect, ch->class_data[ch->Class]->last_quest_affect, next, prev );
          affect_modify( ch, paf, TRUE );

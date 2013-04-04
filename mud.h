@@ -5390,7 +5390,10 @@ void free_otracker( OBJECTIVE_TRACKER *objective );
 bool has_completed_quest( CHAR_DATA *ch, QUEST_DATA *quest );
 int get_available_stat_points( CHAR_DATA *ch );
 int get_spent_stat_points( CHAR_DATA *ch );
-
+void display_statallocation( CHAR_DATA * ch );
+void reset_stats( CHAR_DATA *ch );
+int get_stat_num_from_short_name( const char *argument );
+void clear_stat_array( CHAR_DATA *ch );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

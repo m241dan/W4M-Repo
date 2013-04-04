@@ -6185,56 +6185,21 @@ double get_round( CHAR_DATA *ch )
 void switch_class( CHAR_DATA *ch, int Class )
 {
    OBJ_DATA *obj;
-   AFFECT_DATA *paf, *paf_next;
    int counter;
-
-   if( ch->class_data[ch->Class]->level != ch->level )
-      ch->class_data[ch->Class]->level = ch->level;
 
    for( obj = ch->first_carrying; obj; obj = obj->next_content )
       if( obj->wear_loc > -1 && obj->wear_loc < MAX_WEAR )
          unequip_char( ch, obj );
 
-   /* Remove all Affects */
-
-   for( paf = ch->first_affect; paf; paf = paf_next )
-   {
-      paf_next = paf->next;
-      affect_modify( ch, paf, FALSE );
-      UNLINK( paf, ch->first_affect, ch->last_affect, next, prev );
-   }
-
-   /* Re-Add any room affets */
-
-   for( paf = ch->in_room->first_affect; paf; paf = paf->next )
-   {
-      affect_modify( ch, paf, TRUE );
-      LINK( paf, ch->first_affect, ch->last_affect, next, prev );
-   }
-
    ch->level = 1;
    ch->Class = Class;
 
-   ch->max_hit = base_hp[Class];
-   ch->max_mana = base_mana[Class];
-   ch->max_move= base_move[Class];
-   ch->hit = ch->max_hit;
-   ch->mana = ch->max_mana;
-   ch->move = ch->max_move;
+   reset_stats( ch );
 
-   apply_class_base_stat_mod( ch );
-   apply_class_stats( ch );
    for( counter = 1; counter < ch->class_data[Class]->level; counter++ )
    {
       ch->level++;
       advance_level( ch, TRUE );
-   }
-   /* Add Quest Affects from Quests done on the new class */
-
-   for( paf = ch->class_data[ch->Class]->first_quest_affect; paf; paf = paf->next )
-   {
-      LINK( paf, ch->first_affect, ch->last_affect, next, prev );
-      affect_modify( ch, paf, TRUE );
    }
    return;
 }
@@ -6539,4 +6504,87 @@ int get_spent_stat_points( CHAR_DATA *ch )
       spent += ch->class_data[ch->Class]->stat[count];
 
    return spent;
+}
+
+void display_statallocation( CHAR_DATA * ch )
+{
+   int available_points, spent_points;
+   int x;
+
+   available_points = get_available_stat_points( ch );
+   spent_points = get_spent_stat_points( ch );
+
+
+   ch_printf( ch, "Avaialble Stat Points: %-2.2d Stat Points Spent: %-2.2d\r\n",  available_points, spent_points );
+   send_to_char( "You have spent points in...:\r\n", ch );
+   send_to_char( "-------------------------------------\r\n|", ch );
+   for( x = 0; x < MAX_STAT; x++ )
+      ch_printf( ch, " %-3.3s |", short_stat_names[x] );
+   send_to_char( "\r\n-------------------------------------\r\n|", ch );
+   for( x = 0; x < MAX_STAT; x++ )
+      ch_printf( ch, " %3.3d |", ch->class_data[ch->Class]->stat[x] );
+   send_to_char( "\r\n-------------------------------------\r\n", ch );
+   return;
+}
+
+void reset_stats( CHAR_DATA *ch )
+{
+   AFFECT_DATA *paf, *paf_next;
+
+   /* Remove all Affects */
+
+   for( paf = ch->first_affect; paf; paf = paf_next )
+   {
+      paf_next = paf->next;
+      affect_modify( ch, paf, FALSE );
+      UNLINK( paf, ch->first_affect, ch->last_affect, next, prev );
+   }
+
+   /* Remove Quest Affects */
+   for( paf = ch->class_data[ch->Class]->first_quest_affect; paf; paf = paf->next )
+      affect_modify( ch, paf, FALSE );
+
+   /* Re-Add any room affets */
+
+   for( paf = ch->in_room->first_affect; paf; paf = paf->next )
+   {
+      affect_modify( ch, paf, TRUE );
+      LINK( paf, ch->first_affect, ch->last_affect, next, prev );
+   }
+
+   ch->max_hit = base_hp[ch->Class];
+   ch->max_mana = base_mana[ch->Class];
+   ch->max_move= base_move[ch->Class];
+   ch->hit = ch->max_hit;
+   ch->mana = ch->max_mana;
+   ch->move = ch->max_move;
+
+   apply_class_base_stat_mod( ch );
+   apply_class_stats( ch );
+
+   /* Add Quest Affects from Quests done on the new class */
+   for( paf = ch->class_data[ch->Class]->first_quest_affect; paf; paf = paf->next )
+      affect_modify( ch, paf, TRUE );
+   return;
+}
+
+int get_stat_num_from_short_name( const char *argument )
+{
+   int x;
+
+   for( x = 0; x < MAX_STAT; x++ )
+      if( !str_cmp( strlower( argument ), short_stat_names[x] ) )
+         return x;
+
+   return -1;
+}
+
+void clear_stat_array( CHAR_DATA *ch )
+{
+   int x;
+
+   for( x = 0; x < MAX_STAT; x++ )
+      ch->class_data[ch->Class]->stat[x] = 0;
+
+   return;
 }

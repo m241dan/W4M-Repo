@@ -1084,9 +1084,10 @@ void do_statreport( CHAR_DATA* ch, const char* argument)
 
 void do_stat( CHAR_DATA* ch, const char* argument)
 {
-//   char arg[MAX_STRING_LENGTH], arg2[MAX_STRING_LENGTH];
+   char arg[MAX_STRING_LENGTH], arg2[MAX_STRING_LENGTH];
+   bool increase = FALSE;
    int available_points, spent_points;
-   int x;
+   int value;
 
    if( IS_NPC( ch ) )
    {
@@ -1108,16 +1109,46 @@ void do_stat( CHAR_DATA* ch, const char* argument)
       ch_printf( ch, "Your current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
                  get_curr_str( ch ), get_curr_wis( ch ), get_curr_int( ch ),
                  get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_pas( ch ) );
-      ch_printf( ch, "Avaialble Stat Points: %-2.2d Stat Points Spent: %-2.2d\r\n",  available_points, spent_points );
-      send_to_char( "You have spent points in...:\r\n| ", ch );
-      send_to_char( "\r\n----------------------------------------------------------------------------\r\n", ch );
-      for( x = 0; x < MAX_STAT; x++ )
-         ch_printf( ch, "| %-3.3s |", short_stat_names[x] );
-      send_to_char( "\r\n----------------------------------------------------------------------------\r\n", ch );
-      for( x = 0; x < MAX_STAT; x++ )
-         ch_printf( ch, "| %-2.2d  |", ch->class_data[ch->Class]->stat[x] );
-      send_to_char( "\r\n----------------------------------------------------------------------------\r\n", ch );
+      display_statallocation( ch );
+      return;
    }
+
+   if( !str_cmp( strlower( argument ), "reset" ) )
+   {
+      clear_stat_array( ch );
+      reset_stats( ch );
+      display_statallocation( ch );
+      return;
+   }
+
+   argument = one_argument( argument, arg );
+   argument = one_argument( argument, arg2 );
+
+   if( arg[0] == '\0' || arg2[0] == '\0' )
+   {
+      send_to_char( "Proper Usage: stat <str/dex/con/etc...> Increase/Decrease\r\n              Stat reset\r\n", ch );
+      return;
+   }
+
+   if( ( value = get_stat_num_from_short_name( arg ) ) == -1 )
+   {
+      send_to_char( "Invalid stat: str, dex, con, int, wis or pas?\r\n", ch );
+      return;
+   }
+   if( !str_cmp( strlower( arg2 ), "increase" ) )
+      increase = TRUE;
+   else if( str_cmp( strlower( arg2 ), "decrease" ) )
+   {
+      send_to_char( "Increase or decrease?\r\n", ch );
+      return;
+   }
+
+   if( increase )
+      ch->class_data[ch->Class]->stat[value]++;
+   else
+      ch->class_data[ch->Class]->stat[value]--;
+   reset_stats( ch );
+   display_statallocation( ch );
    return;
 }
 
