@@ -2982,6 +2982,8 @@ void do_talk( CHAR_DATA *ch, const char* argument )
    create_conversation( ch, mob, INIT_CONVERSATION );
    ch->desc->connected = CON_TALKING;
    update_quests( ch, mob, NULL, TYPE_MOB_TALK_GENERAL, 0 );
+   if( ch->desc->connected == CON_PLAYING )
+      return;
    display_branch( ch );
    return;
 }

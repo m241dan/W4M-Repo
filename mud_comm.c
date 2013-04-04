@@ -3426,7 +3426,6 @@ void do_mp_endconversation( CHAR_DATA* ch, const char *argument )
          return;
       if( is_talking( victim ) )
          stop_talking( victim );
-      ch_printf( victim, "Your conversation with %s has ended!\r\n", ch->name );
    }
    if( !str_cmp( arg, "all" ) )
    {
@@ -3435,10 +3434,7 @@ void do_mp_endconversation( CHAR_DATA* ch, const char *argument )
          if( IS_NPC( victim ) )
             continue;
          if( is_talking( victim ) )
-         {
             stop_talking( victim );
-            ch_printf( victim, "Your conversation with %s has ended!\r\n", ch->name );
-         }
       }
    }
 }
