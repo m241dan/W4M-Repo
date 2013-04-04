@@ -7101,6 +7101,41 @@ void fread_fuss_mobprog( FILE * fp, MPROG_DATA * mprg, MOB_INDEX_DATA * prog_tar
    }
 }
 
+void fread_fuss_lootdata( FILE * fp, LOOT_DATA *loot )
+{
+   bool fMatch;
+   for( ;; )
+   {
+      const char *word = ( feof( fp ) ? "#ENDLOOTDATA" : fread_word( fp ) );
+
+      if( word[0] == '\0' )
+      {
+         log_printf( "%s: EOF encountered reading file!", __FUNCTION__ );
+         word = "#ENDLOOTDATA";
+      }
+
+      switch( word[0] )
+      {
+         default:
+            log_printf( "%s: no match: %s", __FUNCTION__, word );
+            fread_to_eol( fp );
+            break;
+         case '#':
+            if( !str_cmp( word, "#ENDLOOTDATA" ) )
+               return;
+         case 'A':
+            KEY( "Amount", loot->amount, fread_number( fp ) );
+            break;
+         case 'P':
+            KEY( "Percent", loot->percent, fread_number( fp ) );
+            break;
+         case 'V':
+            KEY( "Vnum", loot->vnum, fread_number( fp ) );
+            break;
+      }
+   }
+}
+
 void fread_fuss_talkdata( FILE * fp, TALK_DATA *talk )
 {
    bool fMatch;
@@ -7111,7 +7146,7 @@ void fread_fuss_talkdata( FILE * fp, TALK_DATA *talk )
       if( word[0] == '\0' )
       {
          log_printf( "%s: EOF encountered reading file!", __FUNCTION__ );
-         word = "#ENDMOBILE";
+         word = "#ENDTALKDATA";
       }
 
       switch( word[0])
@@ -7179,6 +7214,14 @@ void fread_fuss_mobile( FILE * fp, AREA_DATA * tarea )
                CREATE( talk, TALK_DATA, 1 );
                fread_fuss_talkdata( fp, talk );
                LINK( talk, pMobIndex->first_talk, pMobIndex->last_talk, next, prev );
+               break;
+            }
+            if( !str_cmp( word, "#LOOTDATA" ) )
+            {
+               LOOT_DATA *loot;
+               CREATE( loot, LOOT_DATA, 1 );
+               fread_fuss_lootdata( fp, loot );
+               LINK( loot, pMobIndex->first_loot, pMobIndex->last_loot, next, prev );
                break;
             }
             if( !str_cmp( word, "#ENDMOBILE" ) )

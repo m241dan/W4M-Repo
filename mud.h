@@ -171,6 +171,7 @@ typedef struct conversation_data CONVERSATION_DATA;
 typedef struct talk_data TALK_DATA;
 typedef struct gthreat_data GTHREAT_DATA;
 typedef struct qtalk_data QTALK_DATA;
+typedef struct loot_data LOOT_DATA;
 
 /* Quest system Typedefs -Davenge */
 
@@ -2243,6 +2244,8 @@ struct mob_index_data
    TALK_DATA *first_talk;
    TALK_DATA *last_talk;
    EXT_BV color;
+   LOOT_DATA *first_loot;
+   LOOT_DATA *last_loot;
 };
 
 #define INIT_CONVERSATION     1
@@ -2726,6 +2729,15 @@ struct obj_data
    int room_vnum; /* hotboot tracker */
    EXT_BV damtype;
    EXT_BV Class;
+};
+
+struct loot_data
+{
+   LOOT_DATA *next;
+   LOOT_DATA *prev;
+   int vnum;
+   int percent;
+   int amount;
 };
 
 /*

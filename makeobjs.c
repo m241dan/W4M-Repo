@@ -122,10 +122,13 @@ void make_scraps( OBJ_DATA * obj )
 OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer )
 {
    char buf[MAX_STRING_LENGTH];
+   LOOT_DATA *loot;
    OBJ_DATA *corpse;
    OBJ_DATA *obj;
    OBJ_DATA *obj_next;
+   OBJ_INDEX_DATA *obj_index;
    const char *name;
+   int x;
 
    if( IS_NPC( ch ) )
    {
@@ -141,6 +144,18 @@ OBJ_DATA *make_corpse( CHAR_DATA * ch, CHAR_DATA * killer )
          }
          obj_to_obj( create_money( ch->gold ), corpse );
          ch->gold = 0;
+      }
+
+      for( loot = ch->pIndexData->first_loot; loot; loot = loot->next )
+      {
+         if( ( obj_index = get_obj_index( loot->vnum ) ) == NULL )
+         {
+            bug( "%s: trying to load item %d but it doesn't exist.", __FUNCTION__, loot->vnum );
+            continue;
+         }
+         if( number_percent( ) <= loot->percent )
+            for( x = 0; x < loot->amount; x++ )
+               obj_to_obj( create_object( obj_index, obj_index->level ), corpse ); 
       }
 
 /* Cannot use these!  They are used.
