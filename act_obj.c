@@ -1208,7 +1208,7 @@ void do_give( CHAR_DATA* ch, const char* argument)
    act( AT_ACTION, "$n gives you $p.", ch, obj, victim, TO_VICT );
    act( AT_ACTION, "You give $p to $N.", ch, obj, victim, TO_CHAR );
    obj = obj_to_char( obj, victim );
-   update_quests( victim, NULL, obj, TYPE_OBJ_RECEIVE, 0 );
+   update_quests( ch, victim, obj, TYPE_OBJ_RECEIVE, 0 );
    mprog_give_trigger( victim, ch, obj );
    if( IS_SET( sysdata.save_flags, SV_GIVE ) && !char_died( ch ) )
       save_char_obj( ch );
