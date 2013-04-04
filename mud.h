@@ -271,6 +271,7 @@ extern int MAX_PC_RACE;
 extern int MAX_PC_CLASS;
 extern bool mud_down;
 
+#define MAX_STAT                    6
 #define MAX_DISTANCE		   50
 #define MAX_LEVEL		   65
 #define MAX_CLAN		   50
@@ -2513,6 +2514,7 @@ struct class_data
    short level;
    AFFECT_DATA *first_quest_affect;
    AFFECT_DATA *last_quest_affect;
+   int stat[MAX_STAT];
 };
 
 struct target_data

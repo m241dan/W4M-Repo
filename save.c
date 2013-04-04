@@ -351,6 +351,7 @@ void fwrite_class( CHAR_DATA *ch, FILE *fp )
 {
    AFFECT_DATA *paf;
    int class_id;
+   int x;
 
    fprintf( fp, "#CLASS\n" );
 
@@ -361,6 +362,10 @@ void fwrite_class( CHAR_DATA *ch, FILE *fp )
       for( paf = ch->class_data[class_id]->first_quest_affect; paf; paf = paf->next )
          fprintf( fp, "Affect       %3d %5f %3d %3d %s\n",
                   paf->type, paf->duration, paf->modifier, paf->location, print_bitvector( &paf->bitvector ) );
+      fprintf( fp, "Stat        " );
+      for( x = 0; x < MAX_STAT; x++ )
+         fprintf( fp, " %d", ch->class_data[class_id]->stat[x] );
+      fprintf( fp, "\n" );
    }
    fprintf( fp, "\nEnd\n\n" );
 }
@@ -1174,6 +1179,16 @@ void fread_class( CHAR_DATA *ch, FILE * fp, bool preload )
                }
                else
                   ch->class_data[class_id]->level = fread_number( fp );
+               fMatch = TRUE;
+               break;
+            }
+            break;
+         case 'S':
+            if( !strcmp( word, "Stat" ) )
+            {
+               int x;
+               for( x = 0; x < MAX_STAT; x++ )
+                  ch->class_data[class_id]->stat[x] = fread_number( fp );
                fMatch = TRUE;
                break;
             }
