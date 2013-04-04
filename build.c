@@ -8937,6 +8937,7 @@ void mpedit( CHAR_DATA * ch, MPROG_DATA * mprg, int mptype, const char *argument
          STRFREE( mprg->arglist );
       mprg->arglist = STRALLOC( argument );
    }
+   ch->tempnum = ch->substate;
    ch->substate = SUB_MPROG_EDIT;
    ch->dest_buf = mprg;
    if( !mprg->comlist )
