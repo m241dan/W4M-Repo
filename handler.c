@@ -6223,6 +6223,7 @@ void switch_class( CHAR_DATA *ch, int Class )
    ch->move = ch->max_move;
 
    apply_class_base_stat_mod( ch );
+   apply_class_stats( ch );
    for( counter = 1; counter < ch->class_data[Class]->level; counter++ )
    {
       ch->level++;
@@ -6237,6 +6238,18 @@ void switch_class( CHAR_DATA *ch, int Class )
    }
    return;
 }
+
+void apply_class_stats( CHAR_DATA *ch )
+{
+   ch->mod_str += ch->class_data[ch->Class]->stat[STAT_STR];
+   ch->mod_dex += ch->class_data[ch->Class]->stat[STAT_DEX];
+   ch->mod_con += ch->class_data[ch->Class]->stat[STAT_CON];
+   ch->mod_int += ch->class_data[ch->Class]->stat[STAT_INT];
+   ch->mod_wis += ch->class_data[ch->Class]->stat[STAT_WIS];
+   ch->mod_pas += ch->class_data[ch->Class]->stat[STAT_PAS];
+   return;
+}
+
 
 int get_class_num( const char *argument )
 {
@@ -6502,3 +6515,28 @@ int get_value_two( int value )
    return ( value % 10000 );
 }
 
+int get_available_stat_points( CHAR_DATA *ch )
+{
+   int total;
+   int count;
+
+   total = ch->level / 2;
+
+   for( count = 0; count < MAX_STAT; count++ )
+      total -= ch->class_data[ch->Class]->stat[count];
+
+   return total;
+}
+
+int get_spent_stat_points( CHAR_DATA *ch )
+{
+   int spent;
+   int count;
+
+   spent = 0;
+
+   for( count = 0; count < MAX_STAT; count++ )
+      spent += ch->class_data[ch->Class]->stat[count];
+
+   return spent;
+}

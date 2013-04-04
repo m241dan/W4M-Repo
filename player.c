@@ -1084,21 +1084,40 @@ void do_statreport( CHAR_DATA* ch, const char* argument)
 
 void do_stat( CHAR_DATA* ch, const char* argument)
 {
+//   char arg[MAX_STRING_LENGTH], arg2[MAX_STRING_LENGTH];
+   int available_points, spent_points;
+   int x;
+
    if( IS_NPC( ch ) )
    {
       send_to_char( "Huh?\r\n", ch );
       return;
    }
 
-   ch_printf( ch, "You report: %d/%d hp %d/%d mana %d/%d mv %ld xp.\r\n",
-              ch->hit, ch->max_hit, ch->mana, ch->max_mana, ch->move, ch->max_move, ch->experience[ch->Class] );
+   available_points = get_available_stat_points( ch );
+   spent_points = get_spent_stat_points( ch );
 
-   ch_printf( ch, "Your base stats:    %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
-              ch->perm_str, ch->perm_wis, ch->perm_int, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_pas );
+   if( argument[0] == '\0' )
+   {
+      ch_printf( ch, "You report: %d/%d hp %d/%d mana %d/%d mv %ld xp.\r\n",
+                 ch->hit, ch->max_hit, ch->mana, ch->max_mana, ch->move, ch->max_move, ch->experience[ch->Class] );
 
-   ch_printf( ch, "Your current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
-              get_curr_str( ch ), get_curr_wis( ch ), get_curr_int( ch ),
-              get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_pas( ch ) );
+      ch_printf( ch, "Your base stats:    %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
+                 ch->perm_str, ch->perm_wis, ch->perm_int, ch->perm_dex, ch->perm_con, ch->perm_cha, ch->perm_pas );
+
+      ch_printf( ch, "Your current stats: %-2d str %-2d wis %-2d int %-2d dex %-2d con %-2d cha %-2d pas.\r\n",
+                 get_curr_str( ch ), get_curr_wis( ch ), get_curr_int( ch ),
+                 get_curr_dex( ch ), get_curr_con( ch ), get_curr_cha( ch ), get_curr_pas( ch ) );
+      ch_printf( ch, "Avaialble Stat Points: %-2.2d Stat Points Spent: %-2.2d\r\n",  available_points, spent_points );
+      send_to_char( "You have spent points in...:\r\n| ", ch );
+      send_to_char( "\r\n----------------------------------------------------------------------------\r\n", ch );
+      for( x = 0; x < MAX_STAT; x++ )
+         ch_printf( ch, "| %-3.3s |", short_stat_names[x] );
+      send_to_char( "\r\n----------------------------------------------------------------------------\r\n", ch );
+      for( x = 0; x < MAX_STAT; x++ )
+         ch_printf( ch, "| %-2.2d  |", ch->class_data[ch->Class]->stat[x] );
+      send_to_char( "\r\n----------------------------------------------------------------------------\r\n", ch );
+   }
    return;
 }
 

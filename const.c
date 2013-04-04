@@ -56,6 +56,10 @@ const char *const trigger_types[MAX_TRIGGER_TYPE] = {
    "obj_drop", "obj_get", "obj_receive", "obj_put", "obj_give", "obj_destroy", "mob_kill", "mob_talk_general", "mob_talk_script_advance", "mob_follow"
 };
 
+const char *const short_stat_names[MAX_STAT] = {
+   "str", "dex", "con", "int", "wis", "pas"
+};
+
 const double base_class_lag[MAX_CLASS] = {
    3, 3, 3, 2.5, 2.5, 2.5, 2, 2, 2
 };

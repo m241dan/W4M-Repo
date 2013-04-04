@@ -271,7 +271,6 @@ extern int MAX_PC_RACE;
 extern int MAX_PC_CLASS;
 extern bool mud_down;
 
-#define MAX_STAT                    6
 #define MAX_DISTANCE		   50
 #define MAX_LEVEL		   65
 #define MAX_CLAN		   50
@@ -1729,6 +1728,12 @@ typedef enum
    ITEM_PROTOTYPE, ITEM_NOLOCATE, ITEM_GROUNDROT, ITEM_LOOTABLE, ITEM_PERSONAL,
    ITEM_MULTI_INVOKE, ITEM_ENCHANTED, MAX_ITEM_FLAG
 } item_extra_flags;
+
+typedef enum
+{
+   STAT_STR, STAT_DEX, STAT_CON, STAT_INT, STAT_WIS, STAT_PAS,
+   MAX_STAT
+} stat_types;
 
 /* Magic flags - extra extra_flags for objects that are used in spells */
 #define ITEM_RETURNING		BV00
@@ -3892,6 +3897,7 @@ extern const struct dex_app_type dex_app[26];
 extern const struct con_app_type con_app[26];
 extern const struct cha_app_type cha_app[26];
 extern const struct lck_app_type lck_app[26];
+extern const char *const short_stat_names[MAX_STAT];
 
 extern const struct race_type _race_table[MAX_RACE];
 extern struct race_type *race_table[MAX_RACE];
@@ -5382,6 +5388,9 @@ void create_trackers( PLAYER_QUEST *pquest, STAGE_DATA *stage );
 void clear_trackers(  PLAYER_QUEST *pquest );
 void free_otracker( OBJECTIVE_TRACKER *objective );
 bool has_completed_quest( CHAR_DATA *ch, QUEST_DATA *quest );
+int get_available_stat_points( CHAR_DATA *ch );
+int get_spent_stat_points( CHAR_DATA *ch );
+
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
@@ -5402,6 +5411,8 @@ void update_userec args( ( struct timeval * time_used, struct timerset * userec 
 int store_two_value( int v1, int v2 );
 int get_value_one( int value );
 int get_value_two( int value );
+void apply_class_stats( CHAR_DATA *ch );
+
 
 /* magic.c */
 bool process_spell_components( CHAR_DATA * ch, int sn );
