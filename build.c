@@ -12397,6 +12397,7 @@ void advance_quest( CHAR_DATA *ch, PLAYER_QUEST *pquest )
       case QUEST_JUST_COMPLETED:
          ch_printf( ch, "Congratulations!!! You've just completed the quest '%s.'\r\n", pquest->quest->name );
          pquest->stage = QUEST_COMPLETE;
+         pquest->times_completed[ch->Class]++;
          reward_player( ch, pquest->on_path );
          save_char_obj( ch );
          break;
