@@ -3295,8 +3295,7 @@ void converse( CHAR_DATA *ch, const char *argument )
    {
       send_to_char( "You accept the quest!\r\n", ch );
       init_quest( ch, conv->on_qtalk->quest );
-      conv->on_qtalk = NULL;
-      display_branch( ch );
+      stop_talking( ch );
       return;
    }
    else if( !str_cmp( strlower( arg ), "no" ) && conv->on_qtalk )

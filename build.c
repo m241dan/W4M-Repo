@@ -12529,7 +12529,7 @@ void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int 
    for( pquest = ch->first_quest; pquest; pquest = pquest->next )
    {
       if( pquest->stage == 0 || pquest->stage == -1 )
-         return;
+         continue;
       switch( type )
       {
       /* ones without vwhere */
