@@ -385,7 +385,12 @@ void stop_editing( CHAR_DATA *ch )
 	bug( "Fatal: stop_editing: no desc" );
 	return;
     }
-    ch->desc->connected = CON_PLAYING;
+   if( ch->substate == SUB_TRIGGER_EDIT || ch->substate == SUB_QUEST_EDIT )
+   {
+      ch->desc->connected = CON_QUEST_OLC;
+      return;
+   }
+   ch->desc->connected = CON_PLAYING;
 }
 
 void edit_buffer( CHAR_DATA *ch, char *argument )
