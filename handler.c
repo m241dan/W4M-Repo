@@ -6320,9 +6320,17 @@ bool has_completed_quest( CHAR_DATA *ch, QUEST_DATA *quest )
    if( pquest->stage == QUEST_COMPLETE )
       return TRUE;
 
-   for( x = 0; x < MAX_CLASS; x++ )
-      if( pquest->times_completed[x] > 0 )
+   if( pquest->quest->type == QUEST_ONCE_PER_CLASS )
+   {
+      if( pquest->times_completed[ch->Class] > 0 )
          return TRUE;
+   }
+   else
+   {
+      for( x = 0; x < MAX_CLASS; x++ )
+         if( pquest->times_completed[x] > 0 )
+            return TRUE;
+   }
 
    return FALSE;
 }
