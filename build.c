@@ -843,35 +843,8 @@ char *strip_cr( const char *str )
    return newstr;
 }
 
+
 /*
- * Removes the tildes from a line, except if it's the last character.
- */
-
-void smush_tilde( char *str )
-{
-   int len;
-   char last;
-   char *strptr;
-
-   strptr = str;
-
-   len = strlen( str );
-   if( len )
-      last = strptr[len - 1];
-   else
-      last = '\0';
-
-   for( ; *str != '\0'; str++ )
-   {
-      if( *str == '~' )
-         *str = '-';
-   }
-   if( len )
-      strptr[len - 1] = last;
-
-   return;
-}
-
 void start_editing( CHAR_DATA * ch, const char *data )
 {
    EDITOR_DATA *edit;
@@ -938,7 +911,8 @@ void start_editing( CHAR_DATA * ch, const char *data )
    ch->editor = edit;
    ch->desc->connected = CON_EDITING;
 }
-
+*/
+/*
 const char *copy_buffer_nohash( CHAR_DATA * ch )
 {
    char buf[MAX_STRING_LENGTH];
@@ -975,8 +949,8 @@ const char *copy_buffer_nohash( CHAR_DATA * ch )
       mudstrlcat( buf, tmp, MAX_STRING_LENGTH );
    }
    return STRALLOC( buf );
-}
-
+}*/
+/*
 const char *copy_buffer( CHAR_DATA * ch )
 {
    char buf[MAX_STRING_LENGTH];
@@ -1008,8 +982,8 @@ const char *copy_buffer( CHAR_DATA * ch )
       mudstrlcat( buf, tmp, MAX_STRING_LENGTH );
    }
    return STRALLOC( buf );
-}
-
+}*/
+/*
 void stop_editing( CHAR_DATA * ch )
 {
    set_char_color( AT_PLAIN, ch );
@@ -1031,7 +1005,7 @@ void stop_editing( CHAR_DATA * ch )
    }
    ch->desc->connected = CON_PLAYING;
 }
-
+*/
 void do_goto( CHAR_DATA* ch, const char* argument)
 {
    char arg[MAX_INPUT_LENGTH];
@@ -6332,7 +6306,7 @@ void do_mcreate( CHAR_DATA* ch, const char* argument)
 
 /*
  * Simple but nice and handy line editor.			-Thoric
- */
+ *
 void edit_buffer( CHAR_DATA * ch, char *argument )
 {
    DESCRIPTOR_DATA *d;
@@ -6447,13 +6421,13 @@ void edit_buffer( CHAR_DATA * ch, char *argument )
          return;
       }
 
-      /*
+       *
        * added format command - shogar 
        *
        * This has been redone to be more efficient, and to make format
        * start at beginning of buffer, not whatever line you happened
        * to be on, at the time.   
-       */
+       *
       if( !str_cmp( cmd + 1, "f" ) )
       {
          char temp_buf[MAX_STRING_LENGTH + max_buf_lines];
@@ -6712,7 +6686,7 @@ void edit_buffer( CHAR_DATA * ch, char *argument )
    }
    send_to_char( "> ", ch );
 }
-
+*/
 void assign_area( CHAR_DATA * ch )
 {
    char buf[MAX_STRING_LENGTH];
@@ -9061,7 +9035,7 @@ void do_mpedit( CHAR_DATA* ch, const char* argument)
          mprog = ( MPROG_DATA * ) ch->dest_buf;
          if( mprog->comlist )
             STRFREE( mprog->comlist );
-         mprog->comlist = copy_buffer_nohash( ch );
+         mprog->comlist = copy_buffer( ch );
          stop_editing( ch );
          return;
    }
@@ -9384,7 +9358,7 @@ void do_opedit( CHAR_DATA* ch, const char* argument)
          mprog = ( MPROG_DATA * ) ch->dest_buf;
          if( mprog->comlist )
             STRFREE( mprog->comlist );
-         mprog->comlist = copy_buffer_nohash( ch );
+         mprog->comlist = copy_buffer( ch );
          stop_editing( ch );
          return;
    }
@@ -9688,7 +9662,7 @@ void do_rpedit( CHAR_DATA* ch, const char* argument)
          mprog = ( MPROG_DATA * ) ch->dest_buf;
          if( mprog->comlist )
             STRFREE( mprog->comlist );
-         mprog->comlist = copy_buffer_nohash( ch );
+         mprog->comlist = copy_buffer( ch );
          stop_editing( ch );
          return;
    }
@@ -11539,7 +11513,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
          trigger = (TRIGGER_DATA *)ch->quest_edit_ptr;
          if( trigger->script )
             STRFREE( trigger->script );
-         trigger->script = copy_buffer_nohash( ch );
+         trigger->script = copy_buffer( ch );
          stop_editing( ch );
          display_questolc( ch );
          return;

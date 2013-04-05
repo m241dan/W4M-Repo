@@ -727,13 +727,6 @@ struct immortal_host
    bool suffix;
 };
 
-struct editor_data
-{
-   short numlines;
-   short on_line;
-   short size;
-   char line[60][81];
-};
 
 struct project_data
 {
@@ -4906,7 +4899,9 @@ int get_partflag( const char *flag );
 int get_npc_position( const char *position );
 void init_area_weather( void );
 void save_weatherdata( void );
-void start_editing args( ( CHAR_DATA * ch, const char *data ) );
+#define start_editing( ch, data ) \
+	start_editing_nolimit( ch, data, MAX_STRING_LENGTH )
+void	start_editing_nolimit	args( ( CHAR_DATA *ch, char *data, int max_size ) );
 void stop_editing args( ( CHAR_DATA * ch ) );
 void edit_buffer args( ( CHAR_DATA * ch, char *argument ) );
 const char *copy_buffer( CHAR_DATA * ch );
