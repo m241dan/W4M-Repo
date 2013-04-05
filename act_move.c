@@ -827,7 +827,6 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
 
    if( !fall && !IS_NPC( ch ) )
    {
-      int move;
 
       /*
        * Prevent deadlies from entering a nopkill-flagged area from a 
@@ -923,73 +922,6 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
          }
       }
 
-      if( ch->mount )
-      {
-         switch ( ch->mount->position )
-         {
-            case POS_DEAD:
-               send_to_char( "Your mount is dead!\r\n", ch );
-               return rNONE;
-               break;
-
-            case POS_MORTAL:
-            case POS_INCAP:
-               send_to_char( "Your mount is hurt far too badly to move.\r\n", ch );
-               return rNONE;
-               break;
-
-            case POS_STUNNED:
-               send_to_char( "Your mount is too stunned to do that.\r\n", ch );
-               return rNONE;
-               break;
-
-            case POS_SLEEPING:
-               send_to_char( "Your mount is sleeping.\r\n", ch );
-               return rNONE;
-               break;
-
-            case POS_RESTING:
-               send_to_char( "Your mount is resting.\r\n", ch );
-               return rNONE;
-               break;
-
-            case POS_SITTING:
-               send_to_char( "Your mount is sitting down.\r\n", ch );
-               return rNONE;
-               break;
-
-            default:
-               break;
-         }
-
-         if( !IS_FLOATING( ch->mount ) )
-            move = movement_loss[UMIN( SECT_MAX - 1, in_room->sector_type )];
-         else
-            move = 1;
-         if( ch->mount->move < move )
-         {
-            send_to_char( "Your mount is too exhausted.\r\n", ch );
-            return rNONE;
-         }
-      }
-      else
-      {
-         if( !IS_FLOATING( ch ) )
-            move = encumbrance( ch, movement_loss[UMIN( SECT_MAX - 1, in_room->sector_type )] );
-         else
-            move = 1;
-         if( ch->move < move )
-         {
-            send_to_char( "You are too exhausted.\r\n", ch );
-            return rNONE;
-         }
-      }
-
-      WAIT_STATE( ch, move );
-      if( ch->mount )
-         ch->mount->move -= move;
-      else
-         ch->move -= move;
    }
 
    /*

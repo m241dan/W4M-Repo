@@ -170,7 +170,7 @@ DECLARE_DO_FUN( do_color );
 #define AT_DAMAGE       53
 #define AT_FLEE         54
 #define AT_RMNAME       55
-#define AT_RMDESC       56
+#define AT_RMDESC       AT_WHITE
 #define AT_OBJECT       57
 #define AT_PERSON       58
 #define AT_LIST         59

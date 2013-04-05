@@ -1173,7 +1173,7 @@ void print_compass( CHAR_DATA * ch )
          exit_info[pexit->vdir] = 1;
    }
    set_char_color( AT_RMNAME, ch );
-   ch_printf_color( ch, "%s&w", ch->in_room->name );
+   ch_printf_color( ch, "&C%s&w", ch->in_room->name );
    if( IS_IMMORTAL( ch ) && xIS_SET( ch->act, PLR_ROOMVNUM ) )
       ch_printf_color( ch, "\r\n&w-<---- &YVnum: %6d &w----------------------------->-        ", ch->in_room->vnum );
    else
