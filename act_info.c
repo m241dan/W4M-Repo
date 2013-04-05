@@ -2359,7 +2359,7 @@ void do_hedit( CHAR_DATA* ch, const char* argument)
          add_help( pHelp );
       }
    }
-
+   ch->tempnum = ch->substate;
    ch->substate = SUB_HELP_EDIT;
    ch->dest_buf = pHelp;
    start_editing( ch, (char *)pHelp->text );

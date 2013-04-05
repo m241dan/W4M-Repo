@@ -1065,6 +1065,7 @@ int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int 
          }
          if( pban->level == BAN_WARN )
             pban->warn = TRUE;
+         ch->tempnum = ch->substate;
          ch->substate = SUB_BAN_DESC;
          ch->dest_buf = pban;
          if( !pban->note )

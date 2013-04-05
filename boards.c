@@ -911,6 +911,7 @@ void do_note( CHAR_DATA * ch, const char *arg_passed, bool IS_MAIL )
       {
          paper->value[0] = 1;
          ed = SetOExtra( paper, "_text_" );
+         ch->tempnum = ch->substate;
          ch->substate = SUB_WRITING_NOTE;
          ch->dest_buf = ed;
          if( get_trust( ch ) < sysdata.write_mail_free )

@@ -256,6 +256,7 @@ void do_mapout( CHAR_DATA* ch, const char* argument)
    if( !str_cmp( arg, "write" ) )
    {
       note_attach( ch );
+      ch->tempnum = ch->substate;
       ch->substate = SUB_WRITING_NOTE;
       ch->dest_buf = ch->pnote;
       start_editing( ch, (char *)ch->pnote->text );

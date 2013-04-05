@@ -989,6 +989,7 @@ void do_description( CHAR_DATA* ch, const char* argument)
          return;
 
       case SUB_NONE:
+         ch->tempnum = ch->substate;
          ch->substate = SUB_PERSONAL_DESC;
          ch->dest_buf = ch;
          start_editing( ch, (char *)ch->description );
@@ -1033,6 +1034,7 @@ void do_bio( CHAR_DATA* ch, const char* argument)
          return;
 
       case SUB_NONE:
+         ch->tempnum = ch->substate;
          ch->substate = SUB_PERSONAL_BIO;
          ch->dest_buf = ch;
          start_editing( ch, (char *)ch->pcdata->bio );
