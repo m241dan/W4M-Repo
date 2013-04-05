@@ -1955,14 +1955,18 @@ void do_mset( CHAR_DATA* ch, const char* argument)
       if( !can_mmodify( ch, victim ) )
          return;
 
-      if( ( value = get_damtype( arg3 ) ) == -1 || ( value >= DAM_ALL && value <= DAM_PHYSICAL ) )
+      while( argument[0] != '\0' )
       {
-         send_to_char( "&RInvalid damage type.&w\r\n&PValid Choices: &wpierce, slash, blunt, &Rfire, &gwind, &Oearth, &Bwater, &Ylightning, &Wlight, &zdark&w\r\n", ch );
-         return;
+         argument = one_argument( argument, arg2 );
+         if( ( value = get_damtype( arg2 ) ) == -1 || ( value >= DAM_ALL && value <= DAM_PHYSICAL ) )
+         {
+            ch_printf( ch, "%s is an invalid damtype.\r\n", arg2 );
+            continue;
+         }   
+         xTOGGLE_BIT( victim->damtype, value );
+         if( IS_NPC( victim ) && xIS_SET( victim->damtype, ACT_PROTOTYPE ) )
+            xTOGGLE_BIT( victim->pIndexData->damtype, value );
       }
-      xTOGGLE_BIT( victim->damtype, value );
-      if( IS_NPC( victim ) && xIS_SET( victim->damtype, ACT_PROTOTYPE ) )
-         xTOGGLE_BIT( victim->pIndexData->damtype, value );
       send_to_char( "Ok.\r\n", ch );
       return;
    }
