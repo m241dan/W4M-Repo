@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include "mud.h"
 #include "sha256.h"
+#include <ctype.h>
 
 extern int top_affect;
 extern int top_reset;
