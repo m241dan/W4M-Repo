@@ -379,7 +379,7 @@ void stop_editing( CHAR_DATA *ch )
     send_to_char( "Done.\n\r", ch );
     ch->dest_buf  = NULL;
     ch->spare_ptr = NULL;
-    ch->substate  = SUB_NONE;
+    ch->substate  = ch->tempnum;
     if ( !ch->desc )
     {
 	bug( "Fatal: stop_editing: no desc" );
@@ -880,7 +880,20 @@ void editor_save( CHAR_DATA *ch, EDITOR_DATA *edd, char *argument )
 
     d = ch->desc;
 
-    d->connected = CON_PLAYING;
+    if( ch->tempnum == SUB_TRIGGER_EDIT )
+    {
+       d->connected = CON_QUEST_OLC;
+       quest_olc( ch, "" );
+       return;
+    }
+    else if( ch->tempnum == SUB_QUEST_EDIT )
+    {
+       d->connected = CON_QUEST_OLC;
+       quest_olc( ch, "" );
+       return;
+    }
+    else
+       d->connected = CON_PLAYING;
     if ( !ch->last_cmd )
       return;
     (*ch->last_cmd) ( ch, "" );

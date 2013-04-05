@@ -234,7 +234,7 @@ typedef bool SPEC_FUN( CHAR_DATA * ch );
  * String and memory management parameters.
  */
 #define MAX_KEY_HASH		 2048
-#define MAX_STRING_LENGTH	 4096 /* buf */
+#define MAX_STRING_LENGTH	 (MIL*2*4) /* buf */
 #define MAX_INPUT_LENGTH	 2048 /* arg */
 #define MAX_INBUF_SIZE		 2048
 #define MSL                    MAX_STRING_LENGTH 
