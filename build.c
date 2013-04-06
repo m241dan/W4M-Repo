@@ -12535,7 +12535,6 @@ void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int 
    {
       if( pquest->stage == 0 || pquest->stage == -1 )
          continue;
-      log_string( "checking first pquest" );       
       switch( type )
       {
       /* ones without vwhere */
@@ -12548,7 +12547,8 @@ void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int 
          case TYPE_OBJ_GET:
             for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
             {
-               log_string( "called" );
+               if( objective->objective == NULL )
+                  continue;
                if( objective->objective->type == type && objective->objective->vnum == vnum  )
                   advance_objective( ch, mob, obj, pquest, objective );
             }
