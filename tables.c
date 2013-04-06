@@ -750,6 +750,8 @@ void fwrite_skill( FILE * fpout, SKILLTYPE * skill )
       fprintf( fpout, "Slot         %d\n", skill->slot );
    if( skill->min_mana )
       fprintf( fpout, "Mana         %d\n", skill->min_mana );
+   if( skill->min_move )
+      fprintf( fpout, "Move         %d\n", skill->min_move );
    if( skill->beats )
       fprintf( fpout, "Rounds       %d\n", skill->beats );
    if( skill->range )
@@ -1260,6 +1262,7 @@ SKILLTYPE *fread_skill( FILE * fp )
             KEY( "Misschar", skill->miss_char, fread_string_nohash( fp ) );
             KEY( "Missroom", skill->miss_room, fread_string_nohash( fp ) );
             KEY( "Missvict", skill->miss_vict, fread_string_nohash( fp ) );
+            KEY( "Move", skill->min_move, fread_number( fp ) );
             break;
 
          case 'N':

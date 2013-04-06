@@ -885,10 +885,10 @@ void do_slookup( CHAR_DATA* ch, const char* argument)
       if( skill->difficulty != '\0' )
          ch_printf( ch, "Difficulty: %d\r\n", ( int )skill->difficulty );
 
-      ch_printf( ch, "Type: %s  Target: %s  Minpos: %d  Mana: %d  Beats: %d  Range: %d\r\n",
+      ch_printf( ch, "Type: %s  Target: %s  Minpos: %d  Mana: %d  Move: %d Beats: %d  Range: %d\r\n",
                  skill_tname[skill->type],
                  target_type[URANGE( TAR_IGNORE, skill->target, TAR_OBJ_INV )],
-                 skill->minimum_position, skill->min_mana, skill->beats, skill->range );
+                 skill->minimum_position, skill->min_mana, skill->min_move, skill->beats, skill->range );
       ch_printf( ch, "Flags: %d  Guild: %d  Value: %d  Info: %d  Code: %s\r\n",
                  skill->flags,
                  skill->guild, skill->value, skill->info, skill->skill_fun ? skill->skill_fun_name : skill->spell_fun_name );
@@ -1377,6 +1377,12 @@ void do_sset( CHAR_DATA* ch, const char* argument)
       if( !str_cmp( arg2, "mana" ) )
       {
          skill->min_mana = URANGE( 0, atoi( argument ), 2000 );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
+      if( !str_cmp( arg2, "move" ) )
+      {
+         skill->min_move = URANGE( 0, atoi( argument ), 2000 );
          send_to_char( "Ok.\r\n", ch );
          return;
       }
@@ -5778,19 +5784,9 @@ void do_slice( CHAR_DATA* ch, const char* argument)
 /*  New check to see if you can use skills to support morphs --Shaddai */
 bool can_use_skill( CHAR_DATA * ch, int percent, int gsn )
 {
-   bool check = FALSE;
-   if( IS_NPC( ch ) && percent < 85 )
-      check = TRUE;
-   else if( !IS_NPC( ch ) && percent < LEARNED( ch, gsn ) )
-      check = TRUE;
-   else if( ch->morph && ch->morph->morph && ch->morph->morph->skills &&
-            ch->morph->morph->skills[0] != '\0' &&
-            is_name( skill_table[gsn]->name, ch->morph->morph->skills ) && percent < 85 )
-      check = TRUE;
-   if( ch->morph && ch->morph->morph && ch->morph->morph->no_skills &&
-       ch->morph->morph->no_skills[0] != '\0' && is_name( skill_table[gsn]->name, ch->morph->morph->no_skills ) )
-      check = FALSE;
-   return check;
+   if( ( ch->Class == skill_table[gsn]->guild || xIS_SET( ch->granted_skills, gsn ) ) && ch->level >= skill_table[gsn]->min_level )
+      return TRUE;
+   return FALSE;
 }
 
 /*

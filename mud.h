@@ -3287,6 +3287,7 @@ struct skill_type
    short minimum_position; /* Position for caster / user */
    short slot; /* Slot for #OBJECT loading   */
    short min_mana;   /* Minimum mana used    */
+   short min_move;   /* Minimum move used    */
    short beats;   /* Rounds required to use skill  */
    const char *noun_damage;   /* Damage message    */
    const char *msg_off; /* Wear off message     */
