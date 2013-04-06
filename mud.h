@@ -1722,13 +1722,8 @@ typedef enum
    ITEM_MULTI_INVOKE, ITEM_ENCHANTED, MAX_ITEM_FLAG
 } item_extra_flags;
 
-typedef enum
-{
-   STAT_STR, STAT_DEX, STAT_CON, STAT_INT, STAT_WIS, STAT_PAS,
-   MAX_STAT
-} stat_types;
-
 /* Magic flags - extra extra_flags for objects that are used in spells */
+
 #define ITEM_RETURNING		BV00
 #define ITEM_BACKSTABBER  	BV01
 #define ITEM_BANE		BV02
@@ -2488,6 +2483,27 @@ struct char_data
    int charmed_def;
    int feedback_potency;
 };
+
+typedef enum
+{
+   STAT_STR, STAT_DEX, STAT_CON, STAT_INT, STAT_WIS, STAT_PAS,
+   MAX_STAT
+} stats;
+
+typedef enum
+{
+   STAT_HIT, STAT_MAXHIT, STAT_MANA, STAT_MAXMANA, STAT_MOVE, STAT_MAXMOVE,
+   STAT_ALIGN, STAT_BARENUMDIE, STAT_BARESIZEDIE, STAT_ATTACK, STAT_MAGICATTACK,
+   STAT_DEFENSE, STAT_MAGICDEFENSE, STAT_HASTE, STAT_HASTEFROMMAGIC, STAT_THREAT,
+   STAT_PERMSTR, STAT_PERMDEX, STAT_PERMCON, STAT_PERMINT, STAT_PERMWIS,
+   STAT_PERMPAS, STAT_STRENGTH, STAT_DEXTERITY, STAT_CONSTITUTION, STAT_INTELLIGENCE, STAT_WISDOM, STAT_PASSION,
+   STAT_RESISTANCE, STAT_PENETRATION, STAT_DTYPEPOTENCY, STAT_WEPNUMDIE,
+   STAT_WEPSIZEDIE, STAT_POTENCY, STAT_COOLDOWNS, STAT_RANGE, STAT_DURATIONS,
+   STAT_REGEN, STAT_REFRESH, STAT_DOUBLEATTACK, STAT_CRITCHANCE, STAT_CRITDAM,
+   STAT_DODGE, STAT_PARRY, STAT_COUNTER, STAT_BLOCK, STAT_PHASE, STAT_COMBODMG,
+   STAT_CHARMEDDMG, STAT_CHARMEDDEF, STAT_FEEDBACKPOTENCY,
+   MAX_STATTYPE
+} stat_types;
 
 struct gthreat_data
 {
@@ -3890,7 +3906,8 @@ extern const struct dex_app_type dex_app[26];
 extern const struct con_app_type con_app[26];
 extern const struct cha_app_type cha_app[26];
 extern const struct lck_app_type lck_app[26];
-extern const char *const short_stat_names[MAX_STAT];
+extern const char *const basic_short_stat_names[MAX_STAT];
+extern const char *const short_stat_names[MAX_STATTYPE];
 
 extern const struct race_type _race_table[MAX_RACE];
 extern struct race_type *race_table[MAX_RACE];
@@ -5389,6 +5406,7 @@ void display_statallocation( CHAR_DATA * ch );
 void reset_stats( CHAR_DATA *ch );
 int get_stat_num_from_short_name( const char *argument );
 void clear_stat_array( CHAR_DATA *ch );
+void adjust_stat( CHAR_DATA *ch, int type, int amount );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

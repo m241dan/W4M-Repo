@@ -6581,7 +6581,7 @@ int get_stat_num_from_short_name( const char *argument )
    int x;
 
    for( x = 0; x < MAX_STAT; x++ )
-      if( !str_cmp( strlower( argument ), short_stat_names[x] ) )
+      if( !str_cmp( strlower( argument ), basic_short_stat_names[x] ) )
          return x;
 
    return -1;
@@ -6595,4 +6595,172 @@ void clear_stat_array( CHAR_DATA *ch )
       ch->class_data[ch->Class]->stat[x] = 0;
 
    return;
+}
+
+void adjust_stat( CHAR_DATA *ch, int type, int amount )
+{
+   int v1, v2;
+
+   switch( type )
+   {
+      case STAT_HIT:
+         ch->hit += amount;
+         break;
+      case STAT_MAXHIT:
+         ch->max_hit += amount;
+         break;
+      case STAT_MANA:
+         ch->mana += amount;
+         break;
+      case STAT_MAXMANA:
+         ch->max_mana += amount;
+         break;
+      case STAT_MOVE:
+         ch->move += amount;
+         break;
+      case STAT_MAXMOVE:
+         ch->max_move += amount;
+         break;
+      case STAT_ALIGN:
+         ch->alignment += amount;
+         break;
+      case STAT_BARENUMDIE:
+         ch->barenumdie += amount;
+         break;
+      case STAT_BARESIZEDIE:
+         ch->baresizedie += amount;
+         break;
+      case STAT_ATTACK:
+         ch->attack += amount;
+         break;
+      case STAT_MAGICATTACK:
+         ch->magic_attack += amount;
+         break;
+      case STAT_DEFENSE:
+         ch->armor += amount;
+         break;
+      case STAT_MAGICDEFENSE:
+         ch->magic_defense += amount;
+         break;
+      case STAT_HASTE:
+         ch->haste += amount;
+         break;
+      case STAT_HASTEFROMMAGIC:
+         ch->haste_from_magic += amount;
+         break;
+      case STAT_THREAT:
+         ch->threat += amount;
+         break;
+      case STAT_PERMSTR:
+         ch->perm_str += amount;
+         break;
+      case STAT_PERMDEX:
+         ch->perm_dex += amount;
+         break;
+      case STAT_PERMCON:
+         ch->perm_con += amount;
+         break;
+      case STAT_PERMINT:
+         ch->perm_int += amount;
+         break;
+      case STAT_PERMWIS:
+         ch->perm_wis += amount;
+         break;
+      case STAT_PERMPAS:
+         ch->perm_pas += amount;
+         break;
+      case STAT_STRENGTH:
+         ch->mod_str += amount;
+         break;
+      case STAT_DEXTERITY:
+         ch->mod_dex += amount;
+         break;
+      case STAT_CONSTITUTION:
+         ch->mod_con += amount;
+         break;
+      case STAT_INTELLIGENCE:
+         ch->mod_int += amount;
+         break;
+      case STAT_WISDOM:
+         ch->mod_wis += amount;
+         break;
+      case STAT_PASSION:
+         ch->mod_pas += amount;
+         break;
+      case STAT_RESISTANCE:
+         v1 = get_value_one( amount );
+         v2 = get_value_two( amount );
+         ch->resistance[v1] += v2;
+         break;
+      case STAT_PENETRATION:
+         v1 = get_value_one( amount );
+         v2 = get_value_two( amount );
+         ch->penetration[v1] += v2;
+         break;
+      case STAT_DTYPEPOTENCY:
+         v1 = get_value_one( amount );
+         v2 = get_value_two( amount );
+         ch->damtype_potency[v1] += v2;
+         break;
+      case STAT_WEPNUMDIE:
+         ch->wepnumdie += amount;
+         break;
+      case STAT_WEPSIZEDIE:
+         ch->wepsizedie += amount;
+         break;
+      case STAT_POTENCY:
+         ch->potency += amount;
+         break;
+      case STAT_COOLDOWNS:
+         ch->cooldowns += amount;
+         break;
+      case STAT_RANGE:
+         ch->range += amount;
+         break;
+      case STAT_DURATIONS:
+         ch->durations += amount;
+         break;
+      case STAT_REGEN:
+         ch->regen += amount;
+         break;
+      case STAT_REFRESH:
+         ch->refresh += amount;
+         break;
+      case STAT_DOUBLEATTACK:
+         ch->double_attack += amount;
+         break;
+      case STAT_CRITCHANCE:
+         ch->crit_chance += amount;
+         break;
+      case STAT_CRITDAM:
+         ch->crit_dam += amount;
+         break;
+      case STAT_DODGE:
+         ch->dodge += amount;
+         break;
+      case STAT_PARRY:
+         ch->parry += amount;
+         break;
+      case STAT_COUNTER:
+         ch->counter += amount;
+         break;
+      case STAT_BLOCK:
+         ch->counter += amount;
+         break;
+      case STAT_PHASE:
+         ch->phase += amount;
+         break;
+      case STAT_COMBODMG:
+         ch->combo_dmg += amount;
+         break;
+      case STAT_CHARMEDDMG:
+         ch->charmed_dmg += amount;
+         break;
+      case STAT_CHARMEDDEF:
+         ch->charmed_def += amount;
+         break;
+      case STAT_FEEDBACKPOTENCY:
+         ch->feedback_potency += amount;
+         break;
+   }
 }
