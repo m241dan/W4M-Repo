@@ -1365,7 +1365,7 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     * Hurt the victim.
     * Inform the victim of his new state.
     */
-   victim->hit -= dam;
+   adjust_stat( victim, STAT_HIT, -dam );
 
    if( ch != victim )
    {
@@ -2700,6 +2700,8 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
    int level_dif;
 
    level_dif = victim->level - gch->level;
+
+   ch_printf( gch, "Level Difference: %d\r\n", level_dif );
 
    if( level_dif >= 5 )
       return 200;

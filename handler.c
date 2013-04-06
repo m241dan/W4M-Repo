@@ -1038,25 +1038,25 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_NONE:
          break;
       case APPLY_STR:
-         ch->mod_str += mod;
+         adjust_stat( ch, STAT_STRENGTH, mod );
          break;
       case APPLY_DEX:
-         ch->mod_dex += mod;
+         adjust_stat( ch, STAT_DEXTERITY, mod );
          break;
       case APPLY_INT:
-         ch->mod_int += mod;
+         adjust_stat( ch, STAT_INTELLIGENCE, mod );
          break;
       case APPLY_WIS:
-         ch->mod_wis += mod;
+         adjust_stat( ch, STAT_WISDOM, mod );
          break;
       case APPLY_CON:
-         ch->mod_con += mod;
+         adjust_stat( ch, STAT_CONSTITUTION, mod );
          break;
       case APPLY_CHA:
          ch->mod_cha += mod;
          break;
       case APPLY_PAS:
-         ch->mod_pas += mod;
+         adjust_stat( ch, STAT_PASSION, mod );
          break;
       case APPLY_SEX:
          ch->sex = ( ch->sex + mod ) % 3;
@@ -1089,19 +1089,19 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
          ch->weight += mod;
          break;
       case APPLY_MANA:
-         ch->max_mana += mod;
+         adjust_stat( ch, STAT_MAXMANA, mod );
          break;
       case APPLY_HIT:
-         ch->max_hit += mod;
+         adjust_stat( ch, STAT_MAXHIT, mod );
          break;
       case APPLY_MOVE:
-         ch->max_move += mod;
+         adjust_stat( ch, STAT_MAXMOVE, mod );
          break;
       case APPLY_ARMOR:
-         ch->armor += mod;
+         adjust_stat( ch, STAT_DEFENSE, mod );
          break;
       case APPLY_ATTACK:
-         ch->attack += mod;
+         adjust_stat( ch, STAT_ATTACK, mod );
          break;
       case APPLY_SAVING_POISON:
          ch->saving_poison_death += mod;
@@ -1299,32 +1299,16 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_TELEVNUM:
          break;
       case APPLY_PENETRATION:
-         int damtype, amount;
-         /*
-          * Undo our little hack to get two sets of varying info from one variable
-          * Don't doubt, just trust -Davenge
-          */
-         damtype = get_value_one( mod );
-         amount = get_value_two( mod );
-
-         ch->penetration[damtype] += amount;
+         adjust_stat( ch, STAT_PENETRATION, mod );
          break;
       case APPLY_RESISTANCE:
-         /*
-          * Undo our little hack to get two sets of varying info from one variable
-          * Don't doubt, just trust -Davenge
-          */
-         damtype = get_value_one( mod );
-         amount = get_value_two( mod );
-
-         ch->resistance[damtype] += amount;
+         adjust_stat( ch, STAT_RESISTANCE, mod );
          break;
       case APPLY_DTYPEPOTENCY:
-         damtype = get_value_one( mod );
-         amount = get_value_two( mod );
-         ch->damtype_potency[damtype] += amount;
+         adjust_stat( ch, STAT_DTYPEPOTENCY, mod );
          break;
       case APPLY_SKILLPOTENCY:
+         int amount;
          sn = get_value_one( mod );
          amount = get_value_two( mod );
          ch->pcdata->potency[sn] += amount;
@@ -1349,100 +1333,100 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
             xSET_BIT( ch->granted_skills, mod );
          break;
       case APPLY_BARENUMDIE:
-         ch->barenumdie += mod;
+         adjust_stat( ch, STAT_BARENUMDIE, mod );
          break;
       case APPLY_BARESIZEDIE:
-         ch->baresizedie += mod;
+         adjust_stat( ch, STAT_BARESIZEDIE, mod );
          break;
       case APPLY_WEPNUMDIE:
-         ch->wepnumdie += mod;
+         adjust_stat( ch, STAT_WEPNUMDIE, mod );
          break;
       case APPLY_WEPSIZEDIE:
-         ch->wepsizedie +=  mod;
+         adjust_stat( ch, STAT_WEPSIZEDIE, mod );
          break;
       case APPLY_MAGICATTACK:
-         ch->magic_attack += mod;
+         adjust_stat( ch, STAT_MAGICATTACK, mod );
          break;
       case APPLY_HASTE:
-         ch->haste += mod;
+         adjust_stat( ch, STAT_HASTE, mod );
          break;
       case APPLY_MAGICDEFENSE:
-         ch->magic_defense += mod;
+         adjust_stat( ch, STAT_MAGICDEFENSE, mod );
          break;
       case APPLY_THREAT:
-         ch->threat += mod;
+         adjust_stat( ch, STAT_THREAT, mod );
          break;
       case APPLY_PERMSTR:
-         ch->perm_str += mod;
+         adjust_stat( ch, STAT_PERMSTR, mod );
          break;
       case APPLY_PERMDEX:
-         ch->perm_dex += mod;
+         adjust_stat( ch, STAT_PERMDEX, mod );
          break;
       case APPLY_PERMCON:
-         ch->perm_con += mod;
+         adjust_stat( ch, STAT_PERMCON, mod );
          break;
       case APPLY_PERMINT:
-         ch->perm_int += mod;
+         adjust_stat( ch, STAT_PERMINT, mod );
          break;
       case APPLY_PERMWIS:
-         ch->perm_wis += mod;
+         adjust_stat( ch, STAT_PERMWIS, mod );
          break;
       case APPLY_PERMPAS:
-         ch->perm_pas += mod;
+         adjust_stat( ch, STAT_PERMPAS, mod );
          break;
       case APPLY_POTENCY:
-         ch->potency += mod;
+         adjust_stat( ch, STAT_POTENCY, mod );
          break;
       case APPLY_RANGE:
-         ch->range += mod;
+         adjust_stat( ch, STAT_RANGE, mod );
          break;
       case APPLY_COOLDOWNS:
-         ch->cooldowns += mod;
+         adjust_stat( ch, STAT_COOLDOWNS, mod );
          break;
       case APPLY_DURATIONS:
-         ch->durations += mod;
+         adjust_stat( ch, STAT_DURATIONS, mod );
          break;
       case APPLY_REGEN:
-         ch->regen += mod;
+         adjust_stat( ch, STAT_REGEN, mod );
          break;
       case APPLY_REFRESH:
-         ch->refresh += mod;
+         adjust_stat( ch, STAT_REFRESH, mod );
          break;
       case APPLY_FEEDBACKPOTENCY:
-         ch->feedback_potency += mod;
+         adjust_stat( ch, STAT_FEEDBACKPOTENCY, mod );
          break;
       case APPLY_DOUBLEATTACK:
-         ch->double_attack += mod;
+         adjust_stat( ch, STAT_DOUBLEATTACK, mod );
          break;
       case APPLY_CRITCHANCE:
-         ch->crit_chance += mod;
+         adjust_stat( ch, STAT_CRITCHANCE, mod );
          break;
       case APPLY_CRITDAMAGE:
-         ch->crit_dam += mod;
+         adjust_stat( ch, STAT_CRITDAM, mod );
          break;
       case APPLY_COUNTER:
-         ch->counter += mod;
+         adjust_stat( ch, STAT_COUNTER, mod );
          break;
       case APPLY_PHASE:
-         ch->phase += mod;
+         adjust_stat( ch, STAT_PHASE, mod );
          break;
       case APPLY_BLOCK:
-         ch->block += mod;
+         adjust_stat( ch, STAT_BLOCK, mod );
          break;
       case APPLY_DODGE:
-         ch->dodge += mod;
+         adjust_stat( ch, STAT_DODGE, mod );
          break;
       case APPLY_PARRY:
-         ch->parry += mod;
+         adjust_stat( ch, STAT_PARRY, mod );
          break;
       case APPLY_COMBODMG:
-         ch->combo_dmg += mod;
+         adjust_stat( ch, STAT_COMBODMG, mod );
          break;
       case APPLY_CHARMEDDMGBOOST:
-         ch->charmed_dmg += mod;
+         adjust_stat( ch, STAT_CHARMEDDMG, mod );
          break;
       case APPLY_CHARMEDDEFBOOST:
-         ch->charmed_def += mod;
+         adjust_stat( ch, STAT_CHARMEDDEF, mod );
          break; 
          /*
           * Object apply types
