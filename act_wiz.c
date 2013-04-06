@@ -2187,11 +2187,19 @@ void do_mstat( CHAR_DATA* ch, const char* argument)
    send_to_pager( "\r\n", ch );
 
    if( IS_NPC( victim ) )
+   {
       pager_printf_color( ch,
                           "&cMob hitdie : &C%dd%d+%d    &cMob damdie : &C%dd%d+%3d    &cIndex damdie : &C%dd%d+%3d\r\n&cNumAttacks : &C%d     &cRange : &C%d\r\n",
                           victim->pIndexData->hitnodice, victim->pIndexData->hitsizedice, victim->pIndexData->hitplus,
                           victim->barenumdie, victim->baresizedie, victim->damplus, victim->pIndexData->damnodice,
                           victim->pIndexData->damsizedice, victim->pIndexData->damplus, victim->numattacks, victim->range );
+      send_to_pager( "&cDamage Type:", ch );
+      for( x = 0; x < MAX_DAMTYPE; x++ )
+         if( xIS_SET( victim->damtype, x ) )
+            ch_printf( ch, " &C%s&c,", damage_table[x] );
+      send_to_pager( "&c\r\n", ch );
+            
+   }
    pager_printf_color( ch, "&cMentalState: &w%-3d   &cEmotionalState: &w%-3d   ", victim->mental_state,
                        victim->emotional_state );
    if( !IS_NPC( victim ) )
