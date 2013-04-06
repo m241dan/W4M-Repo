@@ -2628,8 +2628,6 @@ void group_gain( CHAR_DATA * ch, CHAR_DATA * victim )
       }
 
       xp = ( int )( xp_compute( gch, victim ) );
-      if( !gch->fighting )
-         xp /= 2;
       gch->alignment = align_compute( gch, victim );
       ch_printf( gch, "You receive %d experience points.\r\n", xp );
       gain_exp( gch, xp );
