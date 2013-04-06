@@ -3766,7 +3766,9 @@ const char *affect_bit_name( EXT_BV * vector )
    if( xIS_SET( *vector, AFF_PROTECT ) )
       mudstrlcat( buf, " protect", 512 );
    if( xIS_SET( *vector, AFF_PARALYSIS ) )
-      mudstrlcat( buf, " paralysis", 512 );
+      mudstrlcat( buf, " paralyzed", 512 );
+   if( xIS_SET( *vector, AFF_STUN ) )
+      mudstrlcat( buf, " stunned", 512 );
    if( xIS_SET( *vector, AFF_SLEEP ) )
       mudstrlcat( buf, " sleep", 512 );
    if( xIS_SET( *vector, AFF_SNEAK ) )

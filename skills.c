@@ -472,7 +472,7 @@ bool check_ability( CHAR_DATA * ch, char *command, char *argument )
  */
 bool check_skill( CHAR_DATA * ch, char *command, char *argument )
 {
-   int sn, mana, blood;
+   int sn, mana, move, increase, x;
    struct timeval time_used;
 
    /*
@@ -492,7 +492,7 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
    if( !check_pos( ch, skill_table[sn]->minimum_position ) )
       return TRUE;
 
-   if( IS_NPC( ch ) && ( IS_AFFECTED( ch, AFF_CHARM ) || IS_AFFECTED( ch, AFF_POSSESS ) ) )
+   if( IS_AFFECTED( ch, AFF_CHARM ) || IS_AFFECTED( ch, AFF_POSSESS ) )
    {
       send_to_char( "For some reason, you seem unable to perform that...\r\n", ch );
       act( AT_GREY, "$n wanders around aimlessly.", ch, NULL, NULL, TO_ROOM );
@@ -502,22 +502,39 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
    /*
     * check if mana is required 
     */
-   if( skill_table[sn]->min_mana )
+   if( ( mana = skill_table[sn]->min_mana ) > 0 )
    {
-      mana = IS_NPC( ch ) ? 0 : UMAX( skill_table[sn]->min_mana,
-                                      100 / ( 2 + ch->level - skill_table[sn]->skill_level[ch->Class] ) );
-      blood = UMAX( 1, ( mana + 4 ) / 8 );   /* NPCs don't have PCDatas. -- Altrag */
-      if( !IS_NPC( ch ) && ch->mana < mana )
+      for( x = 0; x < ch->level; x++ )
       {
-         send_to_char( "You don't have enough mana.\r\n", ch );
+         increase = (int)( mana *.05 );
+         mana += increase < 1 ? 1 : increase;
+      }
+      if( ch->mana < mana )
+      {
+         if( !IS_NPC( ch ) )
+            send_to_char( "You don't have enough mana.\r\n", ch );
          return TRUE;
       }
    }
    else
-   {
       mana = 0;
-      blood = 0;
+
+   if( ( move = skill_table[sn]->min_move ) > 0 )
+   {
+      for( x = 0; x < ch->level; x++ )
+      {
+         increase = (int)( mana *.05 );
+         move += increase < 1 ? 1: increase;
+      }
+      if( ch->move < move )
+      {
+         if( !IS_NPC( ch ) )
+            send_to_char( "You don't have enough move.\r\n", ch );
+         return TRUE;
+      }
    }
+   else
+      move = 0;
 
    /*
     * Is this a real do-fun, or a really a spell?
@@ -655,21 +672,11 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
          failed_casting( skill_table[sn], ch, victim, obj );
          learn_from_failure( ch, sn );
          if( mana )
-         {
-            if( IS_VAMPIRE( ch ) )
-               gain_condition( ch, COND_BLOODTHIRST, -blood / 2 );
-            else
-               ch->mana -= mana / 2;
-         }
+            ch->mana -= mana / 2;
          return TRUE;
       }
       if( mana )
-      {
-         if( IS_VAMPIRE( ch ) )
-            gain_condition( ch, COND_BLOODTHIRST, -blood );
-         else
-            ch->mana -= mana;
-      }
+         ch->mana -= mana;
       start_timer( &time_used );
       retcode = ( *skill_table[sn]->spell_fun ) ( sn, ch->level, ch, vo );
       end_timer( &time_used );
@@ -708,12 +715,10 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
    }
 
    if( mana )
-   {
-      if( IS_VAMPIRE( ch ) )
-         gain_condition( ch, COND_BLOODTHIRST, -blood );
-      else
-         ch->mana -= mana;
-   }
+      adjust_stat( ch, STAT_MANA, -mana );
+   if( move )
+      adjust_stat( ch, STAT_MOVE, -move );
+
    ch->prev_cmd = ch->last_cmd;  /* haus, for automapping */
    ch->last_cmd = skill_table[sn]->skill_fun;
    start_timer( &time_used );
