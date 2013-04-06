@@ -499,6 +499,12 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       return TRUE;
    }
 
+   if( IS_AFFECTED( ch, AFF_STUN ) )
+   {
+      send_to_char( "You are too stunned to do that.\r\n", ch );
+      return TRUE;
+   }
+
    /*
     * check if mana is required 
     */
@@ -5889,3 +5895,11 @@ void do_cook( CHAR_DATA* ch, const char* argument)
    }
    learn_from_success( ch, gsn_cook );
 }
+
+/* W4M Classes */
+
+
+/* Priest by Davenge */
+
+
+

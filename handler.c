@@ -5819,6 +5819,9 @@ int get_skill_range( CHAR_DATA *ch, int gsn )
    else
       range = skill_table[gsn]->range;
 
+   if( !IS_NPC( ch ) )
+      range += ch->pcdata->range[gsn];
+
    return range;
 }
 
@@ -6001,7 +6004,10 @@ double get_skill_cooldown( CHAR_DATA *ch, int gsn )
 
    cooldown = skill_table[gsn]->cooldown;
 
-   cooldown *= ( 1 + ( get_haste( ch ) / 100 ) );
+   if( !IS_NPC( ch ) )
+      cooldown -= ch->pcdata->cooldown[gsn];
+
+   cooldown *= ( 1 - ( get_haste( ch ) / 100 ) ) ;
 
    return cooldown;
 }
