@@ -11408,7 +11408,7 @@ void display_questolc( CHAR_DATA *ch )
          for( trigger = stage->first_trigger; trigger; trigger = trigger->next )
          {
             x++;
-            pager_printf( ch, "Trigger: %2d Type: %-15s Vnum(Object or Mobile): %d\r\n", x, trigger_types[trigger->type], trigger->vnum );
+            pager_printf( ch, "Trigger: %2d Type: %-15s Vnum(Object or Mobile): %d ToAdvance: %d Vwhere: %d\r\n", x, trigger_types[trigger->type], trigger->vnum, trigger->to_advance, trigger->vwhere );
          }
 /*         x = 0;
          for( objective = stage->first_objective; objective; objective = objective->next )
