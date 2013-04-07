@@ -5963,6 +5963,7 @@ void buff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn )
 
 void do_heal( CHAR_DATA *ch, const char *argument )
 {
+   GTHREAT_DATA *gthreat;
    TARGET_DATA *target;
    double amount = 0;
    int x;
@@ -5989,9 +5990,14 @@ void do_heal( CHAR_DATA *ch, const char *argument )
    if( get_crit( ch, gsn_heal ) )
       amount = (int)( amount * 1.35 );
 
+   amount = UMIN( amount, ( ch->charge_target->victim->max_hit - ch->charge_target->victim->hit ) );
+
    heal_msg( ch, ch->charge_target->victim, amount );
    adjust_stat( ch->charge_target->victim, STAT_HIT, amount );
    adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+      if( gthreat->threat_attacker == ch->charge_target->victim )
+         generate_threat( ch, gthreat->threat_owner, (int)( amount * .6 ) );
    clear_charge_target( ch );
    return;
 }
