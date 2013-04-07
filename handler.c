@@ -6756,3 +6756,33 @@ void adjust_stat( CHAR_DATA *ch, int type, int amount )
          break;
    }
 }
+
+int check_mana( CHAR_DATA *ch, int sn )
+{
+   int mana, increase, x;
+
+   if( ( mana = skill_table[sn]->min_mana ) > 0 )
+   {
+      for( x = 0; x < ch->level; x++ )
+      {
+         increase = (int)( mana *.05 );
+         mana += increase < 1 ? 1 : increase;
+      }
+   }
+   return mana;
+}
+
+int check_move( CHAR_DATA *ch, int sn )
+{
+   int move, increase, x;
+
+   if( ( move = skill_table[sn]->min_move ) > 0 )
+   {
+      for( x = 0; x < ch->level; x++ )
+      {
+         increase = (int)( move *.05 );
+         move += increase < 1 ? 1: increase;
+      }
+   {
+   return move;
+}

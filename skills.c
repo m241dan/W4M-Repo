@@ -472,8 +472,12 @@ bool check_ability( CHAR_DATA * ch, char *command, char *argument )
  */
 bool check_skill( CHAR_DATA * ch, char *command, char *argument )
 {
-   int sn, mana, move, increase, x;
+   CHAR_DATA *victim;
+   const char *orig_argument;
+   int sn;
    struct timeval time_used;
+
+   orig_argument = str_dup( argument );
 
    /*
     * bsearch for the skill
@@ -484,10 +488,8 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       return FALSE;
 
    // some additional checks
-   if( !( skill_table[sn]->skill_fun || skill_table[sn]->spell_fun != spell_null ) || !can_use_skill( ch, 0, sn ) )
-   {
+   if( !( skill_table[sn]->skill_fun ) || !can_use_skill( ch, 0, sn ) )
       return FALSE;
-   }
 
    if( !check_pos( ch, skill_table[sn]->minimum_position ) )
       return TRUE;
@@ -505,230 +507,32 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       return TRUE;
    }
 
+   if( is_on_cooldown( ch, sn ) )
+      return TRUE;
+
    /*
     * check if mana is required 
     */
-   if( ( mana = skill_table[sn]->min_mana ) > 0 )
+   if( ch->mana < check_mana( ch, sn ) )
    {
-      for( x = 0; x < ch->level; x++ )
-      {
-         increase = (int)( mana *.05 );
-         mana += increase < 1 ? 1 : increase;
-      }
-      if( ch->mana < mana )
-      {
-         if( !IS_NPC( ch ) )
-            send_to_char( "You don't have enough mana.\r\n", ch );
-         return TRUE;
-      }
-   }
-   else
-      mana = 0;
-
-   if( ( move = skill_table[sn]->min_move ) > 0 )
-   {
-      for( x = 0; x < ch->level; x++ )
-      {
-         increase = (int)( mana *.05 );
-         move += increase < 1 ? 1: increase;
-      }
-      if( ch->move < move )
-      {
-         if( !IS_NPC( ch ) )
-            send_to_char( "You don't have enough move.\r\n", ch );
-         return TRUE;
-      }
-   }
-   else
-      move = 0;
-
-   /*
-    * Is this a real do-fun, or a really a spell?
-    */
-   if( !skill_table[sn]->skill_fun )
-   {
-      ch_ret retcode = rNONE;
-      void *vo = NULL;
-      CHAR_DATA *victim = NULL;
-      OBJ_DATA *obj = NULL;
-
-      target_name = "";
-
-      switch ( skill_table[sn]->target )
-      {
-         default:
-            bug( "Check_skill: bad target for sn %d.", sn );
-            send_to_char( "Something went wrong...\r\n", ch );
-            return TRUE;
-
-         case TAR_IGNORE:
-            vo = NULL;
-            if( argument[0] == '\0' )
-            {
-               if( ( victim = who_fighting( ch ) ) != NULL )
-                  target_name = victim->name;
-            }
-            else
-               target_name = argument;
-            break;
-
-         case TAR_CHAR_OFFENSIVE:
-         {
-            if( argument[0] == '\0' && ( victim = who_fighting( ch ) ) == NULL )
-            {
-               ch_printf( ch, "Confusion overcomes you as your '%s' has no target.\r\n", skill_table[sn]->name );
-               return TRUE;
-            }
-            else if( argument[0] != '\0' && ( victim = get_char_room( ch, argument ) ) == NULL )
-            {
-               send_to_char( "They aren't here.\r\n", ch );
-               return TRUE;
-            }
-         }
-            if( is_safe( ch, victim, TRUE ) )
-               return TRUE;
-
-            if( ch == victim && SPELL_FLAG( skill_table[sn], SF_NOSELF ) )
-            {
-               send_to_char( "You can't target yourself!\r\n", ch );
-               return TRUE;
-            }
-
-            if( !IS_NPC( ch ) )
-            {
-               if( !IS_NPC( victim ) )
-               {
-                  /*
-                   * Sheesh! can't do anything
-                   * send_to_char( "You can't do that on a player.\r\n", ch );
-                   * return TRUE;
-                   */
-                  if( get_timer( ch, TIMER_PKILLED ) > 0 )
-                  {
-                     send_to_char( "You have been killed in the last 5 minutes.\r\n", ch );
-                     return TRUE;
-                  }
-
-                  if( get_timer( victim, TIMER_PKILLED ) > 0 )
-                  {
-                     send_to_char( "This player has been killed in the last 5 minutes.\r\n", ch );
-                     return TRUE;
-                  }
-
-                  if( victim != ch )
-                     send_to_char( "You really shouldn't do this to another player...\r\n", ch );
-               }
-
-               if( IS_AFFECTED( ch, AFF_CHARM ) && ch->master == victim )
-               {
-                  send_to_char( "You can't do that on your own follower.\r\n", ch );
-                  return TRUE;
-               }
-            }
-
-            check_illegal_pk( ch, victim );
-            vo = ( void * )victim;
-            break;
-
-         case TAR_CHAR_DEFENSIVE:
-         {
-            if( argument[0] != '\0' && ( victim = get_char_room( ch, argument ) ) == NULL )
-            {
-               send_to_char( "They aren't here.\r\n", ch );
-               return TRUE;
-            }
-            if( !victim )
-               victim = ch;
-         }
-
-            if( ch == victim && SPELL_FLAG( skill_table[sn], SF_NOSELF ) )
-            {
-               send_to_char( "You can't target yourself!\r\n", ch );
-               return TRUE;
-            }
-
-            vo = ( void * )victim;
-            break;
-
-         case TAR_CHAR_SELF:
-            vo = ( void * )ch;
-            break;
-
-         case TAR_OBJ_INV:
-         {
-            if( ( obj = get_obj_carry( ch, argument ) ) == NULL )
-            {
-               send_to_char( "You can't find that.\r\n", ch );
-               return TRUE;
-            }
-         }
-            vo = ( void * )obj;
-            break;
-      }
-
-      /*
-       * waitstate 
-       */
-      WAIT_STATE( ch, skill_table[sn]->beats );
-      /*
-       * check for failure 
-       */
-      if( ( number_percent(  ) + skill_table[sn]->difficulty * 5 ) > ( IS_NPC( ch ) ? 75 : LEARNED( ch, sn ) ) )
-      {
-         failed_casting( skill_table[sn], ch, victim, obj );
-         learn_from_failure( ch, sn );
-         if( mana )
-            ch->mana -= mana / 2;
-         return TRUE;
-      }
-      if( mana )
-         ch->mana -= mana;
-      start_timer( &time_used );
-      retcode = ( *skill_table[sn]->spell_fun ) ( sn, ch->level, ch, vo );
-      end_timer( &time_used );
-      update_userec( &time_used, &skill_table[sn]->userec );
-
-      if( retcode == rCHAR_DIED || retcode == rERROR )
-         return TRUE;
-
-      if( char_died( ch ) )
-         return TRUE;
-
-      if( retcode == rSPELL_FAILED )
-      {
-         learn_from_failure( ch, sn );
-         retcode = rNONE;
-      }
-      else
-         learn_from_success( ch, sn );
-
-      if( skill_table[sn]->target == TAR_CHAR_OFFENSIVE && victim != ch && !char_died( victim ) )
-      {
-         CHAR_DATA *vch;
-         CHAR_DATA *vch_next;
-
-         for( vch = ch->in_room->first_person; vch; vch = vch_next )
-         {
-            vch_next = vch->next_in_room;
-            if( victim == vch && !victim->fighting && victim->master != ch )
-            {
-               retcode = multi_hit( victim, ch, TYPE_UNDEFINED );
-               break;
-            }
-         }
-      }
+      if( !IS_NPC( ch ) )
+         send_to_char( "You don't have enough mana.\r\n", ch );
       return TRUE;
    }
 
-   if( mana )
-      adjust_stat( ch, STAT_MANA, -mana );
-   if( move )
-      adjust_stat( ch, STAT_MOVE, -move );
+   if( ch->move < check_move( ch, sn ) )
+   {
+      if( !IS_NPC( ch ) )
+         send_to_char( "You don't have enough move.\r\n", ch );
+      return TRUE;
+   }
+
+
 
    ch->prev_cmd = ch->last_cmd;  /* haus, for automapping */
    ch->last_cmd = skill_table[sn]->skill_fun;
    start_timer( &time_used );
-   ( *skill_table[sn]->skill_fun ) ( ch, argument );
+   ( *skill_table[sn]->skill_fun ) ( ch, orig_argument );
    end_timer( &time_used );
    update_userec( &time_used, &skill_table[sn]->userec );
 
@@ -5898,6 +5702,93 @@ void do_cook( CHAR_DATA* ch, const char* argument)
 
 /* W4M Classes */
 
+TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn )
+{
+   CHAR_DATA *victim;
+   TARGET_DATA *target;
+   char arg[MAX_INPUT_LENGTH], arg2[MAX_INPUT_LENGTH];
+
+   argument = one_argument( argument, arg );
+   argument = one_argument( argument, arg2 );
+
+   /* Grab our target data */
+
+   if( skill_table[gsn]->target == TAR_CHAR_SELF )
+      target = make_new_target( ch, 0, -1 );
+   else
+   {
+      if( arg[0] == '\0' && !ch->target )
+      {
+         ch_printf( ch, "%s %s on who?\r\n", skill_table[gsn]->type == SKILL_SKILL ? "Use" : "Cast",
+                   skill_table[gsn]->name );
+         return NULL;
+      }
+      else if( arg[0] == '\0' && ch->target )
+         target = ch->target;
+      else if( arg2[0] == '\0' )
+      {
+         if( ( victim = get_char_room( ch, arg ) ) != NULL )
+            target = make_new_target( get_char_room( ch, arg ), 0, -1 );
+         else
+         {
+            ch_printf( ch, "%s %s on who?\r\n", skill_table[gsn]->type == SKILL_SKILL ? "Use" : "Cast",
+                      skill_table[gsn]->name );
+            return NULL;
+         }
+      else if( ( target = get_target( ch, arg, get_door( arg2 ) ) ) == NULL )
+      {
+         ch_printf( ch, "%s %s on who?\r\n", skill_table[gsn]->type == SKILL_SKILL ? "Use" : "Cast",
+                   skill_table[gsn]->name );
+         return NULL;
+      }
+   }
+
+   /* Do Range and LOS and Group checks based on skill target type */
+
+   switch( skill_table[gsn]->target )
+   {
+      case TAR_CHAR_DEFENSIVE:
+         if( !is_same_group( ch, target->victim ) )
+         {
+            send_to_char( "You can't use this on someone you aren't grouped with.\r\n", ch );
+            return NULL;
+         }
+      case TAR_CHAR_OFFENSIVE:
+         if( !range_check( ch, target, gsn, TRUE ) )
+         {
+            send_to_char( "Target is out of range.\r\n", ch );
+            return NULL;
+         }
+         if( !check_los( ch, target->victim ) )
+         {
+            send_to_char( "You don't have a line of sight on them.\r\n", ch );
+            return NULL;
+         }
+         break;
+   }
+   return target;
+}
+
+void analyze_retcode( CHAR_DATA *ch, ch_ret ret, int gsn )
+{
+   switch( ret )
+   {
+      case rNONE:
+         adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn ) );
+         adjust_stat( ch, STAT_MOVE, -check_move( ch, gsn ) );
+         set_on_cooldown( ch, gsn );
+         act( AT_YELLOW, skill->table[gsn]->hit_char, ch, NULL, victim, TO_CHAR );
+         act( AT_YELLOW, skill->table[gsn]->hit_vict, ch, NULL, victim, TO_VICT );
+         act( AT_YELLOW, skill->table[gsn]->hit_room, ch, NULL, victim, TO_NOTVICT ); 
+         break;
+      case rVICT_OOR:
+         send_to_char( "Target moved out of rangee.\r\n", ch );
+         break;
+      case rVICT_LOS:
+         send_to_char( "Your target moved out of your line of sight.\r\n", ch );
+         break;
+   }
+}
 
 /* Priest by Davenge */
 

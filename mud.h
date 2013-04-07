@@ -5217,6 +5217,8 @@ void disarm( CHAR_DATA * ch, CHAR_DATA * victim );
 void trip( CHAR_DATA * ch, CHAR_DATA * victim );
 bool mob_fire( CHAR_DATA * ch, const char *name );
 CD *scan_for_victim( CHAR_DATA * ch, EXIT_DATA * pexit, const char *name );
+TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn );
+void analyze_retcode( CHAR_DATA *ch, ch_ret ret, int gsn );
 
 /* ban.c */
 int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int type );
@@ -5408,6 +5410,9 @@ void reset_stats( CHAR_DATA *ch );
 int get_stat_num_from_short_name( const char *argument );
 void clear_stat_array( CHAR_DATA *ch );
 void adjust_stat( CHAR_DATA *ch, int type, int amount );
+int check_mana( CHAR_DATA *ch, int gsn );
+int check_move( CHAR_DATA *ch, int gsn );
+
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
