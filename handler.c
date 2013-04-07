@@ -4779,11 +4779,17 @@ void clean_char_queue(  )
    }
 }
 
+void add_timer( CHAR_DATA *ch, short type, int count, DO_FUN * fun, int value )
+{
+   add_timer( ch, type, (double)count, fun, value );
+   return; 
+}
+
 /*
  * Add a timer to ch						-Thoric
  * Support for "call back" time delayed commands
  */
-void add_timer( CHAR_DATA * ch, short type, int count, DO_FUN * fun, int value )
+void add_timer( CHAR_DATA * ch, short type, double count, DO_FUN * fun, int value )
 {
    TIMER *timer;
 
@@ -5785,27 +5791,77 @@ void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
    return;
 }
 
+void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
+{
+   if( ch->charge_target )
+      free_charge_target( ch, ch->charge_target );
+
+   ch->charge_target = target;
+   if( !target->victim )
+   {
+      bug( "%s: somehow passed a NULL victim within target_data passed.", __FUNCTION__ );
+      return;
+   }
+   LINK( ch, ch->target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
+   return;
+}
+
 /*
- * Clear the target pointer and the targeted by stuff
- * -Davenge
+ * Clear the characters target pointer
  */
 
 void clear_target( CHAR_DATA *ch )
 {
+   if( ch->target )
+      free_target( ch, ch->target );
+   return;
+}
+
+void clear_charge_target( CHAR_DATA *ch )
+{
+   if( ch->charge_target )
+      free_charge_target( ch, ch->charge_target );
+   return;
+}
+
+/*
+ * Free the data at said pointer
+ * -Davenge
+ */
+
+
+void free_target( CHAR_DATA *ch, TARGET_DATA *target )
+{
    CHAR_DATA *tvictim;
 
-   if( ch->target )
-   {
-      if( ch->target->victim->first_targetedby )
-         for( tvictim = ch->target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
-            if( ch == tvictim )
-               UNLINK( tvictim, tvictim->target->victim->first_targetedby, tvictim->target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
-      ch->target->victim = NULL;
-      DISPOSE( ch->target );
-   }
+   if( ch->target == target )
+      ch->target = NULL;
+
+   if( ch->charge_target == target )
+      free_charge_target( ch, target );
 
 
-   return;
+   if( target->victim->first_targetedby )
+      for( tvictim = target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
+         if( ch == tvictim )
+            UNLINK( tvictim, tvictim->target->victim->first_targetedby, tvictim->target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+   target->victim = NULL;
+   DISPOSE( target );
+}
+
+void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
+{
+   CHAR_DATA *cvictim;
+
+   if( ch->charge_target == target )
+      ch->charge_target = NULL;
+
+   if( target->victim->first_charge_targetedby )
+      for( cvictim = target->victim->first_charge_targetedby; cvictim; cvictim = cvictim->next_person_charge_targetting_your_target )
+         if( ch == cvictim )
+            UNLINK( cvictim, cvictim->charge_target->victim->first_charge_targetedby, cvictim->charge_target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
+   target->victim = NULL;
+   DISPOSE( target );
 }
 
 /* Return a skill's range -Davenge */
@@ -5902,9 +5958,19 @@ void update_target_ch_moved( CHAR_DATA *ch )
       set_new_target( ch, get_target_2( ch, victim, -1 ) );
    }
 
+   if( ch->charge_target )
+   {
+      victim = ch->target->victim;
+      set_new_charge_target( ch, get_target_2( ch, victim, -1 ) );
+   }
+
    if( ch->first_targetedby )
       for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_targetting_your_target )
          set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
+
+   if( ch->first_charge_targetedby )
+      for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_charge_targetting_your_target )
+          set_new_charge_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
 }
 
 void add_queue( CHAR_DATA *ch, int type )
@@ -5996,6 +6062,20 @@ bool is_on_cooldown( CHAR_DATA *ch, int gsn )
       }
    }
    return FALSE;
+}
+
+double get_skill_potency( CHAR_DATA *ch, int gsn )
+{
+   double potency;
+
+   potency = ch->potency;
+
+   if( !IS_NPC( ch ) )
+      potency += ch->pcdata->potency[gsn];
+
+   potency = ( potency / 100 ) + 1;
+
+   return potency;
 }
 
 double get_skill_cooldown( CHAR_DATA *ch, int gsn )

@@ -758,6 +758,8 @@ void fwrite_skill( FILE * fpout, SKILLTYPE * skill )
       fprintf( fpout, "Range        %d\n", skill->range );
    if( skill->cooldown )
       fprintf( fpout, "Cooldown     %f\n", skill->cooldown );
+   if( skill->charge )
+      fprintf( fpout, "Charge       %f\n", skill->charge );
    fprintf( fpout, "DamType      %s\n", print_bitvector( &skill->damtype ) );
    if( skill->guild != -1 )
       fprintf( fpout, "Guild        %d\n", skill->guild );
@@ -1094,7 +1096,7 @@ SKILLTYPE *fread_skill( FILE * fp )
                fMatch = TRUE;
                break;
             }
-
+            KEY( "Charge", skill->charge, fread_float( fp ) );
             if( !str_cmp( word, "Code" ) )
             {
                SPELL_FUN *spellfun;

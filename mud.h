@@ -787,7 +787,7 @@ typedef enum
    SUB_PROJ_DESC, SUB_NEWS_POST, SUB_NEWS_EDIT, SUB_TALK_CONTENT,
    SUB_TALK_SCRIPT, SUB_QUEST_EDIT, SUB_STAGE_EDIT, SUB_PATH_EDIT,
    SUB_TRIGGER_EDIT, SUB_OBJECTIVE_EDIT, SUB_REWARD_EDIT, SUB_TRIGGER_SCRIPT,
-   SUB_QUEST_DESC,
+   SUB_QUEST_DESC, SUB_CHARGE,
    /*
     * timer types ONLY below this point
     */
@@ -2443,11 +2443,16 @@ struct char_data
    int home_vnum; /* hotboot tracker */
    int resetvnum;
    int resetnum;
+   TARGET_DATA *charge_target;
    TARGET_DATA *target;
    CHAR_DATA *first_targetedby;
    CHAR_DATA *last_targetedby;
+   CHAR_DATA *first_charge_targetedby;
+   CHAR_DATA *last_charge_targetedby;
    CHAR_DATA *next_person_targetting_your_target;
    CHAR_DATA *prev_person_targetting_your_target;
+   CHAR_DATA *next_person_charge_targetting_your_target;
+   CHAR_DATA *prev_person_charge_targetting_your_target;
    double combat_lag;
    bool stopkill;
    CD_DATA *first_cooldown;
@@ -3252,7 +3257,7 @@ struct teleport_data
 typedef enum
 {
    TAR_IGNORE, TAR_CHAR_OFFENSIVE, TAR_CHAR_DEFENSIVE, TAR_CHAR_SELF,
-   TAR_OBJ_INV
+   TAR_CHAR_ANY, TAR_OBJ_INV
 } target_types;
 
 typedef enum
@@ -3324,6 +3329,7 @@ struct skill_type
    const char *cdmsg; /* Message for when skill is on cooldown */
    double cooldown; /* Amount of time before skill can be used again */
    EXT_BV damtype;
+   double charge;
 };
 
 /* how many items to track.... prevent repeat auctions */
@@ -3350,6 +3356,10 @@ extern int port;
 /*
  * These are skill_lookup return values for common skills and spells.
  */
+
+/* Priest */
+extern short gsn_heal;
+
 extern short gsn_style_evasive;
 extern short gsn_style_defensive;
 extern short gsn_style_standard;
@@ -4531,6 +4541,11 @@ DECLARE_DO_FUN( do_yell );
 DECLARE_DO_FUN( do_zap );
 DECLARE_DO_FUN( do_zones );
 
+/* Skills */
+
+/* Priest */
+DECLARE_DO_FUN( do_heal );
+
 /* Changes.c */
 
 DECLARE_DO_FUN( do_changes );
@@ -5219,8 +5234,13 @@ void disarm( CHAR_DATA * ch, CHAR_DATA * victim );
 void trip( CHAR_DATA * ch, CHAR_DATA * victim );
 bool mob_fire( CHAR_DATA * ch, const char *name );
 CD *scan_for_victim( CHAR_DATA * ch, EXIT_DATA * pexit, const char *name );
-TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn );
+TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn, bool StartCasting );
 void analyze_retcode( CHAR_DATA *ch, CHAR_DATA *victim, ch_ret ret, int gsn );
+void charge_message( CHAR_DATA *ch, CHAR_DATA *victim, int gsn, bool StartCasting );
+bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN *fun );
+void heal_msg( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
+void buff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn );
+
 
 /* ban.c */
 int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int type );
@@ -5328,6 +5348,7 @@ void set_cur_char args( ( CHAR_DATA * ch ) );
 bool char_died args( ( CHAR_DATA * ch ) );
 void queue_extracted_char args( ( CHAR_DATA * ch, bool extract ) );
 void clean_char_queue args( ( void ) );
+void add_timer args( ( CHAR_DATA *ch, short type, double count, DO_FUN * fun, int value ) );
 void add_timer args( ( CHAR_DATA * ch, short type, int count, DO_FUN * fun, int value ) );
 TIMER *get_timerptr args( ( CHAR_DATA * ch, short type ) );
 double get_timer args( ( CHAR_DATA * ch, short type ) );
@@ -5360,11 +5381,13 @@ int get_max_range( CHAR_DATA * ch );
 TARGET_DATA *get_target( CHAR_DATA * ch, const char *argument, int dir );
 TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir );
 void set_new_target( CHAR_DATA *ch, TARGET_DATA *target );
+void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
 int get_skill_range( CHAR_DATA *ch, int gsn );
 int reverse_dir( int dir );
 bool is_skill( int dt );
 TARGET_DATA *make_new_target( CHAR_DATA * victim, int range, int dir );
 void clear_target( CHAR_DATA *ch );
+void clear_charge_target( CHAR_DATA *ch );
 REALM_DATA *get_realm( const char * argument );
 AREA_DATA *get_area_file( const char * name );
 int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir );
@@ -5414,8 +5437,8 @@ void clear_stat_array( CHAR_DATA *ch );
 void adjust_stat( CHAR_DATA *ch, int type, int amount );
 int check_mana( CHAR_DATA *ch, int gsn );
 int check_move( CHAR_DATA *ch, int gsn );
-
-
+void free_target( CHAR_DATA *ch, TARGET_DATA *target );
+void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
@@ -5437,7 +5460,7 @@ int store_two_value( int v1, int v2 );
 int get_value_one( int value );
 int get_value_two( int value );
 void apply_class_stats( CHAR_DATA *ch );
-
+double get_skill_potency( CHAR_DATA *ch, int gsn );
 
 /* magic.c */
 bool process_spell_components( CHAR_DATA * ch, int sn );

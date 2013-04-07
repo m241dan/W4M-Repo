@@ -2918,7 +2918,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
       CHAR_DATA *wch;
       char const *Class;
 
-      if( ( d->connected != CON_PLAYING && d->connected != CON_EDITING ) || !can_see( ch, d->character ) || d->original )
+      if( ( d->connected != CON_PLAYING && d->connected != CON_EDITING  && d->connected != CON_QUEST_OLC && d->connected != CON_TALKING ) || !can_see( ch, d->character ) || d->original )
          continue;
       wch = d->original ? d->original : d->character;
       if( wch->level < iLevelLower || wch->level > iLevelUpper || ( fPkill && !CAN_PKILL( wch ) ) || ( fImmortalOnly && wch->level < LEVEL_IMMORTAL ) || ( fClassRestrict && !rgfClass[wch->Class] ) || ( fRaceRestrict && !rgfRace[wch->race] ) || ( fClanMatch && ( pClan != wch->pcdata->clan ) )  /* SB */

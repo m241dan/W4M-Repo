@@ -104,6 +104,9 @@ OBJ_DATA *supermob_obj;
 bool MOBtrigger;
 bool DONT_UPPER;
 
+/* Priest */
+short gsn_heal;
+
 /* weaponry */
 short gsn_pugilism;
 short gsn_long_blades;
@@ -575,6 +578,9 @@ void boot_db( bool fCopyOver )
     */
    {
       log_string( "Assigning gsn's" );
+      /* Priest */
+      ASSIGN_GSN( gsn_heal, "heal" );
+
       ASSIGN_GSN( gsn_style_evasive, "evasive style" );
       ASSIGN_GSN( gsn_style_defensive, "defensive style" );
       ASSIGN_GSN( gsn_style_standard, "standard style" );

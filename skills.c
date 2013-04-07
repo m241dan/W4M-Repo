@@ -705,7 +705,7 @@ void do_slookup( CHAR_DATA* ch, const char* argument)
       ch_printf( ch, "Dammsg: %s\r\nWearoff: %s\n", skill->noun_damage, skill->msg_off ? skill->msg_off : "(none set)" );
       if( skill->dice && skill->dice[0] != '\0' )
          ch_printf( ch, "Dice: %s\r\n", skill->dice );
-      ch_printf( ch, "Cooldown: %f\r\nCooldown Message: %s\r\n", skill->cooldown, skill->cdmsg );
+      ch_printf( ch, "Charge/Cast: %f Cooldown: %f\r\nCooldown Message: %s\r\n", skill->charge, skill->cooldown, skill->cdmsg );
       if( skill->teachers && skill->teachers[0] != '\0' )
          ch_printf( ch, "Teachers: %s\r\n", skill->teachers );
       if( skill->components && skill->components[0] != '\0' )
@@ -850,7 +850,7 @@ void do_sset( CHAR_DATA* ch, const char* argument)
          send_to_char( "  name code target minpos slot mana beats dammsg wearoff guild minlevel cooldown, cdmsg\r\n", ch );
          send_to_char( "  type damtype acttype classtype powertype seffect flag dice value difficulty\r\n", ch );
          send_to_char( "  affect rmaffect level adept hit miss die imm (char/vict/room)\r\n", ch );
-         send_to_char( "  components teachers racelevel raceadept\r\n", ch );
+         send_to_char( "  components teachers racelevel raceadept charge\r\n", ch );
          send_to_char( "  sector\r\n", ch );
          send_to_char( "Affect having the fields: <location> <modfifier> [duration] [bitvector]\r\n", ch );
          send_to_char( "(See AFFECTTYPES for location, and AFFECTED_BY for bitvector)\r\n", ch );
@@ -1024,6 +1024,13 @@ void do_sset( CHAR_DATA* ch, const char* argument)
       if( !str_cmp( arg2, "cooldown" ) )
       {
          skill->cooldown = atoi( argument );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
+
+      if( !str_cmp( arg2, "charge" ) )
+      {
+         skill->charge = atoi( argument );
          send_to_char( "Ok.\r\n", ch );
          return;
       }
@@ -5696,14 +5703,17 @@ void do_cook( CHAR_DATA* ch, const char* argument)
 
 /* W4M Classes */
 
-TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn )
+TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn, bool StartCasting )
 {
    CHAR_DATA *victim;
    TARGET_DATA *target;
    char arg[MAX_INPUT_LENGTH], arg2[MAX_INPUT_LENGTH];
+   char orig_argument[MAX_STRING_LENGTH];
 
-   argument = one_argument( argument, arg );
-   argument = one_argument( argument, arg2 );
+   mudstrlcpy( orig_argument, argument, MAX_STRING_LENGTH );
+
+   argument = one_argument( orig_argument, arg );
+   argument = one_argument( orig_argument, arg2 );
 
    /* Grab our target data */
 
@@ -5748,18 +5758,25 @@ TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn )
             send_to_char( "You can't use this on someone you aren't grouped with.\r\n", ch );
             return NULL;
          }
+         break;
       case TAR_CHAR_OFFENSIVE:
-         if( !range_check( ch, target, gsn, TRUE ) )
+         if( is_same_group( ch, target->victim ) || ch == target->victim )
          {
-            send_to_char( "Target is out of range.\r\n", ch );
-            return NULL;
-         }
-         if( !check_los( ch, target->victim ) )
-         {
-            send_to_char( "You don't have a line of sight on them.\r\n", ch );
+            send_to_char( "You can't use this on someone you are grouped with.\r\n", ch );
             return NULL;
          }
          break;
+   }
+
+   if( !range_check( ch, target, gsn, StartCasting ) )
+   {
+      send_to_char( "Target is out of range.\r\n", ch );
+      return NULL;
+   }
+   if( !check_los( ch, target->victim ) )
+   {
+      send_to_char( "You don't have a line of sight on them.\r\n", ch );
+      return NULL;
    }
    return target;
 }
@@ -5772,20 +5789,211 @@ void analyze_retcode( CHAR_DATA *ch, CHAR_DATA *victim, ch_ret ret, int gsn )
          adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn ) );
          adjust_stat( ch, STAT_MOVE, -check_move( ch, gsn ) );
          set_on_cooldown( ch, gsn );
-         act( AT_YELLOW, skill_table[gsn]->hit_char, ch, NULL, victim, TO_CHAR );
-         act( AT_YELLOW, skill_table[gsn]->hit_vict, ch, NULL, victim, TO_VICT );
-         act( AT_YELLOW, skill_table[gsn]->hit_room, ch, NULL, victim, TO_NOTVICT ); 
          break;
       case rVICT_OOR:
-         send_to_char( "Target moved out of rangee.\r\n", ch );
+         if( !IS_NPC( ch ) )
+            send_to_char( "Target moved out of rangee.\r\n", ch );
          break;
       case rVICT_LOS:
-         send_to_char( "Your target moved out of your line of sight.\r\n", ch );
+         if( !IS_NPC( ch ) )
+            send_to_char( "Your target moved out of your line of sight.\r\n", ch );
          break;
    }
 }
 
+void charge_message( CHAR_DATA *ch, CHAR_DATA *victim, int gsn, bool StartCasting )
+{
+   char to_char[MAX_INPUT_LENGTH], to_vict[MAX_INPUT_LENGTH], to_room[MAX_INPUT_LENGTH];
+
+   switch( skill_table[gsn]->target )
+   {
+      case TAR_CHAR_OFFENSIVE:
+      case TAR_CHAR_DEFENSIVE:
+      case TAR_CHAR_ANY:
+         if( StartCasting )
+         {
+            sprintf( to_char, "You start %s %s on %s.", skill_table[gsn]->type == SKILL_SKILL ? "charging" : "casting",
+                               smash_underscore( skill_table[gsn]->name ),
+                               IS_NPC( victim ) ? victim->short_descr : victim->name );
+            sprintf( to_vict, "%s starts %s %s on you.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                               skill_table[gsn]->type == SKILL_SKILL ? "charging" : "casting",
+                               smash_underscore( skill_table[gsn]->name ) );
+            sprintf( to_room, "%s starts %s %s on %s.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                               skill_table[gsn]->type == SKILL_SKILL ? "charging" : "casting",
+                               smash_underscore( skill_table[gsn]->name ),
+                               IS_NPC( victim ) ? victim->short_descr : victim->name );
+         }
+         else
+         {
+            sprintf( to_char, "You %s %s on %s.", skill_table[gsn]->type == SKILL_SKILL ? "use" : "cast",
+                               smash_underscore( skill_table[gsn]->name ),
+                               IS_NPC( victim ) ? victim->short_descr : victim->name );
+            sprintf( to_vict, "%s %s %s on you.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                               skill_table[gsn]->type == SKILL_SKILL ? "uses" : "casts",
+                               smash_underscore( skill_table[gsn]->name ) );
+            sprintf( to_room, "%s %s %s on %s.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                               skill_table[gsn]->type == SKILL_SKILL ? "uses" : "casts",
+                               smash_underscore( skill_table[gsn]->name ),
+                               IS_NPC( victim ) ? victim->short_descr : victim->name );
+         }
+      case TAR_CHAR_SELF:
+         if( StartCasting )
+         {
+            sprintf( to_char, "You begin to %s %s.", skill_table[gsn]->type == SKILL_SKILL ? "charge" : "cast", smash_underscore( skill_table[gsn]->name ) );
+            sprintf( to_room, "%s begins to %s %s.", IS_NPC( ch ) ? ch->short_descr : ch->name, skill_table[gsn]->type == SKILL_SKILL ? "charge" : "cast", smash_underscore( skill_table[gsn]->name ) );
+         }
+         else
+         {
+            sprintf( to_char, "You %s %s.", skill_table[gsn]->type == SKILL_SKILL ? "use" : "cast", smash_underscore( skill_table[gsn]->name ) );
+            sprintf( to_room, "%s  %s %s.", IS_NPC( ch ) ? ch->short_descr : ch->name, skill_table[gsn]->type == SKILL_SKILL ? "uses" : "casts", smash_underscore( skill_table[gsn]->name ) );
+         }
+   }
+   act( AT_YELLOW, to_char, ch, NULL, victim, TO_CHAR );
+   if( to_vict[0] != '\0' )
+      act( AT_YELLOW, to_vict, ch, NULL, victim, TO_VICT );
+   act( AT_YELLOW, to_room, ch, NULL, victim, TO_NOTVICT );
+   return;
+}
+
+bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN * fun )
+{
+   switch( ch->substate )
+   {
+      default:
+         set_new_charge_target( ch, charge_target );
+         if( skill_table[gsn]->charge > 0 )
+         {
+            charge_message( ch, charge_target->victim, gsn, TRUE );
+            add_timer( ch, TIMER_DO_FUN, skill_table[gsn]->charge, fun, SUB_CHARGE );
+            return TRUE;
+         }
+         charge_message( ch, charge_target->victim, gsn, FALSE );
+         break;
+      case SUB_CHARGE:
+         if( !ch->charge_target )
+         {
+            send_to_char( "You stop suddenly.\r\n", ch );
+            act( AT_PLAIN, "$n stops suddenly.", ch, NULL, NULL, TO_ROOM );
+            bug( "%s: charge_target missing!", __FUNCTION__ );
+            return TRUE;
+         }
+         if( skill_table[gsn]->charge > 0 )
+         {
+            if( !range_check( ch, charge_target, gsn, FALSE ) )
+            {
+               if( !IS_NPC( ch ) )
+                  send_to_char( "Target moved out of rangee.\r\n", ch );
+               act( AT_PLAIN, "$n's target is out of range.", ch, NULL, NULL, TO_ROOM );
+               return TRUE;
+            }
+            else if( !check_los( ch, charge_target->victim ) )
+            {
+               if( !IS_NPC( ch ) )
+                  send_to_char( "Your target moved out of your line of sight.\r\n", ch );
+               act( AT_PLAIN, "$n's target left $s line of sight.", ch, NULL, NULL, TO_ROOM );
+               return TRUE;
+            }
+         }
+         charge_message( ch, charge_target->victim, gsn, FALSE );
+         break;
+      case SUB_TIMER_DO_ABORT:
+         clear_charge_target( ch );
+         ch->substate = SUB_NONE;
+         send_to_char( "You are interrupted!\r\n", ch );
+         act( AT_PLAIN, "%n is interrupted before they can finish!.", ch, NULL, NULL, TO_ROOM );
+         return TRUE;
+   }
+   ch->substate = SUB_NONE;
+   return FALSE;
+}
+
+void heal_msg( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
+{
+   char to_char[MAX_INPUT_LENGTH], to_vict[MAX_INPUT_LENGTH], to_room[MAX_INPUT_LENGTH];
+
+   if( ch != victim )
+   {
+      sprintf( to_char, "You heal %s for %d.", IS_NPC( victim ) ? victim->short_descr : victim->name, amount );
+      sprintf( to_vict, "%s heals you for %d.", IS_NPC( ch ) ? ch->short_descr : ch->name, amount );
+      sprintf( to_room, "%s heals %s for %d.", IS_NPC( ch ) ? ch->short_descr : ch->name, IS_NPC( victim ) ? victim->short_descr : victim->name, amount );
+   }
+   else
+   {
+      sprintf( to_char, "You heal yourself for %d.", amount );
+      sprintf( to_room, "%s heals themselves for %d.", IS_NPC( ch ) ? ch->short_descr : ch->name, amount );
+   }
+
+   act( AT_PLAIN, to_char, ch, NULL, victim, TO_CHAR );
+   if( to_vict[0] != '\0' )
+      act( AT_PLAIN, to_vict, ch, NULL, victim, TO_VICT );
+   act( AT_PLAIN, to_room, ch, NULL, victim, TO_NOTVICT );
+}
+
+void buff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn )
+{
+   char to_char[MAX_INPUT_LENGTH], to_vict[MAX_INPUT_LENGTH], to_room[MAX_INPUT_LENGTH];
+
+   if( ch != victim )
+   {
+      sprintf( to_char, "You %s %s with the affects of %s.", skill_table[gsn]->target == TAR_CHAR_OFFENSIVE ? "enfeeble" : "buff",
+                         IS_NPC( victim ) ? victim->short_descr : victim->name,
+                         smash_underscore( skill_table[gsn]->name ) );
+      sprintf( to_vict, "%s %s you with the affects of %s.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                         skill_table[gsn]->target == TAR_CHAR_OFFENSIVE ? "enfeebles" : "buffs",
+                         smash_underscore( skill_table[gsn]->name ) );
+      sprintf( to_room, "%s %s %s with the affects of %s.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                         skill_table[gsn]->target == TAR_CHAR_OFFENSIVE ? "enfeebles" : "buffs",
+                         IS_NPC( victim ) ? victim->short_descr : victim->name,
+                         smash_underscore( skill_table[gsn]->name ) );
+   }
+   else
+   {
+      sprintf( to_char, "You %s yourself with the affects of %s.", skill_table[gsn]->target == TAR_CHAR_OFFENSIVE ? "enfeeble" : "buff", smash_underscore( skill_table[gsn]->name ) );
+      sprintf( to_room, "%s %s themselves with the affect of %s.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                         skill_table[gsn]->target == TAR_CHAR_OFFENSIVE ? "enfeebles" : "buffs",
+                         smash_underscore( skill_table[gsn]->name ) );
+   }
+
+   act( AT_PLAIN, to_char, ch, NULL, victim, TO_CHAR );
+   if( to_vict[0] != '\0' )
+      act( AT_PLAIN, to_vict, ch, NULL, victim, TO_VICT );
+   act( AT_PLAIN, to_room, ch, NULL, victim, TO_NOTVICT );
+}
 /* Priest by Davenge */
 
+void do_heal( CHAR_DATA *ch, const char *argument )
+{
+   TARGET_DATA *target;
+   double amount = 0;
+   int x;
+
+
+   if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn_heal, TRUE ) ) == NULL )
+      return;
+
+   if( start_charging( ch, target, gsn_heal, do_heal ) )
+      return;
+
+   for( x = 0; x < ch->level; x++ )
+   {
+      if( x < 10 )
+         amount += .5;
+      if( x < 25 )
+         amount += .75;
+      if( x <= 50 )
+         amount += 1;
+   }
+
+   amount *= get_curr_wis( ch );
+   amount *= get_skill_potency( ch, gsn_heal );
+   if( get_crit( ch, gsn_heal ) )
+      amount = (int)( amount * 1.35 );
+
+   heal_msg( ch, ch->charge_target->victim, amount );
+   adjust_stat( ch->charge_target->victim, STAT_HIT, amount );
+   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
+   clear_charge_target( ch );
+   return;
+}
 
 

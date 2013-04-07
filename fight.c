@@ -386,6 +386,9 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
 
    retcode = rNONE;
 
+   if( ch->target != target )
+      free_target( ch, target );
+
    return retcode;
 }
 
