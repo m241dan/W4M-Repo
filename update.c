@@ -831,7 +831,7 @@ void char_update( void )
          }
       }
 
-      if( !IS_NPC( ch ) && ch->level < LEVEL_IMMORTAL )
+      if( !IS_NPC( ch ) && ch->top_level < LEVEL_IMMORTAL )
       {
          OBJ_DATA *obj;
 
