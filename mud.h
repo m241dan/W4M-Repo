@@ -5059,6 +5059,8 @@ void sort_area_by_name args( ( AREA_DATA * pArea ) ); /* Fireblade */
 void write_projects args( ( void ) );
 size_t mudstrlcpy args( ( char *dst, const char *src, size_t siz ) );
 size_t mudstrlcat args( ( char *dst, const char *src, size_t siz ) );
+void smash_underscore( char *str );
+const char *smash_underscre( const char *str );
 
 /* fight.c */
 void violence_update args( ( void ) );
@@ -5412,6 +5414,7 @@ void clear_stat_array( CHAR_DATA *ch );
 void adjust_stat( CHAR_DATA *ch, int type, int amount );
 int check_mana( CHAR_DATA *ch, int gsn );
 int check_move( CHAR_DATA *ch, int gsn );
+
 
 
 /* interp.c */

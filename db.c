@@ -4116,6 +4116,15 @@ void smash_tilde( char *str )
    return;
 }
 
+void smash_underscore( char *str )
+{
+   for( ; *str != '\0'; str++ )
+      if( *str == '_' )
+         *str = ' ';
+
+   return;
+}
+
 const char *smash_color( const char *str )
 {
    static char ret[MAX_STRING_LENGTH];
@@ -4147,6 +4156,14 @@ const char* smash_tilde( const char *str )
     mudstrlcpy( buf, str, MAX_STRING_LENGTH );
     smash_tilde( buf );
     return buf;
+}
+
+const char *smash_underscre( const char *str )
+{
+   static char buf[MAX_STRING_LENGTH];
+   mudstrlcpy( buf, str, MAX_STRING_LENGTH );
+   smash_tidle( buf );
+   return buf;
 }
 
 char* smash_tilde_copy( const char *str )

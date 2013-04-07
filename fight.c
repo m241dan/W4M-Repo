@@ -2733,7 +2733,8 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
 void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit, EXT_BV damtype )
 {
    CHAR_DATA *rch;
-   char damtype_message[MAX_INPUT_LENGTH];
+   char damtype_message[MAX_INPUT_LENGTH], skill_message[MAX_INPUT_LENGTH], buf[MAX_INPUT_LENGTH], buf2[MAX_INPUT_LENGTH];
+   char to_char[MAX_INPUT_LENGTH], to_vict[MAX_INPUT_LENGTH], to_room[MAX_INPUT_LENGTH];
    int counter;
    damtype_message[0] = '\0';
    /*
@@ -2751,27 +2752,58 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
    for( counter = DAM_PIERCE; counter < DAM_WIND; counter++ )
       if( xIS_SET( damtype, counter ) )
          mudstrlcat( damtype_message, damage_message[counter], MAX_INPUT_LENGTH );
+
+   /*
+    * Form our initial message
+    */
+   if( is_skill( dt ) )
+      sprintf( skill_message, "%s's", smash_underscore( skill_table[dt]->name ) );
+
+   sprintf( to_char, "Your %s %s&wstrikes %s on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? "$N" : "$n", hit_locations[hit_wear], dam );
+   sprintf( to_vict, "%s's %s %s&wstrikes you on the %s dealing %d damage.\r\n", IS_NPC( ch ) ? "$N" : "$n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+   sprintf( to_room, "%s's %s %s&wstrikes %s on the %s dealing %d damage.\r\n", IS_NPC( ch ) ? ch->short_descr : ch->name, is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? victim->short_descr : victim->name, hit_locations[hit_wear], dam );
    /*
     * Doing it by DTs
     */
-   if( dt >= TYPE_HIT && hit_wear >= 0 )
+   /*
+    * Handle the doer and the taker -Davenge
+    */
+
+   if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
+      ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, hit_locations[hit_wear], dam );
+   if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
+      ch_printf( victim, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->short_descr, damtype_message, hit_locations[hit_wear], dam );
+   /*
+    * Now everyone in the room who might care about the ch -Davenge
+    */
+   for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
    {
-      /*
-       * Handle the doer and the taker -Davenge
-       */
-      if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
-         ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, hit_locations[hit_wear], dam );
-      if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
-         ch_printf( victim, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, hit_locations[hit_wear], dam );
-      /*
-       * Now everyone in the room who might care about the ch -Davenge
-       */
-      for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
+      if( rch == victim || rch == ch )
+         continue;
+      if( IS_NPC( rch ) )
+         continue;
+      if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
+         continue;
+      if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
+         continue;
+      if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) ) //Same Party As Victim, don't see damage hey take
+         continue;
+      if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_TAKE ) ) //Not in sameparty as bvictim, don't see damage he takes
+         continue;
+      if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
+         continue;
+      if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes
+         continue;
+      ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
+   }
+   if( ch->in_room != victim->in_room )
+   {
+      for( rch = victim->in_room->first_person; rch; rch = rch->next_in_room )
       {
          if( rch == victim || rch == ch )
             continue;
          if( IS_NPC( rch ) )
-            continue;
+         continue;
          if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
             continue;
          if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
@@ -2782,32 +2814,9 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
             continue;
          if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
             continue;
-         if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes
+         if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes 
             continue;
          ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
-      }
-      if( ch->in_room != victim->in_room )
-      {
-         for( rch = victim->in_room->first_person; rch; rch = rch->next_in_room )
-         {
-            if( rch == victim || rch == ch )
-               continue;
-            if( IS_NPC( rch ) )
-            continue;
-            if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
-               continue;
-            if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
-               continue;
-            if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) ) //Same Party As Victim, don't see damage hey take
-               continue;
-            if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_TAKE ) ) //Not in sameparty as bvictim, don't see damage he takes
-               continue;
-            if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
-               continue;
-            if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes 
-               continue;
-            ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
-         }
       }
    }
    return;
