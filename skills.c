@@ -472,12 +472,8 @@ bool check_ability( CHAR_DATA * ch, char *command, char *argument )
  */
 bool check_skill( CHAR_DATA * ch, char *command, char *argument )
 {
-   CHAR_DATA *victim;
-   const char *orig_argument;
    int sn;
    struct timeval time_used;
-
-   orig_argument = str_dup( argument );
 
    /*
     * bsearch for the skill
@@ -527,12 +523,10 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       return TRUE;
    }
 
-
-
    ch->prev_cmd = ch->last_cmd;  /* haus, for automapping */
    ch->last_cmd = skill_table[sn]->skill_fun;
    start_timer( &time_used );
-   ( *skill_table[sn]->skill_fun ) ( ch, orig_argument );
+   ( *skill_table[sn]->skill_fun ) ( ch, argument );
    end_timer( &time_used );
    update_userec( &time_used, &skill_table[sn]->userec );
 
@@ -5735,6 +5729,7 @@ TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn )
                       skill_table[gsn]->name );
             return NULL;
          }
+      }
       else if( ( target = get_target( ch, arg, get_door( arg2 ) ) ) == NULL )
       {
          ch_printf( ch, "%s %s on who?\r\n", skill_table[gsn]->type == SKILL_SKILL ? "Use" : "Cast",
@@ -5769,7 +5764,7 @@ TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn )
    return target;
 }
 
-void analyze_retcode( CHAR_DATA *ch, ch_ret ret, int gsn )
+void analyze_retcode( CHAR_DATA *ch, CHAR_DATA *victim, ch_ret ret, int gsn )
 {
    switch( ret )
    {
@@ -5777,9 +5772,9 @@ void analyze_retcode( CHAR_DATA *ch, ch_ret ret, int gsn )
          adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn ) );
          adjust_stat( ch, STAT_MOVE, -check_move( ch, gsn ) );
          set_on_cooldown( ch, gsn );
-         act( AT_YELLOW, skill->table[gsn]->hit_char, ch, NULL, victim, TO_CHAR );
-         act( AT_YELLOW, skill->table[gsn]->hit_vict, ch, NULL, victim, TO_VICT );
-         act( AT_YELLOW, skill->table[gsn]->hit_room, ch, NULL, victim, TO_NOTVICT ); 
+         act( AT_YELLOW, skill_table[gsn]->hit_char, ch, NULL, victim, TO_CHAR );
+         act( AT_YELLOW, skill_table[gsn]->hit_vict, ch, NULL, victim, TO_VICT );
+         act( AT_YELLOW, skill_table[gsn]->hit_room, ch, NULL, victim, TO_NOTVICT ); 
          break;
       case rVICT_OOR:
          send_to_char( "Target moved out of rangee.\r\n", ch );

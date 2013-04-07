@@ -6783,6 +6783,6 @@ int check_move( CHAR_DATA *ch, int sn )
          increase = (int)( move *.05 );
          move += increase < 1 ? 1: increase;
       }
-   {
+   }
    return move;
 }
