@@ -5059,8 +5059,8 @@ void sort_area_by_name args( ( AREA_DATA * pArea ) ); /* Fireblade */
 void write_projects args( ( void ) );
 size_t mudstrlcpy args( ( char *dst, const char *src, size_t siz ) );
 size_t mudstrlcat args( ( char *dst, const char *src, size_t siz ) );
-void smash_underscore( char *str );
-const char *smash_underscre( const char *str );
+void smash_underscore args( ( char *str ) );
+const char *smash_underscore args( ( const char *str ) );
 
 /* fight.c */
 void violence_update args( ( void ) );

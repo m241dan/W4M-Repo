@@ -2733,7 +2733,7 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
 void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit, EXT_BV damtype )
 {
    CHAR_DATA *rch;
-   char damtype_message[MAX_INPUT_LENGTH], skill_message[MAX_INPUT_LENGTH], buf[MAX_INPUT_LENGTH], buf2[MAX_INPUT_LENGTH];
+   char damtype_message[MAX_INPUT_LENGTH], skill_message[MAX_INPUT_LENGTH];
    char to_char[MAX_INPUT_LENGTH], to_vict[MAX_INPUT_LENGTH], to_room[MAX_INPUT_LENGTH];
    int counter;
    damtype_message[0] = '\0';
@@ -2770,9 +2770,9 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
     */
 
    if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
-      ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, hit_locations[hit_wear], dam );
+      act( AT_ACTION, to_char, ch, NULL, victim, TO_CHAR );
    if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
-      ch_printf( victim, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->short_descr, damtype_message, hit_locations[hit_wear], dam );
+      act( AT_ACTION, to_vict, ch, NULL, victim, TO_VICT );
    /*
     * Now everyone in the room who might care about the ch -Davenge
     */
@@ -2794,7 +2794,7 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
          continue;
       if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes
          continue;
-      ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
+      send_to_char( to_room, ch );
    }
    if( ch->in_room != victim->in_room )
    {
@@ -2816,7 +2816,7 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
             continue;
          if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes 
             continue;
-         ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
+         send_to_char( to_room, ch );
       }
    }
    return;

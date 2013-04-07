@@ -4158,11 +4158,11 @@ const char* smash_tilde( const char *str )
     return buf;
 }
 
-const char *smash_underscre( const char *str )
+const char *smash_underscore( const char *str )
 {
    static char buf[MAX_STRING_LENGTH];
    mudstrlcpy( buf, str, MAX_STRING_LENGTH );
-   smash_tidle( buf );
+   smash_underscore( buf );
    return buf;
 }
 
