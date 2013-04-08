@@ -3330,6 +3330,7 @@ struct skill_type
    double cooldown; /* Amount of time before skill can be used again */
    EXT_BV damtype;
    double charge;
+   int threat;
 };
 
 /* how many items to track.... prevent repeat auctions */

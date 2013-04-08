@@ -6073,6 +6073,9 @@ double get_skill_potency( CHAR_DATA *ch, int gsn )
    if( !IS_NPC( ch ) )
       potency += ch->pcdata->potency[gsn];
 
+   if( is_affected( ch, gsn_potency ) )
+      potency *= 2;
+
    potency = ( potency / 100 ) + 1;
 
    return potency;
@@ -6865,4 +6868,9 @@ int check_move( CHAR_DATA *ch, int sn )
       }
    }
    return move;
+}
+
+int get_threat( CHAR_DATA *ch, int gsn )
+{
+   return skill_table[gsn]->threat * 5;
 }

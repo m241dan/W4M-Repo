@@ -694,10 +694,10 @@ void do_slookup( CHAR_DATA* ch, const char* argument)
       if( skill->difficulty != '\0' )
          ch_printf( ch, "Difficulty: %d\r\n", ( int )skill->difficulty );
 
-      ch_printf( ch, "Type: %s  Target: %s  Minpos: %d  Mana: %d  Move: %d Beats: %d  Range: %d\r\n",
+      ch_printf( ch, "Type: %s  Target: %s  Minpos: %d  Mana: %d  Move: %d Beats: %d  Range: %d Threat: %d\r\n",
                  skill_tname[skill->type],
                  target_type[URANGE( TAR_IGNORE, skill->target, TAR_OBJ_INV )],
-                 skill->minimum_position, skill->min_mana, skill->min_move, skill->beats, skill->range );
+                 skill->minimum_position, skill->min_mana, skill->min_move, skill->beats, skill->range, skill->threat );
       ch_printf( ch, "Flags: %d  Guild: %d  Value: %d  Info: %d  Code: %s\r\n",
                  skill->flags,
                  skill->guild, skill->value, skill->info, skill->skill_fun ? skill->skill_fun_name : skill->spell_fun_name );
@@ -850,7 +850,7 @@ void do_sset( CHAR_DATA* ch, const char* argument)
          send_to_char( "  name code target minpos slot mana beats dammsg wearoff guild minlevel cooldown, cdmsg\r\n", ch );
          send_to_char( "  type damtype acttype classtype powertype seffect flag dice value difficulty\r\n", ch );
          send_to_char( "  affect rmaffect level adept hit miss die imm (char/vict/room)\r\n", ch );
-         send_to_char( "  components teachers racelevel raceadept charge\r\n", ch );
+         send_to_char( "  components teachers racelevel raceadept charge threat\r\n", ch );
          send_to_char( "  sector\r\n", ch );
          send_to_char( "Affect having the fields: <location> <modfifier> [duration] [bitvector]\r\n", ch );
          send_to_char( "(See AFFECTTYPES for location, and AFFECTED_BY for bitvector)\r\n", ch );
@@ -1034,7 +1034,12 @@ void do_sset( CHAR_DATA* ch, const char* argument)
          send_to_char( "Ok.\r\n", ch );
          return;
       }
-
+      if( !str_cmp( arg2, "threat" ) )
+      {
+         skill->threat = atoi( argument );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
       if( !str_cmp( arg2, "cdmsg" ) )
       {
          DISPOSE( skill->cdmsg );
@@ -5959,6 +5964,35 @@ void buff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn )
       act( AT_PLAIN, to_vict, ch, NULL, victim, TO_VICT );
    act( AT_PLAIN, to_room, ch, NULL, victim, TO_NOTVICT );
 }
+
+void rbuff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn )
+{
+   char to_char[MAX_INPUT_LENGTH], to_vict[MAX_INPUT_LENGTH], to_room[MAX_INPUT_LENGTH];
+
+   if( ch != victim )
+   {
+      sprintf( to_char, "You remove the affects of %s from %s.",
+                         smash_underscore( skill_table[gsn]->name ),
+                         IS_NPC( victim ) ? victim->short_descr : victim->name );
+      sprintf( to_vict, "%s removes the affects of %s from you.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                         smash_underscore( skill_table[gsn]->name ) );
+      sprintf( to_room, "%s removes the affects of %s from %s.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                         smash_underscore( skill_table[gsn]->name ),
+                         IS_NPC( victim ) ? victim->short_descr : victim->name );
+   }
+   else
+   {
+      sprintf( to_char, "You remove the affects of %s on yourself.", smash_underscore( skill_table[gsn]->name ) );
+      sprintf( to_room, "%s removes the affects of %s on themselves.", IS_NPC( ch ) ? ch->short_descr : ch->name,
+                         smash_underscore( skill_table[gsn]->name ) );
+   }
+
+   act( AT_PLAIN, to_char, ch, NULL, victim, TO_CHAR );
+   if( to_vict[0] != '\0' )
+      act( AT_PLAIN, to_vict, ch, NULL, victim, TO_VICT );
+   act( AT_PLAIN, to_room, ch, NULL, victim, TO_NOTVICT );
+
+}
 /* Priest by Davenge */
 
 void do_heal( CHAR_DATA *ch, const char *argument )
@@ -6002,4 +6036,65 @@ void do_heal( CHAR_DATA *ch, const char *argument )
    return;
 }
 
+void do_erase( CHAR_DATA *ch, const char *argument )
+{
+   GTHREAT_DATA *gthreat;
+   TARGET_DATA *target;
+   AFFECT_DATA *paf, *paf_next;
+   CHAR_DATA *rtarget;
 
+   int count = 0;
+
+   if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn_erase, TRUE ) ) == NULL )
+      return;
+
+   if( start_charging( ch, target, gsn_erase, do_erase ) )
+      return;
+
+   for( paf = ch->charge_target->first_affect; paf; paf = paf_next )
+   {
+      paf_next = paf->next;
+      if( skill_table[paf->type]->target == TAR_CHAR_OFFENSIVE )
+      {
+         count++;
+         affect_remove( ch->charge_target->victim, paf->type );
+         rbuff_message( ch, ch->charge_target->victim, paf );
+         for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+            if( gthreat->threat_attacker == ch->charge_target->victim )
+               generate_threat( ch, gthreat->threat_owner, get_threat( ch, gsn_erase ));
+         if( is_affected( ch, gsn_potency ) && count < 2 )
+            continue;
+         else
+            break;
+      }
+   }
+   if( is_affected( ch, gsn_glory ) )
+      for( rtarget = ch->charge_target->victim->in_room->first_person; rtarget; rtarget = rtargeted->next_in_room )
+      {
+         if( !is_same_group( ch, rtarget ) )
+            continue;
+         count = 0;
+         for( paf = rtarget->first_affect; paf; paf = paf_next )
+         {
+            paf_next = paf->next;
+            if( skill_table[paf->type]->target == TAR_CHAR_OFFENSIVE )
+            {
+               count++;
+               affect_remove( rtarget, paf );
+               rbuff_message( ch, rtarget, paf->type );
+               for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+                  if( gthreat->threat_attacker == rtarget )
+                     generate_threat( ch, gthreat->threat_owner, get_threat( ch, gsn_erase ) );
+               if( is_affect( ch, gsn_potency ) && count < 2 )
+                  continue;
+               else
+                  break;
+            }
+         }
+      }
+   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
+   clear_charge_target( ch );
+   return;
+}
+
+//write a method to handle threat instead of using a forloop everytime

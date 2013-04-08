@@ -761,6 +761,8 @@ void fwrite_skill( FILE * fpout, SKILLTYPE * skill )
    if( skill->charge )
       fprintf( fpout, "Charge       %f\n", skill->charge );
    fprintf( fpout, "DamType      %s\n", print_bitvector( &skill->damtype ) );
+   if( skill->threat )
+      fprintf( fpout, "Threat       %d\n", skill->threat );
    if( skill->guild != -1 )
       fprintf( fpout, "Guild        %d\n", skill->guild );
    if( skill->skill_fun )
@@ -1298,6 +1300,7 @@ SKILLTYPE *fread_skill( FILE * fp )
          case 'T':
             KEY( "Target", skill->target, fread_number( fp ) );
             KEY( "Teachers", skill->teachers, fread_string_nohash( fp ) );
+            KEY( "Threat", skill->threat, fread_number( fp ) );
             KEY( "Type", skill->type, get_skill( fread_word( fp ) ) );
             break;
 
