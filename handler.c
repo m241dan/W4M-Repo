@@ -6290,12 +6290,16 @@ bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest )
    if( ch->level >= quest->level_required[ch->Class] )
       can_accept = TRUE;
 
-   if( ( pquest = player_has_quest( ch, quest ) ) != NULL && pquest->quest->type == QUEST_ONE_TIME )
+   /* If player is currently on quest */
+   if( ( pquest = player_has_quest( ch, quest ) ) != NULL && pquest->stage > 0 )
       can_accept = FALSE;
-   else if( pquest && pquest->quest->type == QUEST_ONCE_PER_CLASS && pquest->times_completed[ch->Class] > 0 )
+   /* If player has completed it for one_time or once_per_class one time */
+   else if( has_completed_quest( ch, quest ) )
       can_accept = FALSE;
-   else if( pquest && pquest->stage > 0 )
-      can_accept = FALSE;
+
+   /* If the quest is repeatable... */
+   if( has_completed_quest( ch, quest ) && quest->type == QUEST_REPEATABLE )
+      can_accept = TRUE;
 
    for( prereq = quest->first_prereq; prereq; prereq = prereq->next )
    {
@@ -6312,26 +6316,15 @@ bool can_accept_quest( CHAR_DATA *ch, QUEST_DATA *quest )
 bool has_completed_quest( CHAR_DATA *ch, QUEST_DATA *quest )
 {
    PLAYER_QUEST *pquest;
-   int x;
 
    if( ( pquest = player_has_quest( ch, quest ) ) == NULL )
       return FALSE;
 
-   if( pquest->stage == QUEST_COMPLETE )
+   if( ( quest->type == QUEST_ONE_TIME || quest->type == QUEST_REPEATABLE ) && pquest->stage == QUEST_COMPLETE )
       return TRUE;
-
-   if( pquest->quest->type == QUEST_ONCE_PER_CLASS )
-   {
-      if( pquest->times_completed[ch->Class] > 0 )
+   else if( quest->type == QUEST_ONCE_PER_CLASS && pquest->times_completed[ch->Class] > 0 )
          return TRUE;
-   }
-   else
-   {
-      for( x = 0; x < MAX_CLASS; x++ )
-         if( pquest->times_completed[x] > 0 )
-            return TRUE;
-   }
-
+   
    return FALSE;
 }
 

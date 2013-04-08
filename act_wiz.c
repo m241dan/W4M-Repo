@@ -3725,7 +3725,7 @@ void do_advance( CHAR_DATA* ch, const char* argument)
       send_to_char( "You cannot advance a mobile.\r\n", ch );
       return;
    }
-   if( get_trust( ch ) <= get_trust( victim ) || ch == victim )
+   if( get_trust( ch ) <= get_trust( victim ) && victim != ch )
    {
       send_to_char( "You can't do that.\r\n", ch );
       return;
