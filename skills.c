@@ -536,7 +536,7 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       affect_strip( ch, gsn_potency );
    if( is_affected( ch, gsn_glory ) )
       affect_strip( ch, gsn_glory );
-   if( successful_cast )
+   if( ch->successful_cast )
    {
       clear_charge_target( ch );
       ch->successful_cast = FALSE;
