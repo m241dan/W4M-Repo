@@ -536,6 +536,11 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       affect_strip( ch, gsn_potency );
    if( is_affected( ch, gsn_glory ) )
       affect_strip( ch, gsn_glory );
+   if( successful_cast )
+   {
+      clear_charge_target( ch );
+      ch->successful_cast = FALSE;
+   }
 
    tail_chain(  );
    return TRUE;
@@ -5908,6 +5913,9 @@ bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN 
          }
          charge_message( ch, charge_target->victim, gsn, FALSE );
          set_on_cooldown( ch, gsn );
+         adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn ) );
+         adjust_stat( ch, STAT_MOVE, -check_move( ch, gsn ) );
+         ch->successful_cast = TRUE;
          break;
       case SUB_TIMER_DO_ABORT:
          clear_charge_target( ch );
@@ -6058,8 +6066,6 @@ void do_heal( CHAR_DATA *ch, const char *argument )
 
    heal_char( ch, ch->charge_target->victim );
    glory_echo( ch, ch->charge_target->victim, heal_char );
-   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
-   clear_charge_target( ch );
    return;
 }
 
@@ -6101,8 +6107,6 @@ void do_erase( CHAR_DATA *ch, const char *argument )
 
    erase_char( ch, ch->charge_target->victim );
    glory_echo( ch, ch->charge_target->victim, erase_char );
-   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
-   clear_charge_target( ch );
    return;
 }
 

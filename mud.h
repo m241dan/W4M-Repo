@@ -2487,7 +2487,7 @@ struct char_data
    int charmed_dmg;
    int charmed_def;
    int feedback_potency;
-   bool echo_skill;
+   bool successful_cast;
 };
 
 typedef enum
