@@ -12559,6 +12559,8 @@ void update_quests( CHAR_DATA *ch, CHAR_DATA *mob, OBJ_DATA *obj, int type, int 
          case TYPE_OBJ_DROP:
             for( objective = pquest->first_objective_tracker; objective; objective = objective->next )
             {
+               if( objective->objective == NULL )
+                  continue;
                if( objective->objective->type == type && objective->objective->vnum == vnum && objective->objective->vwhere == vwhere )
                   advance_objective( ch, mob, obj, pquest, objective );
             }
