@@ -6073,10 +6073,10 @@ double get_skill_potency( CHAR_DATA *ch, int gsn )
    if( !IS_NPC( ch ) )
       potency += ch->pcdata->potency[gsn];
 
+   potency = ( potency / 100 ) + 1;
+
    if( is_affected( ch, gsn_potency ) )
       potency *= 2;
-
-   potency = ( potency / 100 ) + 1;
 
    return potency;
 }

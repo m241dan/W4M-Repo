@@ -2487,6 +2487,7 @@ struct char_data
    int charmed_dmg;
    int charmed_def;
    int feedback_potency;
+   bool echo_skill;
 };
 
 typedef enum
@@ -3360,6 +3361,9 @@ extern int port;
 
 /* Priest */
 extern short gsn_heal;
+extern short gsn_erase;
+extern short gsn_potency;
+extern short gsn_glory;
 
 extern short gsn_style_evasive;
 extern short gsn_style_defensive;
@@ -5241,7 +5245,10 @@ void charge_message( CHAR_DATA *ch, CHAR_DATA *victim, int gsn, bool StartCastin
 bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN *fun );
 void heal_msg( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
 void buff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn );
-
+void rbuff_msg( CHAR_DATA *ch, CHAR_DATA *victim, AFFECT_DATA *paf );
+void generate_buff_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
+void glory_echo args( ( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA, CHAR_DATA) ) );
+void heal_char( CHAR_DATA *ch, CHAR_DATA *victim );
 
 /* ban.c */
 int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int type );
@@ -5440,6 +5447,7 @@ int check_mana( CHAR_DATA *ch, int gsn );
 int check_move( CHAR_DATA *ch, int gsn );
 void free_target( CHAR_DATA *ch, TARGET_DATA *target );
 void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
+int get_threat( CHAR_DATA *ch, int gsn );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

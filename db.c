@@ -106,6 +106,9 @@ bool DONT_UPPER;
 
 /* Priest */
 short gsn_heal;
+short gsn_erase;
+short gsn_potency;
+short gsn_glory;
 
 /* weaponry */
 short gsn_pugilism;
@@ -580,6 +583,9 @@ void boot_db( bool fCopyOver )
       log_string( "Assigning gsn's" );
       /* Priest */
       ASSIGN_GSN( gsn_heal, "heal" );
+      ASSIGN_GSN( gsn_erase, "erase" );
+      ASSIGN_GSN( gsn_potency, "potency" );
+      ASSIGN_GSN( gsn_glory, "glory" );
 
       ASSIGN_GSN( gsn_style_evasive, "evasive style" );
       ASSIGN_GSN( gsn_style_defensive, "defensive style" );

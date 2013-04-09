@@ -530,6 +530,11 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
    end_timer( &time_used );
    update_userec( &time_used, &skill_table[sn]->userec );
 
+   if( is_affected( ch, gsn_potency ) )
+      affect_strip( ch, gsn_potency );
+   if( is_affected( ch, gsn_glory ) )
+      affect_strip( ch, gsn_glory );
+
    tail_chain(  );
    return TRUE;
 }
@@ -5900,6 +5905,7 @@ bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN 
             }
          }
          charge_message( ch, charge_target->victim, gsn, FALSE );
+         set_on_cooldown( ch, gsn );
          break;
       case SUB_TIMER_DO_ABORT:
          clear_charge_target( ch );
@@ -5993,21 +5999,57 @@ void rbuff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn )
    act( AT_PLAIN, to_room, ch, NULL, victim, TO_NOTVICT );
 
 }
+
+void generate_buff_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
+{
+   GTHREAT_DATA *gthreat;
+
+   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+      if( gthreat->threat_attacker == victim )
+         generate_threat( ch, gthreat->threat_owner, amount );
+   return;
+}
+
+void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DATA*) )
+{
+   CHAR_DATA *gvictim;
+
+   if( is_affected( ch, gsn_glory ) )
+      for( gvictim = victim->in_room->first_person; gvictim; gvictim = gvictim->next_in_room )
+      {
+         if( !is_same_group( victim, gvictim ) )
+            continue;
+         if( gvictim == victim )
+            continue;
+         (*f)( ch, gvictim );
+      }
+}
+
+//void glory_echo( CHAR_DATA *ch, CHAR_DATA* victim
+
 /* Priest by Davenge */
 
 void do_heal( CHAR_DATA *ch, const char *argument )
 {
-   GTHREAT_DATA *gthreat;
    TARGET_DATA *target;
-   double amount = 0;
-   int x;
-
 
    if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn_heal, TRUE ) ) == NULL )
       return;
 
    if( start_charging( ch, target, gsn_heal, do_heal ) )
       return;
+
+   heal_char( ch, ch->charge_target->victim );
+   glory_echo( ch, ch->charge_target->victim, heal_char );
+   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
+   clear_charge_target( ch );
+   return;
+}
+
+void heal_char( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   double amount;
+   int x;
 
    for( x = 0; x < ch->level; x++ )
    {
@@ -6024,21 +6066,14 @@ void do_heal( CHAR_DATA *ch, const char *argument )
    if( get_crit( ch, gsn_heal ) )
       amount = (int)( amount * 1.35 );
 
-   amount = UMIN( amount, ( ch->charge_target->victim->max_hit - ch->charge_target->victim->hit ) );
-
-   heal_msg( ch, ch->charge_target->victim, amount );
-   adjust_stat( ch->charge_target->victim, STAT_HIT, amount );
-   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
-   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
-      if( gthreat->threat_attacker == ch->charge_target->victim )
-         generate_threat( ch, gthreat->threat_owner, (int)( amount * .6 ) );
-   clear_charge_target( ch );
-   return;
+   amount = (int)UMIN( amount, ( victim->max_hit - victim->hit ) );
+   heal_msg( ch, victim, amount );
+   adjust_stat( victim, STAT_HIT, amount );
+   generate_buff_threat( ch, victim, (int)( amount * .6 ) );
 }
 
 void do_erase( CHAR_DATA *ch, const char *argument )
 {
-   GTHREAT_DATA *gthreat;
    TARGET_DATA *target;
    AFFECT_DATA *paf, *paf_next;
    CHAR_DATA *rtarget;
@@ -6051,17 +6086,15 @@ void do_erase( CHAR_DATA *ch, const char *argument )
    if( start_charging( ch, target, gsn_erase, do_erase ) )
       return;
 
-   for( paf = ch->charge_target->first_affect; paf; paf = paf_next )
+   for( paf = ch->charge_target->victim->first_affect; paf; paf = paf_next )
    {
       paf_next = paf->next;
       if( skill_table[paf->type]->target == TAR_CHAR_OFFENSIVE )
       {
          count++;
-         affect_remove( ch->charge_target->victim, paf->type );
-         rbuff_message( ch, ch->charge_target->victim, paf );
-         for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
-            if( gthreat->threat_attacker == ch->charge_target->victim )
-               generate_threat( ch, gthreat->threat_owner, get_threat( ch, gsn_erase ));
+         affect_remove( ch->charge_target->victim, paf );
+         rbuff_msg( ch, ch->charge_target->victim, paf->type );
+         generate_buff_threat( ch, ch->charge_target->victim, get_threat( ch, gsn_erase ));
          if( is_affected( ch, gsn_potency ) && count < 2 )
             continue;
          else
@@ -6069,7 +6102,8 @@ void do_erase( CHAR_DATA *ch, const char *argument )
       }
    }
    if( is_affected( ch, gsn_glory ) )
-      for( rtarget = ch->charge_target->victim->in_room->first_person; rtarget; rtarget = rtargeted->next_in_room )
+   {
+      for( rtarget = ch->charge_target->victim->in_room->first_person; rtarget; rtarget = rtarget->next_in_room )
       {
          if( !is_same_group( ch, rtarget ) )
             continue;
@@ -6081,20 +6115,18 @@ void do_erase( CHAR_DATA *ch, const char *argument )
             {
                count++;
                affect_remove( rtarget, paf );
-               rbuff_message( ch, rtarget, paf->type );
-               for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
-                  if( gthreat->threat_attacker == rtarget )
-                     generate_threat( ch, gthreat->threat_owner, get_threat( ch, gsn_erase ) );
-               if( is_affect( ch, gsn_potency ) && count < 2 )
+               rbuff_msg( ch, rtarget, paf->type );
+               generate_buff_threat( ch, rtarget, get_threat( ch, gsn_erase ) );
+               if( is_affected( ch, gsn_potency ) && count < 2 )
                   continue;
                else
                   break;
             }
          }
       }
+   }
    adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
    clear_charge_target( ch );
    return;
 }
 
-//write a method to handle threat instead of using a forloop everytime
