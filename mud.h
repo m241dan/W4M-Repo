@@ -4550,6 +4550,7 @@ DECLARE_DO_FUN( do_zones );
 
 /* Priest */
 DECLARE_DO_FUN( do_heal );
+DECLARE_DO_FUN( do_erase );
 
 /* Changes.c */
 
@@ -5248,7 +5249,9 @@ void buff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn );
 void rbuff_msg( CHAR_DATA *ch, CHAR_DATA *victim, AFFECT_DATA *paf );
 void generate_buff_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
 void glory_echo args( ( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA, CHAR_DATA) ) );
+void glory_echo args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dt ) );
 void heal_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void erase_char( CHAR_DATA *ch, CHAR_DATA *victim );
 
 /* ban.c */
 int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int type );

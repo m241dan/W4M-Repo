@@ -44,7 +44,7 @@ const char *const spell_power[] = { "none", "minor", "greater", "major" };
 
 const char *const spell_class[] = { "none", "lunar", "solar", "travel", "summon", "life", "death", "illusion" };
 
-const char *const target_type[] = { "ignore", "offensive", "defensive", "self", "objinv" };
+const char *const target_type[] = { "ignore", "offensive", "defensive", "self", "any", "objinv" };
 
 
 void show_char_to_char( CHAR_DATA * list, CHAR_DATA * ch );
@@ -478,7 +478,9 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
    /*
     * bsearch for the skill
     */
-   sn = find_skill( ch, command, TRUE );
+   sn = skill_lookup( command );
+
+   ch_printf( ch, "sn: %d\r\n", sn );
 
    if( sn == -1 )
       return FALSE;
@@ -6025,6 +6027,21 @@ void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DAT
       }
 }
 
+void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
+{
+   CHAR_DATA *gvictim;
+
+   if( is_affected( ch, gsn_glory ) )
+      for( gvictim = victim->in_room->first_person; gvictim; gvictim = gvictim->next_in_room )
+      {
+         if( !is_same_group( victim, gvictim ) )
+            continue;
+         if( gvictim == victim )
+            continue;
+         multi_hit( ch, gvictim, dt );
+      }
+}
+
 //void glory_echo( CHAR_DATA *ch, CHAR_DATA* victim
 
 /* Priest by Davenge */
@@ -6075,16 +6092,24 @@ void heal_char( CHAR_DATA *ch, CHAR_DATA *victim )
 void do_erase( CHAR_DATA *ch, const char *argument )
 {
    TARGET_DATA *target;
-   AFFECT_DATA *paf, *paf_next;
-   CHAR_DATA *rtarget;
-
-   int count = 0;
 
    if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn_erase, TRUE ) ) == NULL )
       return;
 
    if( start_charging( ch, target, gsn_erase, do_erase ) )
       return;
+
+   erase_char( ch, ch->charge_target->victim );
+   glory_echo( ch, ch->charge_target->victim, erase_char );
+   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
+   clear_charge_target( ch );
+   return;
+}
+
+void erase_char( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA *paf, *paf_next;
+   int count = 0;
 
    for( paf = ch->charge_target->victim->first_affect; paf; paf = paf_next )
    {
@@ -6101,32 +6126,5 @@ void do_erase( CHAR_DATA *ch, const char *argument )
             break;
       }
    }
-   if( is_affected( ch, gsn_glory ) )
-   {
-      for( rtarget = ch->charge_target->victim->in_room->first_person; rtarget; rtarget = rtarget->next_in_room )
-      {
-         if( !is_same_group( ch, rtarget ) )
-            continue;
-         count = 0;
-         for( paf = rtarget->first_affect; paf; paf = paf_next )
-         {
-            paf_next = paf->next;
-            if( skill_table[paf->type]->target == TAR_CHAR_OFFENSIVE )
-            {
-               count++;
-               affect_remove( rtarget, paf );
-               rbuff_msg( ch, rtarget, paf->type );
-               generate_buff_threat( ch, rtarget, get_threat( ch, gsn_erase ) );
-               if( is_affected( ch, gsn_potency ) && count < 2 )
-                  continue;
-               else
-                  break;
-            }
-         }
-      }
-   }
-   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn_heal ) );
-   clear_charge_target( ch );
-   return;
 }
 

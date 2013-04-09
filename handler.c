@@ -5802,7 +5802,7 @@ void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
       bug( "%s: somehow passed a NULL victim within target_data passed.", __FUNCTION__ );
       return;
    }
-   LINK( ch, ch->target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
+   LINK( ch, target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
    return;
 }
 
@@ -5859,7 +5859,7 @@ void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
    if( target->victim->first_charge_targetedby )
       for( cvictim = target->victim->first_charge_targetedby; cvictim; cvictim = cvictim->next_person_charge_targetting_your_target )
          if( ch == cvictim )
-            UNLINK( cvictim, cvictim->charge_target->victim->first_charge_targetedby, cvictim->charge_target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
+            UNLINK( cvictim, target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
    target->victim = NULL;
    DISPOSE( target );
 }
