@@ -6059,6 +6059,7 @@ void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
 
    if( is_affected( ch, gsn_glory ) )
    {
+      affect_strip( ch, gsn_glory ); // To prevent a lot of recursion, possibly infinite looping
       room = trvch_create( victim, TR_CHAR_ROOM_FORW );
       for( gvictim = victim->in_room->first_person; gvictim; gvictim = trvch_next( room ) )
       {
@@ -6102,6 +6103,7 @@ void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
 
    if( is_affected( ch, gsn_vacuum ) )
    {
+      affect_strip( ch, gsn_vacuum ); // To prevent a lot of recursion, possibly infinite looping
       room = trvch_create( victim, TR_CHAR_ROOM_FORW );
       for( vvictim = victim->in_room->first_person; vvictim; vvictim = trvch_next( room ) )
       {
@@ -6123,6 +6125,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
    TARGET_DATA *target;
    CHAR_DATA *victim;
    AFFEC_TDATA af;
+   ch_ret retcode;
 
    int gsn = ch->gsn;
 
@@ -6261,10 +6264,60 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       set_redirect( ch, victim );
       return;
    }
-
-
-   analyze_retcode( multi_hit( ch, victim, gsn ) );
-
+   else if( gsn = gsn_rage )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.location = APPLY_HASTEFROMMAGIC;
+      af.bitvector = AFF_RAGE;
+      af.modifier = 10 * get_skill_potency( ch, gsn );
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn = gsn_blindrush )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.location = APPLY_HASTEFROMMAGIC;
+      af.bitvector = AFF_BLINDRUSH;
+      af.modifier = 20 * get_skill_potency( ch, gsn );
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 );
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn = gsn_strongblows )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_STRONGBLOWS;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn = gsn_smashaxe )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_STUN;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 15 );
+      affect_to_char( ch, &af );
+   }
+   analyze_retcode( ( retcode = multi_hit( ch, victim, gsn ) ) );
+   if( retcode == rNONE )
+   {
+      if( gsn == gsn_decimation )
+      {
+         OBJ_DATA *wield = get_eq_char( ch, WEAR_WIELD );
+         char_from_room( ch );
+         char_to_room( ch, victim->in_room );
+         add_queue( ch, COMBAT_LAG_TIMER );
+         do_look( ch, "auto" );
+         act( AT_PLAIN, "You rush into the same room as $N and grab $O.", ch, wield, victim, TO_CHAR );
+         act( AT_PLAIN, "$n rushes into the same room as you and grabs $O.", ch, wield, victim, TO_VICT );
+         act( AT_PLAIN( "$n rushes into the same room as $n and grabs $O.", ch, wield, victim, TO_NOTVICT );
+      }
+   }
    if( skill_table[gsn]->type == SKILL_SPELL )
    {
       if( is_affected( ch, gsn_potency ) )

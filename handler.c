@@ -6197,7 +6197,7 @@ HIT_DATA *init_hitdata( void )
    return hit_data;
 }
 
-HIT_DATA *generate_hit_data( CHAR_DATA *victim )
+HIT_DATA *generate_hit_data( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    OBJ_DATA *obj;
    HIT_DATA *hit_data;
@@ -6229,6 +6229,16 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
             for( counter = 0; counter < amount; counter++ )
             {
                hit_data->locations[hit_data->max_locations] = ( obj->wear_loc * -1);
+               hit_data->miss_locs++;
+               hit_data->max_locations++;
+            }
+         }
+         if( IS_AFFECTED( ch, AFF_BLINDRUSH ) )
+         {
+            amount = hit_data->max_locations / 2;
+            for( counter = 0; counter < amount; counter ++ )
+            {
+               hit_data->locations[hit_data->max_locations] = MISS_GENERAL;
                hit_data->miss_locs++;
                hit_data->max_locations++;
             }
@@ -6305,7 +6315,13 @@ double get_round( CHAR_DATA *ch )
       if( counter > 70 )
          round += .25;
    };
-   return ( round * ( 1 - ( get_haste( ch ) / 10 ) ) );
+
+   round *= ( 1 - get_haste( ch ) / 10 ) );
+
+   if( IS_AFFECTED( ch, AFF_STRONGBLOWS ) )
+      round *= 1.5;
+
+   return round;
 }
 
 void switch_class( CHAR_DATA *ch, int Class )

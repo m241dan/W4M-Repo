@@ -1403,7 +1403,9 @@ typedef enum
    AFF_SCRYING, AFF_FIRESHIELD, AFF_SHOCKSHIELD, AFF_HAUS1, AFF_ICESHIELD,
    AFF_POSSESS, AFF_BERSERK, AFF_AQUA_BREATH, AFF_RECURRINGSPELL,
    AFF_CONTAGIOUS, AFF_ACIDMIST, AFF_VENOMSHIELD, AFF_STUN, AFF_BIND,
-   AFF_GRAVITY, AFF_BURN, AFF_BIO, AFF_DIA, AFF_CURSE, AFF_DRAIN, MAX_AFFECTED_BY
+   AFF_GRAVITY, AFF_BURN, AFF_BIO, AFF_DIA, AFF_CURSE, AFF_DRAIN, AFF_RAGE,
+   AFF_BLINDRUSH, AFF_STRONGBLOWS,
+   MAX_AFFECTED_BY
 } affected_by_types;
 
 /*
@@ -5420,7 +5422,7 @@ void extract_cooldown args( ( CHAR_DATA * ch, CD_DATA * cdat ) );
 double get_skill_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 void set_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 bool is_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
-HIT_DATA *generate_hit_data( CHAR_DATA * victim );
+HIT_DATA *generate_hit_data( CHAR_DATA *ch, CHAR_DATA * victim );
 HIT_DATA *init_hitdata( void );
 int weight_ratio_dex( int dex, int weight );
 int weight_ratio_str( int str, int weight );

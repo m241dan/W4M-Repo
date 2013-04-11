@@ -549,7 +549,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 
    if( physical )
    {
-      hit_data = generate_hit_data( victim );
+      hit_data = generate_hit_data( ch, victim );
 
       hit_wear = hit_data->locations[number_range( 0, ( hit_data->max_locations - 1 ) )];
 
@@ -694,6 +694,11 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 
    if( dam <= 0 )
       dam = 1;
+   /* Berserker Affects */
+   if( IS_AFFECTED( ch, AFF_RAGE ) )
+      dam = (int)( dam * .85 );
+   if( IS_AFFECTED( ch, AFF_STRONGBLOWS ) )
+      dam (int)( dam * 1.35 );
 
    DISPOSE( hit_data );
    if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit, damtype ) ) != rNONE )
