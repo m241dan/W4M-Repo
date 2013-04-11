@@ -1328,6 +1328,10 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
          amount = get_value_two( mod );
          ch->pcdata->cooldown[sn] += amount;
          break;
+      case APPLY_SKILLHITS:
+         sn = get_value_one( mod );
+         amount = get_value_two( mod );
+         ch->pcdata->hits[sn] += amount;
       case APPLY_GRANTSKILL:
          if( IS_VALID_SN( mod ) )
             xSET_BIT( ch->granted_skills, mod );
@@ -1349,6 +1353,9 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
          break;
       case APPLY_HASTE:
          adjust_stat( ch, STAT_HASTE, mod );
+         break;
+      case APPLY_HASTEFROMMAGIC:
+         adjust_stat( ch, STAT_HASTEFROMMAGIC, mod );
          break;
       case APPLY_MAGICDEFENSE:
          adjust_stat( ch, STAT_MAGICDEFENSE, mod );
@@ -1427,7 +1434,10 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
          break;
       case APPLY_CHARMEDDEFBOOST:
          adjust_stat( ch, STAT_CHARMEDDEF, mod );
-         break; 
+         break;
+      case APPLY_GRAVITY:
+         adjust_stat( ch, STAT_GRAVITY, mod );
+         break;
          /*
           * Object apply types
           */
@@ -1459,7 +1469,12 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
 /*
  * Give an affect to a char.
  */
-void affect_to_char( CHAR_DATA * ch, AFFECT_DATA * paf )
+void affect_to_char( CHAR_DATA *ch, AFFECT_DATA *paf )
+{
+   affect_to_char( ch, NULL, paf );
+   return;
+}
+void affect_to_char( CHAR_DATA * ch, CHAR_DATA *from, AFFECT_DATA * paf )
 {
    AFFECT_DATA *paf_new;
 
@@ -1494,6 +1509,9 @@ void affect_to_char( CHAR_DATA * ch, AFFECT_DATA * paf )
 
    if( !is_queued( ch, AFFECT_TIMER ) )
       add_queue( ch, AFFECT_TIMER );
+
+   if( from )
+      generate_buff_threat( from, ch, get_threat( from, paf->type ) );
    return;
 }
 
@@ -4593,6 +4611,9 @@ void showaffect( CHAR_DATA * ch, AFFECT_DATA * paf )
          case APPLY_SKILLDURATION:
             snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' duration by %d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
             break;
+         case APPLY_SKILLHITS:
+            snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' hits per use by %d.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
       }
       send_to_char( buf, ch );
    }
@@ -5866,6 +5887,23 @@ void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
 
 /* Return a skill's range -Davenge */
 
+int get_skill_hits( CHAR_DATA *ch, int gsn )
+{
+   OBJ_DATA *obj;
+   int hits;
+
+   hits = skill_table[gsn]->hits;
+
+   if( !IS_NPC( ch ) )
+      hits += ch->pcdata->hits[gsn];
+
+   if( skill_table[gsn]->type == SKILL_SKILL )
+      if( ( obj = ( get_eq_char( ch, WEAR_DUAL_WIELD ) ) != NULL && obj->type == ITEM_WEAPON )
+         hits++;
+
+   return hits;
+}
+
 int get_skill_range( CHAR_DATA *ch, int gsn )
 {
    int range = 0;
@@ -5982,7 +6020,7 @@ void add_queue( CHAR_DATA *ch, int type )
       case COMBAT_LAG_TIMER:
          double lag;
 
-         lag = base_class_lag[ch->Class];
+         lag = base_class_lag[ch->Class] + ch->gravity;
 
          if( ch->combat_lag > 0 && is_queued( ch, COMBAT_LAG_TIMER ) ) //If we already have timer, just reset it -Davenge
          {
@@ -6079,6 +6117,19 @@ double get_skill_potency( CHAR_DATA *ch, int gsn )
       potency *= 2;
 
    return potency;
+}
+
+double get_skill_duration( CHAR_DATA *ch, int gsn )
+{
+   double duration;
+
+   duration = skill_table[gsn]->duration + ch->duration;
+
+   if( !IS_NPC( ch ) )
+      duration += ch->pcdata->duration[gsn];
+
+   return duration;;
+
 }
 
 double get_skill_cooldown( CHAR_DATA *ch, int gsn )
@@ -6678,6 +6729,8 @@ void adjust_stat( CHAR_DATA *ch, int type, int amount )
 
    switch( type )
    {
+      default:
+         bug( "%s: Invalid type passed: %d", __FUNCTION__, type );
       case STAT_HIT:
          ch->hit += amount;
          break;
@@ -6837,6 +6890,9 @@ void adjust_stat( CHAR_DATA *ch, int type, int amount )
       case STAT_FEEDBACKPOTENCY:
          ch->feedback_potency += amount;
          break;
+      case STAT_GRAVITY:
+         ch->gravity += amount;
+         break;
    }
 }
 
@@ -6872,5 +6928,5 @@ int check_move( CHAR_DATA *ch, int sn )
 
 int get_threat( CHAR_DATA *ch, int gsn )
 {
-   return skill_table[gsn]->threat * 5;
+   return skill_table[gsn]->threat * ch->level;
 }

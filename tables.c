@@ -763,6 +763,10 @@ void fwrite_skill( FILE * fpout, SKILLTYPE * skill )
    fprintf( fpout, "DamType      %s\n", print_bitvector( &skill->damtype ) );
    if( skill->threat )
       fprintf( fpout, "Threat       %d\n", skill->threat );
+   if( skill->hits )
+      fprintf( fpout, "Hits         %d\n", skill->hits );
+   if( skill->duration )
+      fprintf( fpout, "Duration     %f\n", skill->duration );
    if( skill->guild != -1 )
       fprintf( fpout, "Guild        %d\n", skill->guild );
    if( skill->skill_fun )
@@ -1137,6 +1141,7 @@ SKILLTYPE *fread_skill( FILE * fp )
             KEY( "Dieroom", skill->die_room, fread_string_nohash( fp ) );
             KEY( "Dievict", skill->die_vict, fread_string_nohash( fp ) );
             KEY( "Difficulty", skill->difficulty, fread_number( fp ) );
+            KEY( "Duration", skill->duration, fread_float( fp ) );
             break;
 
          case 'E':
@@ -1192,6 +1197,7 @@ SKILLTYPE *fread_skill( FILE * fp )
             KEY( "Hitchar", skill->hit_char, fread_string_nohash( fp ) );
             KEY( "Hitdest", skill->hit_dest, fread_string_nohash( fp ) );
             KEY( "Hitroom", skill->hit_room, fread_string_nohash( fp ) );
+            KEY( "Hits", skill->hits, fread_number( fp ) );
             KEY( "Hitvict", skill->hit_vict, fread_string_nohash( fp ) );
             break;
 

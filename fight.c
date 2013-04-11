@@ -355,6 +355,22 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    if( !check_los( ch, target->victim ) )
       return rVICT_LOS;
 
+   if( is_skill( dt ) )
+   {
+      int count, hits;
+      hits = get_skill_hits( ch, dt );
+
+      for( count = 0; count < hits; count++ )
+         if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
+            break;
+      if( skill_table[dt]->type == SKILL_SPELL )
+      {
+         glory_echo( ch, target->victim, dt );
+         vacuum_spell( ch, target->victim, dt );
+      }
+      return retcode;
+   }
+
    if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
       return retcode;
 

@@ -51,6 +51,9 @@ void show_char_to_char( CHAR_DATA * list, CHAR_DATA * ch );
 int ris_save( CHAR_DATA * ch, int schance, int ris );
 bool check_illegal_psteal( CHAR_DATA * ch, CHAR_DATA * victim );
 
+int gsn_global;
+DO_FUN *global_fun
+
 /* from magic.c */
 void failed_casting( struct skill_type *skill, CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * obj );
 
@@ -525,6 +528,9 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       return TRUE;
    }
 
+   gsn_global = sn;
+   global_fun = skill_table[sn]->skill_fun;
+
    ch->prev_cmd = ch->last_cmd;  /* haus, for automapping */
    ch->last_cmd = skill_table[sn]->skill_fun;
    start_timer( &time_used );
@@ -532,15 +538,16 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
    end_timer( &time_used );
    update_userec( &time_used, &skill_table[sn]->userec );
 
-   if( is_affected( ch, gsn_potency ) )
-      affect_strip( ch, gsn_potency );
-   if( is_affected( ch, gsn_glory ) )
-      affect_strip( ch, gsn_glory );
-   if( ch->successful_cast )
+   if( skill_table[gsn]->type == SKILL_SPELL )
    {
-      clear_charge_target( ch );
-      ch->successful_cast = FALSE;
+      if( is_affected( ch, gsn_potency ) )
+         affect_strip( ch, gsn_potency );
+      if( is_affected( ch, gsn_glory ) )
+         affect_strip( ch, gsn_glory );
+      if( is_affected( ch, gsn_augmentspell ) );
+         affect_strip( ch, gsn_augmentspell );
    }
+   clear_charge_target( ch );
 
    tail_chain(  );
    return TRUE;
@@ -706,10 +713,10 @@ void do_slookup( CHAR_DATA* ch, const char* argument)
       if( skill->difficulty != '\0' )
          ch_printf( ch, "Difficulty: %d\r\n", ( int )skill->difficulty );
 
-      ch_printf( ch, "Type: %s  Target: %s  Minpos: %d  Mana: %d  Move: %d Beats: %d  Range: %d Threat: %d\r\n",
+      ch_printf( ch, "Type: %s  Target: %s  Minpos: %d  Mana: %d  Move: %d \r\nRange: %d Threat: %d Hits: %d Duration: %f\r\n",
                  skill_tname[skill->type],
                  target_type[URANGE( TAR_IGNORE, skill->target, TAR_OBJ_INV )],
-                 skill->minimum_position, skill->min_mana, skill->min_move, skill->beats, skill->range, skill->threat );
+                 skill->minimum_position, skill->min_mana, skill->min_move, skill->range, skill->threat, skill->hits, skill->duration );
       ch_printf( ch, "Flags: %d  Guild: %d  Value: %d  Info: %d  Code: %s\r\n",
                  skill->flags,
                  skill->guild, skill->value, skill->info, skill->skill_fun ? skill->skill_fun_name : skill->spell_fun_name );
@@ -862,8 +869,8 @@ void do_sset( CHAR_DATA* ch, const char* argument)
          send_to_char( "  name code target minpos slot mana beats dammsg wearoff guild minlevel cooldown, cdmsg\r\n", ch );
          send_to_char( "  type damtype acttype classtype powertype seffect flag dice value difficulty\r\n", ch );
          send_to_char( "  affect rmaffect level adept hit miss die imm (char/vict/room)\r\n", ch );
-         send_to_char( "  components teachers racelevel raceadept charge threat\r\n", ch );
-         send_to_char( "  sector\r\n", ch );
+         send_to_char( "  components teachers racelevel raceadept charge threat hits\r\n", ch );
+         send_to_char( "  sector duration\r\n", ch );
          send_to_char( "Affect having the fields: <location> <modfifier> [duration] [bitvector]\r\n", ch );
          send_to_char( "(See AFFECTTYPES for location, and AFFECTED_BY for bitvector)\r\n", ch );
       }
@@ -1042,13 +1049,25 @@ void do_sset( CHAR_DATA* ch, const char* argument)
 
       if( !str_cmp( arg2, "charge" ) )
       {
-         skill->charge = atoi( argument );
+         skill->charge = atof( argument );
          send_to_char( "Ok.\r\n", ch );
          return;
       }
       if( !str_cmp( arg2, "threat" ) )
       {
          skill->threat = atoi( argument );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
+      if( !str_cmp( arg2, "hits" ) )
+      {
+         skill->hits = atoi( argument );
+         send_to_char( "Ok.\r\n", ch );
+         return;
+      }
+      if( !str_cmp( arg2, "duration" ) )
+      {
+         skill->duration = atof( argument );
          send_to_char( "Ok.\r\n", ch );
          return;
       }
@@ -5802,11 +5821,6 @@ void analyze_retcode( CHAR_DATA *ch, CHAR_DATA *victim, ch_ret ret, int gsn )
 {
    switch( ret )
    {
-      case rNONE:
-         adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn ) );
-         adjust_stat( ch, STAT_MOVE, -check_move( ch, gsn ) );
-         set_on_cooldown( ch, gsn );
-         break;
       case rVICT_OOR:
          if( !IS_NPC( ch ) )
             send_to_char( "Target moved out of rangee.\r\n", ch );
@@ -6022,11 +6036,12 @@ void generate_buff_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
 
 void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DATA*) )
 {
-   CHAR_DATA *gvictim;
+   CHAR_DATA *gvictim, *next_gvictim;
 
    if( is_affected( ch, gsn_glory ) )
-      for( gvictim = victim->in_room->first_person; gvictim; gvictim = gvictim->next_in_room )
+      for( gvictim = victim->in_room->first_person; gvictim; gvictim = next_gvictim )
       {
+         next_gvictim = gvictim->next_in_room;
          if( !is_same_group( victim, gvictim ) )
             continue;
          if( gvictim == victim )
@@ -6037,11 +6052,12 @@ void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DAT
 
 void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
 {
-   CHAR_DATA *gvictim;
+   CHAR_DATA *gvictim, *next_gvictim;;
 
    if( is_affected( ch, gsn_glory ) )
-      for( gvictim = victim->in_room->first_person; gvictim; gvictim = gvictim->next_in_room )
+      for( gvictim = victim->in_room->first_person; gvictim; gvictim = next_gvictim )
       {
+         next_gvictim = gvictim->next_in_room;
          if( !is_same_group( victim, gvictim ) )
             continue;
          if( gvictim == victim )
@@ -6050,25 +6066,203 @@ void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
       }
 }
 
-//void glory_echo( CHAR_DATA *ch, CHAR_DATA* victim
-
-/* Priest by Davenge */
-
-void do_heal( CHAR_DATA *ch, const char *argument )
+void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DATA* ) )
 {
-   TARGET_DATA *target;
+   CHAR_DATA *vvictim, *next_vvictim;
 
-   if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn_heal, TRUE ) ) == NULL )
-      return;
-
-   if( start_charging( ch, target, gsn_heal, do_heal ) )
-      return;
-
-   heal_char( ch, ch->charge_target->victim );
-   glory_echo( ch, ch->charge_target->victim, heal_char );
-   return;
+   if( is_affected( ch, gsn_vacuum ) )
+      for( vvictim = victim->in_room->first_person; vvictim; vvictim = next_vvictim )
+      {
+         next_vvictim = vvictim->next_in_room;
+         if( is_same_group( ch, vvictim ) )
+            continue;
+         if( vvictim == victim )
+            continue;
+         (*f)( ch, vvictim );
+      }
 }
 
+void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
+{
+   CHAR_DATA *vvictim, *next_vvictim;
+
+   if( is_affected( ch, gsn_vacuum ) )
+      for( vvictim = victim->in_room->first_person; vvictim; vvictim = next_vvictim )
+      {
+         next_vvictim = vvictim->next_in_room;
+         if( is_same_group( ch, vvictim ) )
+            continue;
+         if( vvictim == victim )
+            continue;
+         multi_hit( ch, vvictim, dt );
+      }
+
+}
+
+//void glory_echo( CHAR_DATA *ch, CHAR_DATA* victim
+
+void do_skill( CHAR_DATA *ch, const char *argument )
+{
+   TARGET_DATA *target;
+   CHAR_DATA *victim;
+   AFFEC_TDATA af;
+
+   int gsn = gsn_global;
+
+   if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn_global, TRUE ) ) == NULL )
+      return;
+
+   if( start_charging( ch, target, gsn_global, global_fun ) )
+      return;
+
+   victim = ch->charge_target->victim;
+
+   if( gsn == gsn_heal )
+   {
+      heal_char( ch, victim );
+      glory_echo( ch, victim, heal_char );
+      vacuum_spell( ch, victim, heal_char );
+      return;
+   }
+   else if( gsn == gsn_erase )
+   {
+      erase_char( ch, victim );
+      glory_echo( ch, victim, erase_char );
+      vacuum_spell( ch, victim, erase_char );
+      return;
+   }
+   else if( gsn == gsn_holy )
+   {
+      holy_debuff( ch, victim );
+      glory_echo( ch, victim, holy_debuff );
+      vacuum_spell( ch, victim, holy_debuff );
+   }
+   else if( gsn == gsn_stoneskin )
+   {
+      stoneskin_char( ch, victim );
+      glory_echo( ch, victim, stoneskin_char );
+      vacuum_spell( ch, victim, stoneskin_char );
+      return;
+   }
+   else if( gsn == gsn_potency || gsn == gsn_gloryecho || gsn == gsn_augmentspell || gsn = gsn_ignorewis || gsn = gsn_vacuum || gsn = gsn_doubletrouble )
+   {
+      af.type = gsn;
+      af.duration = get_skill_duration( ch, gsn );
+      af.location = APPLY_NONE;
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn == gsn_martyr )
+   {
+      int hit, mana, move;
+
+      hit = ch->hit;
+      mana = ch->mana;
+      move = ch->move;
+
+      adjust_stat( ch, STAT_HIT, -hit );
+      adjust_stat( ch, STAT_MANA, -mana );
+      adjust_stat( ch, STAT_MOVE, -move );
+
+      adjust_stat( victim, STAT_HIT, ( hit * get_skill_potency( ch, gsn_martyr ) ) );
+      adjust_stat( victim, STAT_MANA, ( mana * get_skill_potency( ch, gsn_martyr ) ) );
+      adjust_stat( victim, STAT_MOVE, ( move * get_skill_potency( ch, gns_martyr ) ) );
+      return;
+   }
+   else if( gsn == gsn_lightning && is_affected( ch, gsn_augmentspell ) )
+   {
+      wizard_stun( ch, victim );
+      glory_echo( ch, victim, wizard_stun );
+      vacuum_spell( ch, victim, wizard_stun );
+      return;
+   }
+   else if( gsn == gsn_ice && is_affected( ch, gsn_augmentspell ) )
+   {
+      wizard_bind( ch, victim );
+      glory_echo( ch, victim, wizard_bind );
+      vacuum_spell( ch, victim, wizard_bind );
+      return;
+   }
+   else if( gsn == gsn_fire && is_affected( ch, gsn_augmentspell ) )
+   {
+      wizard_burn( ch, victim );
+      glory_echo( ch, victim, wizard_burn );
+      vacuum_spell( ch, victim, wizard_burn );
+      return;
+   }
+   else if( gsn == gsn_water && is_affected( ch, gsn_augmentspell ) )
+   {
+      wizard_gravity( ch, victim );
+      glory_echo( ch, victim, wizard_gravity );
+      vacuum_spell( ch, victim, wizard_gravity );
+      return;
+   }
+   else if( gsn == gsn_sleepblast )
+   {
+      wizard_sblast( ch, victim );
+      return;
+   }
+   else if( gsn == gsn_bio )
+   {
+      sorc_enfeeb( ch, victim, gsn );
+      bio_char( ch, victim );
+      glory_echo( ch, victim, bio_char );
+      vacuum_spell( ch, victim, bio_char );
+      if( is_affected( ch, gsn_doubletrouble ) )
+         affect_strip( ch, gsn_doubletrouble );
+   }
+   else if( gsn == gsn_dia )
+   {
+      sorc_enfeeb( ch, victim, gsn );
+      dia_char( ch, victim );
+      glory_echo( ch, victim, dia_char );
+      vacuum_spell( ch, victim, dia_char );
+      if( is_affected( ch, gsn_doubletrouble ) )
+         affect_strip( ch, gsn_doubletrouble );
+   }
+   else if( gsn == gsn_curse )
+   {
+      sorc_enfeeb( ch, victim, gsn );
+      sorc_curse( ch, victim );
+      glory_echo( ch, victim, sorc_curse );
+      vacuum_spell( ch, victim, sorc_curse );
+      if( is_affected( ch, gsn_doubletrouble ) )
+         affect_strip( ch, gsn_doubletrouble );
+      return;
+   }
+   else if( gsn == gsn_drain )
+   {
+      sorc_enfeeb( ch, vicitim, gsn );
+      sorc_drain( ch, victim );
+      glory_echo( ch, victim, sorc_drain );
+      vacuum_spell( ch, victim, sorc_drain );
+      if( is_affected( ch, gsn_doubletrouble ) )
+         affect_strip( ch, gsn_doubletrouble );
+   }
+   else if( gsn = gsn_redirect )
+   {
+      set_redirect( ch, victim );
+      return;
+   }
+   analyze_retcode( multi_hit( ch, victim, gsn ) );
+
+   if( skill_table[gsn]->type == SKILL_SPELL )
+   {
+      if( is_affected( ch, gsn_potency ) )
+         affect_strip( ch, gsn_potency );
+      if( is_affected( ch, gsn_glory ) )
+         affect_strip( ch, gsn_glory );
+      if( is_affected( ch, gsn_augmentspell ) )
+         affect_strip( ch, gsn_augmentspell );
+      if( is_affected( ch, gsn_vacuum ) )
+         affect_strip( ch, gsn_vacuum );
+      if( is_affected( ch, gsn_ignorewis ) )
+         affect_strip( ch, gsn_ignorewis );
+   }
+   clear_charge_target( ch );
+}
+
+/* Priest executables */
 void heal_char( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    double amount;
@@ -6095,21 +6289,6 @@ void heal_char( CHAR_DATA *ch, CHAR_DATA *victim )
    generate_buff_threat( ch, victim, (int)( amount * .6 ) );
 }
 
-void do_erase( CHAR_DATA *ch, const char *argument )
-{
-   TARGET_DATA *target;
-
-   if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn_erase, TRUE ) ) == NULL )
-      return;
-
-   if( start_charging( ch, target, gsn_erase, do_erase ) )
-      return;
-
-   erase_char( ch, ch->charge_target->victim );
-   glory_echo( ch, ch->charge_target->victim, erase_char );
-   return;
-}
-
 void erase_char( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    AFFECT_DATA *paf, *paf_next;
@@ -6121,9 +6300,9 @@ void erase_char( CHAR_DATA *ch, CHAR_DATA *victim )
       if( skill_table[paf->type]->target == TAR_CHAR_OFFENSIVE )
       {
          count++;
-         affect_remove( ch->charge_target->victim, paf );
-         rbuff_msg( ch, ch->charge_target->victim, paf->type );
-         generate_buff_threat( ch, ch->charge_target->victim, get_threat( ch, gsn_erase ));
+         affect_remove( victim, paf );
+         rbuff_msg( ch, victim, paf->type );
+         generate_buff_threat( ch, victim, get_threat( ch, gsn_erase ));
          if( is_affected( ch, gsn_potency ) && count < 2 )
             continue;
          else
@@ -6132,3 +6311,210 @@ void erase_char( CHAR_DATA *ch, CHAR_DATA *victim )
    }
 }
 
+void holy_debuff( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+
+   af.modifier = (int)( get_attack( victim ) * -.1 );
+   af.location = APPLY_ATTACK;
+   af.type = gsn_holy;
+   af.bitvector = AFF_HOLYDEBUFF;
+   af.duration = get_skill_duration( ch, gsn_holy );
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_holy ) );
+   return;
+}
+
+void stoneskin_char( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+   int amount;
+
+   amount = ch->level;
+   amount *=  get_curr_wis( ch ) / 2;
+   amount *= get_skill_potency( ch, gsn_stoneskin );
+
+   af.location = APPLY_ARMOR;
+   af.modifier = amount;
+   af.type = gsn_stoneskin;
+   af.bitvector = AFF_STONESKIN;
+   af.duration = get_skill_duration( ch, gsn_stoneskin ) + get_curr_pas( ch );
+   affect_to_char( victim, &af );
+   af.location = APPLY_MAGICDEFENSE;
+   affect_to_char( victim, ch, &af );
+   return;
+}
+
+/* Wizard executables */
+
+void wizard_stun( CHAR_DATA *ch, const char *argument )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_lightning;
+   af.location = APPLY_NONE;
+   af.bitvector = AFF_STUN;
+   af.duration = get_skill_duration( ch, gsn_lightning );
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_thunder ) );
+   return;
+}
+
+void wizard_bind( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_ice;
+   af.location = APPLY_NONE;
+   af.bitvector = AFF_BIND;
+   af.duration = get_skill_duration( ch, gsn_ice );
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_ice ) );
+   return;
+
+}
+
+void wizard_burn( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_fire;
+   af.location = APPLY_WISDOM;
+   af.bitvector = AFF_BURN;
+   af.duration = get_skill_duration( ch, gsn_fire );
+   af.modifier = get_curr_wis( victim ) * -.1;
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_fire ) );
+   return;
+}
+
+void wizard_gravity( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_water;
+   af.location = APPLY_GRAVITY;
+   af.bitvector = AFF_GRAVITY;
+   af.duration = get_skill_duration( ch, gsn_water );
+   af.modifier = -1;
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_water ) );
+   return;
+}
+
+void wizard_sblast( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_sleepblast;
+   af.bitvector = AFF_SLEEP;
+   af.duration = get_skill_duration( ch, gsn_sleepblast );
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_sleepbast ) );
+   return;
+}
+
+void bio_char( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_bio;
+   af.bitvector = AFF_BIO;
+   af.duration = get_skill_duration( ch, gsn_bio ) + ( get_curr_pas( ch ) / 10 );
+   af.location = APPLY_ATTACK;
+   af.modifier = ( get_curr_wis( ch ) / 2 ) + ( GET_ATTACK( victim ) *  -.1 ) * get_skill_potency( ch, gsn_bio ) );
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_bio ) );
+   feedback( ch, &af );
+   return;
+}
+void dia_char( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_dia;
+   af.bitvector = AFF_DIA;
+   af.duration = get_skill_duration( ch, gsn_dia ) + ( get_curr_pas( ch ) / 10 );
+   af.location = APPLY_ARMOR;
+   af.modifier = ( get_curr_wis( ch ) / 2 ) + ( GET_AC( victim ) *  -.1 ) * get_skill_potency( ch, gsn_dia ) );
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_dia ) );
+   feedback( ch, &af );
+   return;
+}
+void sorc_curse( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_curse;
+   af.bitvector = AFF_SORCCURSE;
+   af.duration = get_skill_duration( ch, gsn_curse ) + ( get_curr_pas( ch ) / 10 );
+   af.location = APPLY_HASTEFROMMAGIC;
+   af.modifier = ( ( get_curr_wis( ch ) / 10 ) + 10 * get_skill_potency( ch, gsn_curse ) ) * -1;
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_curse ) );
+   feedback( ch, &af );
+   return;
+
+}
+void sorc_drain( CHAR_DATA *ch, CHAR_DTA *victim )
+{
+   AFFECT_DATA af;
+
+   af.type = gsn_drain;
+   af.bitvector = AFF_DRAIN;
+   af.duration = get_skill_duration( ch, gsn_drain ) + ( get_curr_pas( ch ) / 10 );
+   af.location = APPLY_MAGICDEFENSE;
+   af.modifier = ( get_curr_wis( ch ) / 2 ) + ( GET_MAGICDEFENSE( victim ) * -.1 ) * get_skill_potency( ch, gsn_drain ) );
+   affect_to_char( victim, &af );
+   generate_threat( ch, victim, get_threat( ch, gsn_drain ) );
+   feedback( ch, &af );
+   return;
+}
+
+void feedback( CHAR_DATA *ch, AFFECT_DATA *af )
+{
+   af->type = gsn_sorcbuff;
+   af->modifier *= -1;
+   af->bitvector = 0;
+   if( ch->feedback > 0 )
+      af->modifier *= 1 + ( ch->feedback / 100 );
+
+   if( ch->redirect )
+   {
+      affect_to_char( ch->redirect, ch, af );
+      set_redirect( ch, NULL );
+   }
+   else
+      affect_to_char( ch, af );
+   return;
+}
+
+void set_redirect( CHAR_DATA *ch, CHAR_DATA *redirect )
+{
+   ch->redirect = redirect;
+   return;
+}
+
+void sorc_enfeeb( CHAR_DATA *ch, CHAR_DATA *victim, int gsn )
+{
+   AFFECT_DATA *paf;
+   int count = 0;
+
+   if( is_affected( victim, gsn ) )
+      affect_strip( victim, gsn );
+
+   for( paf = victim->first_affect; paf; paf = paf->next )
+   {
+      if( paf->type == gsn_dia || paf->type == gsn_bio || paf->type == gsn_drain || paf->type == gsn_curse )
+      {
+         if( ++count == 1 && is_affected( ch, gns_doubletrouble ) )
+            continue;
+         if( ++count >= 2 )
+            break;
+      }
+   }
+   if( paf )
+      affect_remove( victim, paf );
+   return;
+}

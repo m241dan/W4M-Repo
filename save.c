@@ -467,6 +467,7 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "CharmedDam   %d\n", ch->charmed_dmg );
    fprintf( fp, "CharmedDef   %d\n", ch->charmed_def );
    fprintf( fp, "FeedBackPot  %d\n", ch->feedback_potency );
+   fprintf( fp, "Gravity      %d\n", ch->gravity );
    if( ch->wimpy )
       fprintf( fp, "Wimpy        %d\n", ch->wimpy );
    if( ch->deaf )
@@ -602,17 +603,17 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
 
    for( sn = 1; sn < num_skills; ++sn )
    {
-      if( skill_table[sn]->name && ch->pcdata->learned[sn] > 0 )
+      if( skill_table[sn]->name )
          switch ( skill_table[sn]->type )
          {
             default:
-               fprintf( fp, "Skill        %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], skill_table[sn]->name );
+               fprintf( fp, "Skill        %d %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], ch->pcdata->hits[sn], skill_table[sn]->name );
                break;
             case SKILL_RACIAL:
-               fprintf( fp, "Ability      %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], skill_table[sn]->name );
+               fprintf( fp, "Ability      %d %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], ch->pcdata->hits[sn], skill_table[sn]->name );
                break;
             case SKILL_SPELL:
-               fprintf( fp, "Spell        %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], skill_table[sn]->name );
+               fprintf( fp, "Spell        %d %d %d %d %d %d '%s'\n", ch->pcdata->learned[sn], ch->pcdata->potency[sn], ch->pcdata->range[sn], ch->pcdata->cooldown[sn], ch->pcdata->duration[sn], ch->pcdata->hits[sn], skill_table[sn]->name );
                break;
             case SKILL_WEAPON:
                fprintf( fp, "Weapon       %d '%s'\n", ch->pcdata->learned[sn], skill_table[sn]->name );
@@ -1578,6 +1579,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                fMatch = TRUE;
                break;
             }
+            KEY( "Gravity", ch->gravity, fread_number( fp ) );
             break;
 
          case 'H':

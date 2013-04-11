@@ -661,6 +661,17 @@ ch_ret move_char( CHAR_DATA * ch, EXIT_DATA * pexit, int fall )
    if( IS_NPC( ch ) && xIS_SET( ch->act, ACT_MOUNTED ) )
       return retcode;
 
+   if( IS_AFFECTED( ch, AFF_BIND ) )
+   {
+      send_to_char( "You are bound to this spot and cannot move!\r\n", ch );
+      return rNONE;
+   }
+   if( IS_AFFECTED( ch, AFF_STUN ) )
+   {
+      send_to_char( "You are too stunned to move!\r\n", ch );
+      return rNONE;
+   }
+
    in_room = ch->in_room;
    from_room = in_room;
    if( !pexit || ( to_room = pexit->to_room ) == NULL )

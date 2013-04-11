@@ -1402,7 +1402,8 @@ typedef enum
    AFF_FLYING, AFF_PASS_DOOR, AFF_FLOATING, AFF_TRUESIGHT, AFF_DETECTTRAPS,
    AFF_SCRYING, AFF_FIRESHIELD, AFF_SHOCKSHIELD, AFF_HAUS1, AFF_ICESHIELD,
    AFF_POSSESS, AFF_BERSERK, AFF_AQUA_BREATH, AFF_RECURRINGSPELL,
-   AFF_CONTAGIOUS, AFF_ACIDMIST, AFF_VENOMSHIELD, AFF_STUN, MAX_AFFECTED_BY
+   AFF_CONTAGIOUS, AFF_ACIDMIST, AFF_VENOMSHIELD, AFF_STUN, AFF_BIND,
+   AFF_GRAVITY, AFF_BURN, AFF_BIO, AFF_DIA, AFF_CURSE, AFF_DRAIN, MAX_AFFECTED_BY
 } affected_by_types;
 
 /*
@@ -1828,7 +1829,7 @@ typedef enum
    APPLY_FEEDBACKPOTENCY, APPLY_DURATIONS,
    APPLY_SKILLDURATION, APPLY_DOUBLEATTACK, APPLY_CRITCHANCE,
    APPLY_CRITDAMAGE, APPLY_COUNTER, APPLY_PHASE, APPLY_BLOCK, APPLY_COMBODMG,
-   APPLY_CHARMEDDMGBOOST, APPLY_CHARMEDDEFBOOST,
+   APPLY_CHARMEDDMGBOOST, APPLY_CHARMEDDEFBOOST, APPLY_SKILLHITS, APPLY_GRAVITY, APPLY_HASTEFROMMAGIC,
    MAX_APPLY_TYPE
 } apply_types;
 
@@ -2313,6 +2314,7 @@ struct char_data
    CHAR_DATA *prev_in_room;
    CHAR_DATA *master;
    CHAR_DATA *leader;
+   CHAR_DATA *redirect;
    FIGHT_DATA *fighting;
    CHAR_DATA *reply;
    CHAR_DATA *retell;
@@ -2487,7 +2489,7 @@ struct char_data
    int charmed_dmg;
    int charmed_def;
    int feedback_potency;
-   bool successful_cast;
+   double gravity;
 };
 
 typedef enum
@@ -2507,7 +2509,7 @@ typedef enum
    STAT_WEPSIZEDIE, STAT_POTENCY, STAT_COOLDOWNS, STAT_RANGE, STAT_DURATIONS,
    STAT_REGEN, STAT_REFRESH, STAT_DOUBLEATTACK, STAT_CRITCHANCE, STAT_CRITDAM,
    STAT_DODGE, STAT_PARRY, STAT_COUNTER, STAT_BLOCK, STAT_PHASE, STAT_COMBODMG,
-   STAT_CHARMEDDMG, STAT_CHARMEDDEF, STAT_FEEDBACKPOTENCY,
+   STAT_CHARMEDDMG, STAT_CHARMEDDEF, STAT_FEEDBACKPOTENCY, STAT_GRAVITY,
    MAX_STATTYPE
 } stat_types;
 
@@ -3331,7 +3333,9 @@ struct skill_type
    double cooldown; /* Amount of time before skill can be used again */
    EXT_BV damtype;
    double charge;
+   double duration;
    int threat;
+   int hits;
 };
 
 /* how many items to track.... prevent repeat auctions */
@@ -5292,6 +5296,7 @@ bool nifty_is_name args( ( const char *str, const char *namelist ) );
 bool nifty_is_name_prefix args( ( const char *str, const char *namelist ) );
 void affect_modify args( ( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd ) );
 void affect_to_char args( ( CHAR_DATA * ch, AFFECT_DATA * paf ) );
+void affect_to_char args( ( CHAR_DATA * ch, CHAR_DATA *from, AFFECT_DATA *paf ) );
 void affect_remove args( ( CHAR_DATA * ch, AFFECT_DATA * paf ) );
 void affect_strip args( ( CHAR_DATA * ch, int sn ) );
 bool is_affected args( ( CHAR_DATA * ch, int sn ) );
@@ -5451,6 +5456,7 @@ int check_move( CHAR_DATA *ch, int gsn );
 void free_target( CHAR_DATA *ch, TARGET_DATA *target );
 void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
 int get_threat( CHAR_DATA *ch, int gsn );
+double get_skill_duration( CHAR_DATA *ch, int gsn );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
