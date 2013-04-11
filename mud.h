@@ -2489,6 +2489,7 @@ struct char_data
    int charmed_dmg;
    int charmed_def;
    int feedback_potency;
+   int gsn;
    double gravity;
 };
 

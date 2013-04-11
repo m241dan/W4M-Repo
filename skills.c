@@ -51,9 +51,6 @@ void show_char_to_char( CHAR_DATA * list, CHAR_DATA * ch );
 int ris_save( CHAR_DATA * ch, int schance, int ris );
 bool check_illegal_psteal( CHAR_DATA * ch, CHAR_DATA * victim );
 
-int gsn_global;
-DO_FUN *global_fun
-
 /* from magic.c */
 void failed_casting( struct skill_type *skill, CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * obj );
 
@@ -528,8 +525,7 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       return TRUE;
    }
 
-   gsn_global = sn;
-   global_fun = skill_table[sn]->skill_fun;
+   ch->gsn = sn;
 
    ch->prev_cmd = ch->last_cmd;  /* haus, for automapping */
    ch->last_cmd = skill_table[sn]->skill_fun;
@@ -5895,7 +5891,7 @@ bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN 
          if( skill_table[gsn]->charge > 0 )
          {
             charge_message( ch, charge_target->victim, gsn, TRUE );
-            add_timer( ch, TIMER_DO_FUN, skill_table[gsn]->charge, fun, SUB_CHARGE );
+            add_timer( ch, TIMER_DO_FUN, skill_table[gsn]->charge, do_skill, SUB_CHARGE );
             return TRUE;
          }
          charge_message( ch, charge_target->victim, gsn, FALSE );
@@ -6036,67 +6032,88 @@ void generate_buff_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
 
 void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DATA*) )
 {
-   CHAR_DATA *gvictim, *next_gvictim;
+   CHAR_DATA *gvictim;
+   TRV_DATA *room;
 
    if( is_affected( ch, gsn_glory ) )
-      for( gvictim = victim->in_room->first_person; gvictim; gvictim = next_gvictim )
+   {
+      room = trvch_create( victim, TR_CHAR_ROOM_FORW );
+      for( gvictim = victim->in_room->first_person; gvictim; gvictim = trvch_next( room ) )
       {
-         next_gvictim = gvictim->next_in_room;
+         if( char_died( gvictim ) )
+            continue;
          if( !is_same_group( victim, gvictim ) )
             continue;
          if( gvictim == victim )
             continue;
          (*f)( ch, gvictim );
       }
+      trvch_dispose( room );
+   }
 }
 
 void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
 {
-   CHAR_DATA *gvictim, *next_gvictim;;
+   CHAR_DATA *gvictim;
+   TRV_DATA *room;
 
    if( is_affected( ch, gsn_glory ) )
-      for( gvictim = victim->in_room->first_person; gvictim; gvictim = next_gvictim )
+   {
+      room = trvch_create( victim, TR_CHAR_ROOM_FORW );
+      for( gvictim = victim->in_room->first_person; gvictim; gvictim = trvch_next( room ) )
       {
-         next_gvictim = gvictim->next_in_room;
          if( !is_same_group( victim, gvictim ) )
             continue;
          if( gvictim == victim )
             continue;
-         multi_hit( ch, gvictim, dt );
+         if( ( multi_hit( ch, gvictim, dt ) ) != rNONE )
+            continue;
       }
+      trvch_dispose( room );
+   }
 }
 
 void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DATA* ) )
 {
-   CHAR_DATA *vvictim, *next_vvictim;
+   CHAR_DATA *vvictim;
+   TRV_DATA *room;
 
    if( is_affected( ch, gsn_vacuum ) )
-      for( vvictim = victim->in_room->first_person; vvictim; vvictim = next_vvictim )
+   {
+      room = trvch_create( victim, TR_CHAR_ROOM_FORW );
+      for( vvictim = victim->in_room->first_person; vvictim; vvictim = trvch_next( room ) )
       {
-         next_vvictim = vvictim->next_in_room;
+         if( char_died( vvictim ) )
+            continue;
          if( is_same_group( ch, vvictim ) )
             continue;
          if( vvictim == victim )
             continue;
          (*f)( ch, vvictim );
       }
+      trvch_dispoes( room );
+   }
 }
 
 void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
 {
-   CHAR_DATA *vvictim, *next_vvictim;
+   CHAR_DATA *vvictim;
+   TRV_DATA *room;
 
    if( is_affected( ch, gsn_vacuum ) )
-      for( vvictim = victim->in_room->first_person; vvictim; vvictim = next_vvictim )
+   {
+      room = trvch_create( victim, TR_CHAR_ROOM_FORW );
+      for( vvictim = victim->in_room->first_person; vvictim; vvictim = trvch_next( room ) )
       {
-         next_vvictim = vvictim->next_in_room;
          if( is_same_group( ch, vvictim ) )
             continue;
          if( vvictim == victim )
             continue;
-         multi_hit( ch, vvictim, dt );
+         if( ( multi_hit( ch, vvictim, dt ) ) != rNONE )
+            continue;
       }
-
+      trvch_dispose( room );
+   }
 }
 
 //void glory_echo( CHAR_DATA *ch, CHAR_DATA* victim
@@ -6107,12 +6124,12 @@ void do_skill( CHAR_DATA *ch, const char *argument )
    CHAR_DATA *victim;
    AFFEC_TDATA af;
 
-   int gsn = gsn_global;
+   int gsn = ch->gsn;
 
-   if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn_global, TRUE ) ) == NULL )
+   if( ch->substate == SUB_NONE && ( target = check_can( ch, argument, gsn, TRUE ) ) == NULL )
       return;
 
-   if( start_charging( ch, target, gsn_global, global_fun ) )
+   if( start_charging( ch, target, gsn, do_skill ) )
       return;
 
    victim = ch->charge_target->victim;
@@ -6244,6 +6261,8 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       set_redirect( ch, victim );
       return;
    }
+
+
    analyze_retcode( multi_hit( ch, victim, gsn ) );
 
    if( skill_table[gsn]->type == SKILL_SPELL )
