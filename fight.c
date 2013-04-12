@@ -699,8 +699,11 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       dam = (int)( dam * .85 );
    if( IS_AFFECTED( ch, AFF_STRONGBLOWS ) )
       dam (int)( dam * 1.35 );
+   if( IS_AFFETED( ch, AFF_CRITSANCE ) )
+      dam /= 2;
 
    DISPOSE( hit_data );
+
    if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit, damtype ) ) != rNONE )
       return retcode;
    if( char_died( ch ) )
@@ -3609,6 +3612,8 @@ bool get_crit( CHAR_DATA *ch, int dt )
             chance += .05;
       }
       chance = URANGE( 0, (int)chance, 50 );
+      if( IS_AFFECTED( ch, AFF_CRITSTANCE ) )
+         return TRUE;
    }
    else if( skill_table[dt]->type == SKILL_SPELL )
    {

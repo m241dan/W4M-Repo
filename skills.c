@@ -6264,7 +6264,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       set_redirect( ch, victim );
       return;
    }
-   else if( gsn = gsn_rage )
+   else if( gsn == gsn_rage )
    {
       AFFECT_DATA af;
       af.type = gsn;
@@ -6275,7 +6275,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       affect_to_char( ch, &af );
       return;
    }
-   else if( gsn = gsn_blindrush )
+   else if( gsn == gsn_blindrush )
    {
       AFFECT_DATA af;
       af.type = gsn;
@@ -6286,7 +6286,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       affect_to_char( ch, &af );
       return;
    }
-   else if( gsn = gsn_strongblows )
+   else if( gsn == gsn_strongblows )
    {
       AFFECT_DATA af;
       af.type = gsn;
@@ -6295,7 +6295,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       affect_to_char( ch, &af );
       return;
    }
-   else if( gsn = gsn_smashaxe )
+   else if( gsn == gsn_smashaxe )
    {
       AFFECT_DATA af;
       af.type = gsn;
@@ -6303,6 +6303,116 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 15 );
       affect_to_char( ch, &af );
    }
+   else if( gsn == gsn_counterstance )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_COUNTERSTANCE;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 );
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn == gsn_chakra )
+   {
+      chakra_heal( ch );
+      return;
+   }
+   else if( gsn == gsn_critstance )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_CRITSTANCE;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pass( ch ) / 2 );
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn == gsn_crossslash )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_CROSSSLASH;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pass( ch ) / 7 );
+      af.location = APPLY_ARMOR;
+      af.modifier = ( GET_AC( victim ) * -.1 );
+      affect_to_char( victim, &af );
+   }
+   else if( gsn == gsn_onguard )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_ONGUARD;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 10 );
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn == gsn_sworddash )
+   {
+      char_from_room( ch );
+      char_to_room( ch, victim->in_room );
+      add_queue( ch, COMBAT_LAG_TIMER );
+      do_look( ch, "auto" );
+      act( AT_PLAIN( "You dash into the room with $N.", ch, NULL, victim, TO_CHAR );
+      act( AT_PLAIN( "$n dashes into the room.", ch, NULL, victim, TO_VICT );
+      act( AT_PLAIN( "$n dashes into the room as $N.", ch, NULL, victim, TO_NOTVICT );
+   }
+   else if( gsn == gsn_disarm )
+   {
+      if( disarm_char( ch, victim ) )
+      {
+         AFFECT_DATA af;
+         af.type = gsn;
+         af.location = APPLY_STRENGTH;
+         af.modifier = 5;
+         af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 ) ;
+         affect_to_char( ch, &af );
+      }
+      return;
+   }
+   else if( gsn == gsn_bladeflash )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_FLASH;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
+      affect_to_char( victim, ch, &af );
+      return;
+   }
+   else if( gsn == gsn_bear )
+   {
+      druid_summon( ch, DRUID_BEAR );
+      return;
+   }
+   else if( gsn == gsn_wolf )
+   {
+      druid_summon( ch, DRUID_WOLF );
+      return;
+   }
+   else if( gsn == gsn_owl )
+   {
+      druid_summon( ch, DRUID_OWL );
+      return;
+   }
+   else if( gsn == gsn_charm )
+   {
+      druid_charm( ch, victim );
+      return;
+   }
+   else if( gsn == gsn_infuse )
+   {
+      druid_infuse( ch );
+      return;
+   }
+   else if( gsn == gsn_naturecurse )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_NATURECURSE;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 2 );
+      af.location = APPLY_HASTEFROMMAGIC;
+      af.modifier = 20 + ( get_curr_wis( ch ) / 8 );
+      affect_to_char( victim, ch, &af );
+   }
+   else if( gsn = gsn_
    analyze_retcode( ( retcode = multi_hit( ch, victim, gsn ) ) );
    if( retcode == rNONE )
    {
@@ -6589,4 +6699,64 @@ void sorc_enfeeb( CHAR_DATA *ch, CHAR_DATA *victim, int gsn )
    if( paf )
       affect_remove( victim, paf );
    return;
+}
+
+/* Teras Kasi */
+
+void chakra_heal( CHAR_DATA *ch )
+{
+   double amount;
+   int x;
+
+   for( x = 0; x < ch->level; x++ )
+   {
+      if( x < 10 )
+         amount += .25;
+      if( x < 25 )
+         amount += .35;
+      if( x <= 50 )
+         amount += .45;
+   }
+
+   amount += get_curr_wis( ch );
+   amount *= ( get_curr_wis( ch ) / 4 );
+   amount *= get_skill_potency( ch, gsn_chakra );
+   if( get_crit( ch, gsn_chakra ) )
+      amount = (int)( amount * 1.35 );
+
+   amount = (int)UMIN( amount, ( ch->max_hit - ch->hit ) );
+   heal_msg( ch, ch, amount );
+   adjust_stat( ch, STAT_HIT, amount );
+   amount *= .5;
+   amount += ( get_curr_con( ch ) + get_curr_str( ch ) ) / 3;
+   generate_buff_threat( ch, ch, (int)amount );
+}
+
+/* Blade Master */
+
+bool disarm_char( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   OBJ_DATA *wield, *dual_wield;
+   int chance;
+
+   if( ( wield = get_eq_char( victim, WEAR_WIELD ) ) == NULL && ( ( dual_wield = get_eq_char( victim, WEAR_DUAL_WIELD ) ) == NULL )
+      return FALSE;
+
+   if( !wield )
+      wield = dual_wield;
+
+   chance = 50 + ( ch->level - victim->level );
+   chance += ( get_curr_strength( ch ) / 5 ) - ( get_curr_srength( victim ) / 4 );
+   chance = URANGE( 5, chance, 95 );
+
+   if( chance < number_percent( ) )
+   {
+      act( AT_SKILL, "$n DISARMS you!", ch, NULL, victim, TO_VICT );
+      act( AT_SKILL, "You disarm $N!", ch, NULL, victim, TO_CHAR );
+      act( AT_SKILL, "$n disarms $N!", ch, NULL, victim, TO_NOTVICT );
+      obj_from_char( wield );
+      obj_to_char( victim, wield );
+      return TRUE;
+   }
+   return FALSE;
 }
