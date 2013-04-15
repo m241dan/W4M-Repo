@@ -365,7 +365,7 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
          CHAR_DATA *aoe_victim;
          TRV_DATA *room;
 
-         room = trvch_create( ch, TR_CHAR_ROOM_FORW;
+         room = trvch_create( ch, TR_CHAR_ROOM_FORW );
          for( aoe_victim = ch->in_room->first_person; aoe_victim; aoe_victim = trvch_next( room ) )
          {
             if( is_same_group( ch, aoe_victim ) )
@@ -698,8 +698,8 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    if( IS_AFFECTED( ch, AFF_RAGE ) )
       dam = (int)( dam * .85 );
    if( IS_AFFECTED( ch, AFF_STRONGBLOWS ) )
-      dam (int)( dam * 1.35 );
-   if( IS_AFFETED( ch, AFF_CRITSANCE ) )
+      dam = (int)( dam * 1.35 );
+   if( IS_AFFECTED( ch, AFF_CRITSTANCE ) )
       dam /= 2;
 
    DISPOSE( hit_data );

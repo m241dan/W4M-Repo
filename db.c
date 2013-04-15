@@ -209,7 +209,6 @@ short gsn_gouge;
 short gsn_poison_weapon;
 
 /* thief & warrior */
-short gsn_disarm;
 short gsn_enhanced_damage;
 short gsn_kick;
 short gsn_parry;
@@ -255,7 +254,6 @@ short gsn_slice;
 short gsn_aqua_breath;
 short gsn_blindness;
 short gsn_charm_person;
-short gsn_curse;
 short gsn_invis;
 short gsn_mass_invis;
 short gsn_poison;

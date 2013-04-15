@@ -5898,7 +5898,7 @@ int get_skill_hits( CHAR_DATA *ch, int gsn )
       hits += ch->pcdata->hits[gsn];
 
    if( skill_table[gsn]->type == SKILL_SKILL )
-      if( ( obj = ( get_eq_char( ch, WEAR_DUAL_WIELD ) ) != NULL && obj->type == ITEM_WEAPON )
+      if( ( obj = get_eq_char( ch, WEAR_DUAL_WIELD ) ) != NULL && obj->item_type == ITEM_WEAPON )
          hits++;
 
    return hits;
@@ -6123,7 +6123,7 @@ double get_skill_duration( CHAR_DATA *ch, int gsn )
 {
    double duration;
 
-   duration = skill_table[gsn]->duration + ch->duration;
+   duration = skill_table[gsn]->duration + ch->durations;
 
    if( !IS_NPC( ch ) )
       duration += ch->pcdata->duration[gsn];
@@ -6316,7 +6316,7 @@ double get_round( CHAR_DATA *ch )
          round += .25;
    };
 
-   round *= ( 1 - get_haste( ch ) / 10 ) );
+   round *= 1 + ( get_haste( ch ) / 100 );
 
    if( IS_AFFECTED( ch, AFF_STRONGBLOWS ) )
       round *= 1.5;

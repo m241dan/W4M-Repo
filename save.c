@@ -467,7 +467,7 @@ void fwrite_char( CHAR_DATA * ch, FILE * fp )
    fprintf( fp, "CharmedDam   %d\n", ch->charmed_dmg );
    fprintf( fp, "CharmedDef   %d\n", ch->charmed_def );
    fprintf( fp, "FeedBackPot  %d\n", ch->feedback_potency );
-   fprintf( fp, "Gravity      %d\n", ch->gravity );
+   fprintf( fp, "Gravity      %f\n", ch->gravity );
    if( ch->wimpy )
       fprintf( fp, "Wimpy        %d\n", ch->wimpy );
    if( ch->deaf )

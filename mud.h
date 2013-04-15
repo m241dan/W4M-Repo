@@ -1403,9 +1403,11 @@ typedef enum
    AFF_SCRYING, AFF_FIRESHIELD, AFF_SHOCKSHIELD, AFF_HAUS1, AFF_ICESHIELD,
    AFF_POSSESS, AFF_BERSERK, AFF_AQUA_BREATH, AFF_RECURRINGSPELL,
    AFF_CONTAGIOUS, AFF_ACIDMIST, AFF_VENOMSHIELD, AFF_STUN, AFF_BIND,
-   AFF_GRAVITY, AFF_BURN, AFF_BIO, AFF_DIA, AFF_CURSE, AFF_DRAIN, AFF_RAGE,
-   AFF_BLINDRUSH, AFF_STRONGBLOWS, AFF_COUNTERSTANCE, AFF_CRITSANCE,
-   AFF_CROSSSLASH, AFF_FLASH,
+   AFF_GRAVITY, AFF_BURN, AFF_BIO, AFF_DIA, AFF_DRAIN, AFF_RAGE,
+   AFF_BLINDRUSH, AFF_STRONGBLOWS, AFF_COUNTERSTANCE, AFF_CRITSTANCE,
+   AFF_CROSSSLASH, AFF_FLASH, AFF_HOLYSHIELD, AFF_HOLYBLADE, AFF_SHOUT,
+   AFF_BATTLECRY, AFF_ONGUARD, AFF_NATURECURSE, AFF_SENTINEL, AFF_CHAINWEAPON,
+   AFF_STONESKIN, AFF_HOLYDEBUFF,
    MAX_AFFECTED_BY
 } affected_by_types;
 
@@ -1601,6 +1603,13 @@ typedef enum
 { SE_NONE, SE_NEGATE, SE_EIGHTHDAM, SE_QUARTERDAM, SE_HALFDAM,
    SE_3QTRDAM, SE_REFLECT, SE_ABSORB
 } spell_save_effects;
+
+/* Druid Summons */
+
+typedef enum
+{
+   DRUID_BEAR, DRUID_WOLF, DRUID_OWL, MAX_DRUIDSUMMON
+} druid_summons;
 
 /*
  * Sex.
@@ -2613,6 +2622,7 @@ struct pc_data
    short range[MAX_SKILL];
    short cooldown[MAX_SKILL];
    short duration[MAX_SKILL];
+   short hits[MAX_SKILL];
    short quest_number;  /* current *QUEST BEING DONE* DON'T REMOVE! */
    short quest_curr; /* current number of quest points */
    int quest_accum;  /* quest points accumulated in players life */
@@ -4630,10 +4640,7 @@ DECLARE_DO_FUN( do_zap );
 DECLARE_DO_FUN( do_zones );
 
 /* Skills */
-
-/* Priest */
-DECLARE_DO_FUN( do_heal );
-DECLARE_DO_FUN( do_erase );
+DECLARE_DO_FUN( do_skill );
 
 /* Changes.c */
 
@@ -5333,8 +5340,39 @@ void rbuff_msg( CHAR_DATA *ch, CHAR_DATA *victim, AFFECT_DATA *paf );
 void generate_buff_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
 void glory_echo args( ( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA, CHAR_DATA) ) );
 void glory_echo args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dt ) );
+void vacuum_spell args( ( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA, CHAR_DATA) ) );
+void vacuum_spell args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dt ) );
+void sorc_enfeeb( CHAR_DATA *ch, CHAR_DATA *victim, int gsn );
 void heal_char( CHAR_DATA *ch, CHAR_DATA *victim );
 void erase_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void holy_debuff( CHAR_DATA *ch, CHAR_DATA *victim );
+void stoneskin_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_stun( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_bind( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_burn( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_gravity( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_sblast( CHAR_DATA *ch, CHAR_DATA *victim );
+void bio_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void dia_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void sorc_curse( CHAR_DATA *ch, CHAR_DATA *victim );
+void sorc_drain( CHAR_DATA *ch, CHAR_DATA *victim );
+void feedback( CHAR_DATA *ch, AFFECT_DATA *af );
+void set_redirect( CHAR_DATA *ch, CHAR_DATA *redirect );
+void sorc_enfeeb( CHAR_DATA *ch, CHAR_DATA *victim );
+void chakra_heal( CHAR_DATA *ch );
+bool disarm_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void druid_summon( CHAR_DATA *ch, int summon );
+void druid_charm( CHAR_DATA *ch, CHAR_DATA *victim );
+void druid_infuse( CHAR_DATA *ch );
+void paladin_flash( CHAR_DATA *ch, CHAR_DATA *victim );
+void paladin_cure( CHAR_DATA *ch, CHAR_DATA *victim );
+void holy_shield( CHAR_DATA *ch, CHAR_DATA *victim );
+void holy_blade( CHAR_DATA *ch, CHAR_DATA *victim );
+void barb_warcry( CHAR_DATA *ch );
+void barb_shout( CHAR_DATA *ch );
+void barb_howl( CHAR_DATA *ch );
+void barb_battlecry( CHAR_DATA *ch );
+
 
 /* ban.c */
 int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int type );
@@ -5536,6 +5574,7 @@ void free_target( CHAR_DATA *ch, TARGET_DATA *target );
 void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
 int get_threat( CHAR_DATA *ch, int gsn );
 double get_skill_duration( CHAR_DATA *ch, int gsn );
+int get_skill_hits( CHAR_DATA *ch, int gsn );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
