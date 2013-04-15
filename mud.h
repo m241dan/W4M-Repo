@@ -3370,8 +3370,83 @@ extern int port;
 /* Priest */
 extern short gsn_heal;
 extern short gsn_erase;
+extern short gsn_holy;
+extern short gsn_stoneskin;
 extern short gsn_potency;
 extern short gsn_glory;
+extern short gsn_martyr;
+
+/* Wizard */
+extern short gsn_lightning;
+extern short gsn_ice;
+extern short gsn_fire;
+extern short gsn_water;
+extern short gsn_augmentspell;
+extern short gsn_ignorewis;
+extern short gsn_sblast;
+
+/* Sorceror */
+extern short gsn_bio;
+extern short gsn_dia;
+extern short gsn_curse;
+extern short gsn_drain;
+extern short gsn_doubletrouble;
+extern short gsn_vacuum;
+extern short gsn_redirect;
+
+/* Berserker */
+extern short gsn_whirlwind;
+extern short gsn_ragingrush;
+extern short gsn_decimation;
+extern short gsn_rage;
+extern short gsn_blindrush;
+extern short gsn_strongblows;
+extern short gsn_smashaxe;
+
+/* TerasKasi */
+extern short gsn_counterstance;
+extern short gsn_rancorrising;
+extern short gsn_grondastomp;
+extern short gsn_chargingwampa;
+extern short gsn_spittingrawl;
+extern short gsn_slashingwampa;
+extern short gsn_chakra;
+
+/* BladeMaster */
+extern short gsn_critstance;
+extern short gsn_crossslash;
+extern short gsn_dancingedge;
+extern short gsn_onguard;
+extern short gsn_sworddash;
+extern short gsn_disarm;
+extern short gsn_bladeflash;
+
+/* Druid */
+extern short gsn_summonbear;
+extern short gsn_summonwolf;
+extern short gsn_summonowl;
+extern short gsn_charm;
+extern short gsn_infuse;
+extern short gsn_naturecurse;
+extern short gsn_vinegrasp;
+
+/* Paladin */
+extern short gsn_flash;
+extern short gsn_cure;
+extern short gsn_holyshield;
+extern short gsn_holyblade;
+extern short gsn_sentinel;
+extern short gsn_shieldbash;
+extern short gsn_defender;
+
+/* Barbarian */
+extern short gsn_warcry;
+extern short gsn_howl;
+extern short gsn_shout;
+extern short gsn_boomingvoice;
+extern short gsn_battlecry;
+extern short gsn_doubleswing;
+extern short gsn_chainweapon;
 
 extern short gsn_style_evasive;
 extern short gsn_style_defensive;
