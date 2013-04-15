@@ -6024,9 +6024,14 @@ void generate_buff_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount )
 {
    GTHREAT_DATA *gthreat;
 
-   for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
-      if( gthreat->threat_attacker == victim )
-         generate_threat( ch, gthreat->threat_owner, amount );
+   if( is_same_party( ch, victim ) )
+   {
+      for( gthreat = first_gthreat; gthreat; gthreat = gthreat->next )
+         if( gthreat->threat_attacker == victim )
+            generate_threat( ch, gthreat->threat_owner, amount );
+   }
+   else
+     generate_threat( ch, victim, amount );
    return;
 }
 
@@ -6333,7 +6338,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = AFF_CROSSSLASH;
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pass( ch ) / 7 );
       af.location = APPLY_ARMOR;
-      af.modifier = ( GET_AC( victim ) * -.1 );
+      af.modifier = ( GET_AC( victim ) * -.1 ) * get_skill_potency( ch, gsn );
       affect_to_char( victim, &af );
    }
    else if( gsn == gsn_onguard )
@@ -6362,7 +6367,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
          AFFECT_DATA af;
          af.type = gsn;
          af.location = APPLY_STRENGTH;
-         af.modifier = 5;
+         af.modifier = 5 * get_skill_potency( ch, gsn );
          af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 ) ;
          affect_to_char( ch, &af );
       }
@@ -6409,10 +6414,111 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = AFF_NATURECURSE;
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 2 );
       af.location = APPLY_HASTEFROMMAGIC;
-      af.modifier = 20 + ( get_curr_wis( ch ) / 8 );
+      af.modifier = ( 20 + ( get_curr_wis( ch ) / 8 ) ) * get_skill_potency( ch, gsn );
+      affect_to_char( victim, ch, &af );
+      return;
+   }
+   else if( gsn == gsn_vinegrasp )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_BIND;
+      af.duration = get_skill_duration( ch, gsn ) + get_curr_pas( ch );
       affect_to_char( victim, ch, &af );
    }
-   else if( gsn = gsn_
+   else if( gsn == gsn_flash )
+   {
+      paladin_flash( ch, victim );
+      glory_echo( ch, victim, paladin_flash );
+      vacuum_spell( ch, victim, paladin_flash );
+      return;
+   }
+   else if( gsn == gsn_cure )
+   {
+      paladin_cure( ch, victim );
+      glory_echo( ch, victim, paladin_cure );
+      vacuum_spell( ch, victim, paladin_cure );
+      return;
+   }
+   else if( gsn == gsn_holyshield )
+   {
+      holy_shield( ch, victim );
+      glory_echo( ch, victim, holy_shield );
+      vacuum_spell( ch, victim, holy_shiled );
+      return;
+   }
+   else if( gsn == gsn_holyblade )
+   {
+      holy_blade( ch, victim );
+      glory_echo( ch, victim, holy_blade );
+      vacuum_spell( ch, victim, holy_blade );
+      return;
+   }
+   else if( gsn == gsn_sentinel )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_SENTINEL;
+      af.location = APPLY_RESISTANCE;
+      af.modifier = store_two_value( DAM_ALL, 80 );
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 );
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn == gsn_shieldbash )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.bitvector = AFF_STUN;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) /  30 );
+      affect_to_char( victim, ch, &af );
+   }
+   else if( gsn == gsn_defender )
+   {
+      AFFECT_DATA af;
+      af.type = gsn;
+      af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
+      af.modifier = GET_AC( ch ) * .25;
+      af.location = APPLY_ARMOR;
+      affect_to_char( ch, &af );
+      af.modifier = GET_MAGICDEFENSE( ch ) * .25;
+      af.location = APPLY_MAGICDEFENSE;
+      affect_to_char( ch, &af );
+      return;
+   }
+   else if( gsn == gsn_warcry )
+   {
+      barb_warcry( ch );
+      return;
+   }
+   else if( gsn == gsn_shout )
+   {
+      barb_shout( ch );
+      return;
+   }
+   else if( gsn == gsn_howl )
+   {
+      barb_howl( ch );
+      return;
+   }
+   else if( gsn == gsn_boomingvoice )
+   {
+      WAIT_STATE( victim, get_skill_duration( ch, gsn ) )
+      generate_threat( ch, victim, get_threat( ch, gsn ) );
+   }
+   else if( gsn == gsn_battlecry )
+   {
+      barb_battlecry( ch );
+      return;
+   }
+   else if( gsn == gsn_chainweapon )
+   {
+      AFFECT_DATA af;
+      af.type = -1;
+      af.bitvector = AFF_CHAINWEAPON;
+      affect_to_char( ch, &af );
+      return;
+   }
    analyze_retcode( ( retcode = multi_hit( ch, victim, gsn ) ) );
    if( retcode == rNONE )
    {
@@ -6759,4 +6865,202 @@ bool disarm_char( CHAR_DATA *ch, CHAR_DATA *victim )
       return TRUE;
    }
    return FALSE;
+}
+
+/* Druid */
+
+
+void druid_summon( CHAR_DATA *ch, int summon )
+{
+   return;
+}
+void druid_charm( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   return;
+}
+
+void druid_infuse( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   return;
+}
+
+/* Paladin */
+
+void paladin_flash( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   AFFECT_DATA af;
+   af.type = gsn_flash;
+   af.bitvector = AFF_FLASH;
+   af.duration = get_skill_duration( ch, gsn_flash ) + ( get_curr_pas( ch ) / 2 );
+   affect_to_char( victim, ch, &af );
+   return;
+}
+
+void paladin_cure( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   double amount;
+   int x;
+
+   for( x = 0; x < ch->level; x++ )
+   {
+      if( x < 10 )
+         amount += .30;
+      if( x < 25 )
+         amount += .45;
+      if( x <= 50 )
+         amount += .75;
+   }
+
+   amount *= get_curr_wis( ch );
+   amount *= get_skill_potency( ch, gsn_cure );
+   if( get_crit( ch, gsn_cure ) )
+      amount = (int)( amount * 1.35 );
+
+   amount = (int)UMIN( amount, ( victim->max_hit - victim->hit ) );
+   heal_msg( ch, victim, amount );
+   adjust_stat( victim, STAT_HIT, amount );
+   generate_buff_threat( ch, victim, (int)amount;
+   return;
+}
+
+void holy_shield( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   OBJ_DATA *shield;
+
+   if( ( shield = get_eq_char( victim, WEAR_DUAL_WIELD ) ) == NULL )
+   {
+      send_to_char( "You aren't wearing a shield.\r\n", ch );
+      return;
+   }
+
+   AFFECT_DATA af;
+   af.type = gsn_holyshield;
+   af.bitvector = AFF_HOLYSHIELD;
+   af.duration = get_skill_duration( ch, gsn_holyshield ) + ( get_curr_pas( ch ) / 3 );
+   affect_to_char( victim, ch, &af );
+   return;
+}
+
+void holy_blade( CHAR_DATA *ch, CHAR_DATA *victim )
+{
+   OBJ_DATA *sword;
+
+   if( ( sword = get_eq_char( victim, WEAR_WIELD ) ) == NULL )
+   {
+      send_to_char( "You aren't wielding a sword.\r\n", ch );
+      return;
+   }
+   if( sword && sword->value[3] != WPN_SWORD )
+   {
+      send_to_char( "You aren't wielding a sword.\r\n", ch );
+      return;
+   }
+
+   AFFECT_DATA af;
+   af.type = gsn_holysword;
+   af.bitvector = AFF_HOLYSWORD;
+   af.duration = get_skill_duration( ch, gsn_holysword ) + ( get_curr_pas( ch ) / 3 );
+   affect_to_char( victim, ch, &af );
+   return;
+}
+
+/* Barbarian */
+
+void barb_warcry( CHAR_DATA *ch )
+{
+   CHAR_DATA *victim;
+   TRV_DATA *room;
+
+   room = trvch_create( ch, TR_CHAR_ROOM_FORW );
+
+   for( victim = ch->in_room->first_person; victim; victim = trvch_next( room ) )
+   {
+      if( char_died( victim ) )
+         continue;
+      if( is_same_party( ch, victim ) )
+         continue;
+      generate_threat( ch, victim, get_threat( ch, gsn_warcry ) );
+   }
+   return;
+}
+
+void barb_shout( CHAR_DATA *ch )
+{
+   CHAR_DATA *gch;
+   TRV_DATA *room;
+   AFFECT_DATA af;
+   int mod;
+
+   room = trvch_create( ch, TAR_CHAR_ROOM_FORW );
+   mod = 20 * get_skill_potency( ch, gsn_shout );
+
+   af.type = gsn_shout;
+   af.bitvector = AFF_SHOUT;
+   af.duration = get_skill_duration( ch, gsn_shout ) + ( get_curr_pas( ch ) * 2 ) );
+   af.modifier = store_two_value( DAM_ALL, mod );
+   af.location = APPLY_RESISTANCE;
+
+   for( gch = ch->in_room->first_person; gch, gch = trvch_next( room ) )
+   {
+      if( char_died( gch ) )
+         continue;
+      if( !is_same_group( ch, gch ) )
+         continue;
+      affect_to_char( gch, ch, &af );
+   }
+   return;
+}
+
+void barb_howl( CHAR_DATA *ch )
+{
+   CHAR_DATA *victim;
+   TRV_DATA *room;
+   AFFECT_DATA af;
+
+   room = trvch_create( ch, TAR_CHAR_ROOM_FORW );
+
+   af.type = gsn_howl;
+   af.bitvector = AFF_STUN;
+   af.duration = get_skill_duration( ch, gsn_howl ) + ( get_curr_pas( ch ) / 15 );
+
+   for( victim = ch->in_room->first_person; victim; victim = trvch_next( room ) )
+   {
+      if( char_died( victim ) )
+         continue;
+      if( is_same_party( ch, victim ) )
+         continue;
+      affect_to_char( victim, ch, &af );
+   }
+   return;
+}
+
+void barb_battlecry( CHAR_DATA *ch )
+{
+   CHAR_DATA *gch;
+   TRV_DATA *room;
+   AFFECT_DATA af;
+
+   room = trvch_create( ch, TAR_CHAR_ROOM_FORW );
+
+   af.type = gsn_battlecry;
+   af.bitvector = AFF_BATTLECRY;
+   af.duration = get_skill_duration( ch, gsn_battlecry ) + ( get_curr_pas( ch ) * 1.5 );
+
+   for( gch = ch->in_room->first_person; gch, gch = trvch_next( room ) )
+   {
+      if( char_died( gch ) )
+         continue;
+      if( !is_same_group( ch, gch ) )
+         continue;
+      af.location = APPLY_HIT;
+      af.modifier = ch->max_hit * ( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 );
+      affect_to_char( gch, ch, &af );
+      af.location = APPLY_MANA;
+      af.modifier = ch->max_mana * ( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 );
+      affect_to_char( gch, &af );
+      af.location = APPLY_MOVE;
+      af.modifier = ch->max_move  *( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 );
+      affect_to_char( gch, &af );
+   }
+   return;
 }

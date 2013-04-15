@@ -107,8 +107,84 @@ bool DONT_UPPER;
 /* Priest */
 short gsn_heal;
 short gsn_erase;
+short gsn_holy;
+short gsn_stoneskin;
 short gsn_potency;
 short gsn_glory;
+short gsn_martyr;
+
+/* Wizard */
+short gsn_lightning;
+short gsn_ice;
+short gsn_fire;
+short gsn_water;
+short gsn_augmentspell;
+short gsn_ignorewis;
+short gsn_sblast;
+
+/* Sorceror */
+short gsn_bio;
+short gsn_dia;
+short gsn_curse;
+short gsn_drain;
+short gsn_doubletrouble;
+short gsn_vacuum;
+short gsn_redirect;
+
+/* Berserker */
+short gsn_whirlwind;
+short gsn_ragingrush;
+short gsn_decimation;
+short gsn_rage;
+short gsn_blindrush;
+short gsn_strongblows;
+short gsn_smashaxe;
+
+/* TerasKasi */
+short gsn_counterstance;
+short gsn_rancorrising;
+short gsn_grondastomp;
+short gsn_chargingwampa;
+short gsn_spittingrawl;
+short gsn_slashingwampa;
+short gsn_chakra;
+
+/* BladeMaster */
+short gsn_critstance;
+short gsn_crossslash;
+short gsn_dancingedge;
+short gsn_onguard;
+short gsn_sworddash;
+short gsn_disarm;
+short gsn_bladeflash;
+
+/* Druid */
+short gsn_summonbear;
+short gsn_summonwolf;
+short gsn_summonowl;
+short gsn_charm;
+short gsn_infuse;
+short gsn_naturecurse;
+short gsn_vinegrasp;
+
+/* Paladin */
+short gsn_flash;
+short gsn_cure;
+short gsn_holyshield;
+short gsn_holyblade;
+short gsn_sentinel;
+short gsn_shieldbash;
+short gsn_defender;
+
+/* Barbarian */
+short gsn_warcry;
+short gsn_howl;
+short gsn_shout;
+short gsn_boomingvoice;
+short gsn_battlecry;
+short gsn_doubleswing;
+short gsn_chainweapon;
+
 
 /* weaponry */
 short gsn_pugilism;
@@ -584,8 +660,83 @@ void boot_db( bool fCopyOver )
       /* Priest */
       ASSIGN_GSN( gsn_heal, "heal" );
       ASSIGN_GSN( gsn_erase, "erase" );
+      ASSIGN_GSN( gsn_holy, "holy" );
+      ASSIGN_GSN( gsn_stoneskin, "stoneskin" );
       ASSIGN_GSN( gsn_potency, "potency" );
       ASSIGN_GSN( gsn_glory, "glory" );
+      ASSIGN_GSN( gsn_martyr, "martyr" );
+
+      /* Wizard */
+      ASSIGN_GSN( gsn_lightning, "lightning" );
+      ASSIGN_GSN( gsn_ice, "ice" );
+      ASSIGN_GSN( gsn_fire, "fire" );
+      ASSIGN_GSN( gsn_water, "water" );
+      ASSIGN_GSN( gsn_augmentspell, "augment_spell" );
+      ASSIGN_GSN( gsn_ignorewis, "ignore_wis" );
+      ASSIGN_GSN(  gsn_sblast, "sleep_blast" );
+
+      /* Sorceror */
+      ASSIGN_GSN( gsn_bio, "bio" );
+      ASSIGN_GSN( gsn_dia, "dia" );
+      ASSIGN_GSN( gsn_curse, "curse" );
+      ASSIGN_GSN( gsn_drain, "drain" );
+      ASSIGN_GSN( gsn_doubletrouble, "double_trouble" );
+      ASSIGN_GSN( gsn_vacuum, "vacuum" );
+      ASSIGN_GSN( gsn_redirect, "redirect" );
+
+      /* Berserker */
+      ASSIGN_GSN( gsn_whirlwind, "whirlwind" );
+      ASSIGN_GSN( gsn_ragingrush, "raging_rush" );
+      ASSIGN_GSN( gsn_decimation, "decimation" );
+      ASSIGN_GSN( gsn_rage, "rage" );
+      ASSIGN_GSN( gsn_blindrush, "blind_rush" );
+      ASSIGN_GSN( gsn_strongblows, "strong_blows" );
+      ASSIGN_GSN( gsn_smashaxe, "smash_axe" );
+
+      /* TerasKasi */
+      ASSIGN_GSN( gsn_counterstance, "counter_stance" );
+      ASSIGN_GSN( gsn_rancorrising, "rancor_rising" );
+      ASSIGN_GSN( gsn_grondastomp, "gronda_stomp" );
+      ASSIGN_GSN( gsn_chargingwampa, "charging_wampa" );
+      ASSIGN_GSN( gsn_spittingrawl, "spitting_rawl" );
+      ASSIGN_GSN( gsn_slashingwampa, "slashing_wampa" );
+      ASSIGN_GSN( gsn_chakra, "chakra" );
+
+      /* BladeMaster */
+      ASSIGN_GSN( gsn_critstance, "crit_stance" );
+      ASSIGN_GSN( gsn_crossslash, "cross_slash" );
+      ASSIGN_GSN( gsn_dancingedge, "dancing_edge" );
+      ASSIGN_GSN( gsn_onguard, "onguard" );
+      ASSIGN_GSN( gsn_sworddash, "sword_dash" );
+      ASSIGN_GSN( gsn_disarm, "disarm" );
+      ASSIGN_GSN( gsn_bladeflash, "blade_flash" );
+
+      /* Druid */
+      ASSIGN_GSN( gsn_summonbear, "summon_bear" );
+      ASSIGN_GSN( gsn_summonwolf, "summon_wolf" );
+      ASSIGN_GSN( gsn_summonowl, "summon_owl" );
+      ASSIGN_GSN( gsn_charm, "charm" );
+      ASSIGN_GSN( gsn_infuse, "infuse" );
+      ASSIGN_GSN( gsn_naturecurse, "nature_curse" );
+      ASSIGN_GSN( gsn_vinegrasp, "vine_grasp" );
+
+      /* Paladin */
+      ASSIGN_GSN( gsn_flash, "flash" );
+      ASSIGN_GSN( gsn_cure, "cure" );
+      ASSIGN_GSN( gsn_holyshield, "holy_shield" );
+      ASSIGN_GSN( gsn_holyblade, "holy_blade" );
+      ASSIGN_GSN( gsn_sentinel, "sentinel" );
+      ASSIGN_GSN( gsn_shieldbash, "shield_bash" );
+      ASSIGN_GSN( gsn_defender, "defender" );
+
+      /* Barbarian */
+      ASSIGN_GSN( gsn_warcry, "warcry" );
+      ASSIGN_GSN( gsn_howl, "howl" );
+      ASSIGN_GSN( gsn_shout, "shout" );
+      ASSIGN_GSN( gsn_boomingvoice, "booming_voice" );
+      ASSIGN_GSN( gsn_battlecry, "battlecry" );
+      ASSIGN_GSN( gsn_doubleswing, "double_swing" );
+      ASSIGN_GSN( gsn_chainweapon, "chain_weapon" );
 
       ASSIGN_GSN( gsn_style_evasive, "evasive style" );
       ASSIGN_GSN( gsn_style_defensive, "defensive style" );
