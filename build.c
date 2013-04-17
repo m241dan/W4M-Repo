@@ -161,7 +161,8 @@ const char *const a_types[] = {
    "range", "skill_cooldown", "skill_range", "regen", "refresh", "damtype_potency",
    "feedback_potency", " duration", "skill_duration",
    "double_attack", "crit_chance", "crit_damage", "counter", "phase", "block",
-   "combo_dmg", "charmed_dmg_boost", "charmed_def_boost"
+   "combo_dmg", "charmed_dmg_boost", "charmed_def_boost", "skill_hits", "gravity",
+   "hastefrommagic"
 };
 
 const char *const a_flags[] = {
@@ -4304,7 +4305,7 @@ void do_oset( CHAR_DATA* ch, const char* argument)
          }
          value = store_two_value( value, value2 );
       }
-      else if( loc == APPLY_SKILLPOTENCY || loc == APPLY_SKILLRANGE || loc == APPLY_SKILLDURATION || loc == APPLY_SKILLCOOLDOWN )
+      else if( loc == APPLY_SKILLPOTENCY || loc == APPLY_SKILLRANGE || loc == APPLY_SKILLDURATION || loc == APPLY_SKILLCOOLDOWN || loc == APPLY_SKILLHITS )
       {
          argument = one_argument( argument, arg3 );
 
@@ -12081,7 +12082,7 @@ void quest_olc( CHAR_DATA *ch, const char *argument )
          return;
       }
       else if( reward->type == APPLY_SKILLPOTENCY || reward->type == APPLY_SKILLRANGE || reward->type == APPLY_SKILLCOOLDOWN
-              || reward->type == APPLY_SKILLDURATION )
+              || reward->type == APPLY_SKILLDURATION || reward->type == APPLY_SKILLHITS )
       {
          argument = one_argument( argument, arg );
 

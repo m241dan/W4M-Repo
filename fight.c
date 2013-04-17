@@ -355,6 +355,41 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    if( !check_los( ch, target->victim ) )
       return rVICT_LOS;
 
+   if( is_skill( dt ) )
+   {
+      int count, hits;
+      hits = get_skill_hits( ch, dt );
+      /* Handle Self-Target AoEs */
+      if( skill_table[dt]->target == TAR_CHAR_SELF )
+      {
+         CHAR_DATA *aoe_victim;
+         TRV_DATA *room;
+
+         room = trvch_create( ch, TR_CHAR_ROOM_FORW );
+         for( aoe_victim = ch->in_room->first_person; aoe_victim; aoe_victim = trvch_next( room ) )
+         {
+            if( is_same_group( ch, aoe_victim ) )
+               continue;
+            for( count = 0; count < hits; count++ )
+               if( ( retcode = one_hit( ch, aoe_victim, dt ) ) != rNONE )
+                  break;
+         }
+         trv_dispose( &room );
+      }
+      else
+      {
+         for( count = 0; count < hits; count++ )
+            if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
+               break;
+         if( skill_table[dt]->type == SKILL_SPELL )
+         {
+            glory_echo( ch, target->victim, dt );
+            vacuum_spell( ch, target->victim, dt );
+         }
+      }
+      return retcode;
+   }
+
    if( ( retcode = one_hit( ch, target->victim, dt ) ) != rNONE )
       return retcode;
 
@@ -385,6 +420,9 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
    }
 
    retcode = rNONE;
+
+   if( ch->target != target )
+      free_target( ch, target );
 
    return retcode;
 }
@@ -511,7 +549,7 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 
    if( physical )
    {
-      hit_data = generate_hit_data( victim );
+      hit_data = generate_hit_data( ch, victim );
 
       hit_wear = hit_data->locations[number_range( 0, ( hit_data->max_locations - 1 ) )];
 
@@ -562,12 +600,51 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
           */
          wpnroll = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
       else
-         wpnroll = number_range( ( wield->value[1] + ch->wepnumdie ), ( wield->value[2] + ch->wepsizedie ));
+         wpnroll = number_range( ( wield->value[1] + ch->wepnumdie ), ( wield->value[2] + ch->wepsizedie ) );
       /*
        * STR v. CON calculation, flat addition/subtraction to weapon roll -Davenge
        */
       strvcon = get_curr_str( ch ) - get_curr_con( victim );
       dam = wpnroll + strvcon;
+
+      /* Berserker */
+      if( dt == gsn_whirlwind )
+         dam = (int)( dam * 2.75 );
+      else if( dt == gsn_ragingrush )
+         dam *= 9;
+      else if( dt == gsn_decimation )
+         dam *= 6;
+      else if( dt == gsn_smashaxe )
+         dam *= 2;
+
+      /* Teras Kasi */
+      else if( dt == gsn_rancorrising )
+         dam = (int)( dam * 1.25 );
+      else if( dt == gsn_grondastomp )
+         dam = (int)( dam * 1.1 );
+      else if( dt == gsn_chargingwampa )
+         dam = (int)( dam * 1.25 );
+      else if( dt == gsn_spittingrawl )
+         dam *= 2;
+      else if( dt == gsn_slashingwampa )
+         dam = (int)( dam * 1.25 );
+
+      /* Blade Master */
+      else if( dt == gsn_crossslash )
+         dam *= 2;
+      else if( dt == gsn_dancingedge )
+         dam *= 12;
+      else if( dt == gsn_sworddash )
+         dam *= 6;
+
+      /* Paladin */
+      else if( dt == gsn_shieldbash )
+         dam = (get_eq_char( ch, WEAR_DUAL_WIELD))->value[0] * 2;
+
+      /* Barbarian */
+      else if( dt == gsn_boomingvoice )
+         dam *= 6;
+
       if( IS_BETA( ) )
          ch_printf( ch, "Weapon Roll: %d Stat Roll(pSTR - vCON): %d Init Dam Total: %d\r\n", wpnroll, strvcon, dam );
    }
@@ -577,10 +654,28 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
        * Need to come up with base damage for spells -Davenge
        */
       speroll = 0;
+
+      /* Priest */
+      if( dt == gsn_holy )
+         speroll = 1 * ch->level;
+
+      /* Wizard */
+      else if( dt == gsn_lightning || dt == gsn_ice || dt == gsn_fire || dt == gsn_water )
+         speroll = (int)( 4 * ch->level );
+
+      /* Sorceror */
+      else if( dt == gsn_bio || dt == gsn_dia )
+         speroll = (int)( .2 * ch->level );
+      else if( dt == gsn_drain )
+         speroll = (int)( 1.2 * ch->level );
       /*
        * Roll int vs. wis for more base damage stuff -Davenge
        */
-      intvwis = get_curr_int( ch ) - get_curr_wis( victim );
+      if( is_affected( ch, gsn_ignorewis ) )
+         intvwis = get_curr_int( ch );
+      else
+         intvwis = get_curr_int( ch ) - get_curr_wis( victim );
+
       dam = speroll + intvwis;
       if( IS_BETA( ) )
          ch_printf( ch, "Spell Roll: %d Stat Roll(pINT - vWIS): %d Init Dam Total: %d\r\n", speroll, intvwis, dam );
@@ -656,8 +751,16 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 
    if( dam <= 0 )
       dam = 1;
+   /* Berserker Affects */
+   if( IS_AFFECTED( ch, AFF_RAGE ) )
+      dam = (int)( dam * .85 );
+   if( IS_AFFECTED( ch, AFF_STRONGBLOWS ) )
+      dam = (int)( dam * 1.35 );
+   if( IS_AFFECTED( ch, AFF_CRITSTANCE ) )
+      dam /= 2;
 
    DISPOSE( hit_data );
+
    if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit, damtype ) ) != rNONE )
       return retcode;
    if( char_died( ch ) )
@@ -1365,7 +1468,7 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     * Hurt the victim.
     * Inform the victim of his new state.
     */
-   victim->hit -= dam;
+   adjust_stat( victim, STAT_HIT, -dam );
 
    if( ch != victim )
    {
@@ -2628,8 +2731,6 @@ void group_gain( CHAR_DATA * ch, CHAR_DATA * victim )
       }
 
       xp = ( int )( xp_compute( gch, victim ) );
-      if( !gch->fighting )
-         xp /= 2;
       gch->alignment = align_compute( gch, victim );
       ch_printf( gch, "You receive %d experience points.\r\n", xp );
       gain_exp( gch, xp );
@@ -2701,6 +2802,8 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
 
    level_dif = victim->level - gch->level;
 
+   ch_printf( gch, "Level Difference: %d\r\n", level_dif );
+
    if( level_dif >= 5 )
       return 200;
    if( level_dif == 4 )
@@ -2733,7 +2836,8 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
 void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int dt, int hit_wear, bool crit, EXT_BV damtype )
 {
    CHAR_DATA *rch;
-   char damtype_message[MAX_INPUT_LENGTH];
+   char damtype_message[MAX_INPUT_LENGTH], skill_message[MAX_INPUT_LENGTH];
+   char to_char[MAX_INPUT_LENGTH], to_vict[MAX_INPUT_LENGTH], to_room[MAX_INPUT_LENGTH];
    int counter;
    damtype_message[0] = '\0';
    /*
@@ -2751,27 +2855,58 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
    for( counter = DAM_PIERCE; counter < DAM_WIND; counter++ )
       if( xIS_SET( damtype, counter ) )
          mudstrlcat( damtype_message, damage_message[counter], MAX_INPUT_LENGTH );
+
+   /*
+    * Form our initial message
+    */
+   if( is_skill( dt ) )
+      sprintf( skill_message, "%s's", smash_underscore( skill_table[dt]->name ) );
+
+   sprintf( to_char, "Your %s %s&wstrikes %s on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? "$N" : "$n", hit_locations[hit_wear], dam );
+   sprintf( to_vict, "%s's %s %s&wstrikes you on the %s dealing %d damage.\r\n", IS_NPC( ch ) ? "$N" : "$n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+   sprintf( to_room, "%s's %s %s&wstrikes %s on the %s dealing %d damage.\r\n", IS_NPC( ch ) ? ch->short_descr : ch->name, is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? victim->short_descr : victim->name, hit_locations[hit_wear], dam );
    /*
     * Doing it by DTs
     */
-   if( dt >= TYPE_HIT && hit_wear >= 0 )
+   /*
+    * Handle the doer and the taker -Davenge
+    */
+
+   if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
+      act( AT_ACTION, to_char, ch, NULL, victim, TO_CHAR );
+   if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
+      act( AT_ACTION, to_vict, ch, NULL, victim, TO_VICT );
+   /*
+    * Now everyone in the room who might care about the ch -Davenge
+    */
+   for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
    {
-      /*
-       * Handle the doer and the taker -Davenge
-       */
-      if( !IS_NPC( ch ) && !xIS_SET( ch->pcdata->fight_chatter, DAM_YOU_DO ) )
-         ch_printf( ch, "&wYour %s&wstrikes %s on the %s dealing %d damage.\r\n", damtype_message, victim->name, hit_locations[hit_wear], dam );
-      if( !IS_NPC( victim ) && !xIS_SET( victim->pcdata->fight_chatter, DAM_YOU_TAKE ) )
-         ch_printf( victim, "&w%s's %s&wstrikes you on the %s dealing %d damage.\r\n", ch->name, damtype_message, hit_locations[hit_wear], dam );
-      /*
-       * Now everyone in the room who might care about the ch -Davenge
-       */
-      for( rch = ch->in_room->first_person; rch; rch = rch->next_in_room )
+      if( rch == victim || rch == ch )
+         continue;
+      if( IS_NPC( rch ) )
+         continue;
+      if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
+         continue;
+      if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
+         continue;
+      if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) ) //Same Party As Victim, don't see damage hey take
+         continue;
+      if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_TAKE ) ) //Not in sameparty as bvictim, don't see damage he takes
+         continue;
+      if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
+         continue;
+      if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes
+         continue;
+      send_to_char( to_room, ch );
+   }
+   if( ch->in_room != victim->in_room )
+   {
+      for( rch = victim->in_room->first_person; rch; rch = rch->next_in_room )
       {
          if( rch == victim || rch == ch )
             continue;
          if( IS_NPC( rch ) )
-            continue;
+         continue;
          if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
             continue;
          if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
@@ -2782,32 +2917,9 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
             continue;
          if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
             continue;
-         if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes
+         if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes 
             continue;
-         ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
-      }
-      if( ch->in_room != victim->in_room )
-      {
-         for( rch = victim->in_room->first_person; rch; rch = rch->next_in_room )
-         {
-            if( rch == victim || rch == ch )
-               continue;
-            if( IS_NPC( rch ) )
-            continue;
-            if( is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_DOES ) ) //Same Party as CH, don't dont see the damage they DO
-               continue;
-            if( !is_same_group( rch, ch ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_DO ) ) //Not in the same Party as CH, dont see the damage others do
-               continue;
-            if( is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_PARTY_TAKES ) ) //Same Party As Victim, don't see damage hey take
-               continue;
-            if( !is_same_group( rch, victim ) && xIS_SET( rch->pcdata->fight_chatter, DAM_OTHERS_TAKE ) ) //Not in sameparty as bvictim, don't see damage he takes
-               continue;
-            if( who_fighting( rch ) == ch && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_DOES ) ) //If RCH is fighting CH, don't see the damage he does
-               continue;
-            if( who_fighting( rch ) == victim && xIS_SET( rch->pcdata->fight_chatter, DAM_ENEMY_TAKES ) ) //If RCH is fighting victim, don't see the damage he takes 
-               continue;
-            ch_printf( rch, "&w%s's %s&wstrikes %s on the %s dealing %d damage.\r\n", ch->name, damtype_message, victim->name, hit_locations[hit_wear], dam );
-         }
+         send_to_char( to_room, ch );
       }
    }
    return;
@@ -3557,6 +3669,10 @@ bool get_crit( CHAR_DATA *ch, int dt )
             chance += .05;
       }
       chance = URANGE( 0, (int)chance, 50 );
+      if( IS_AFFECTED( ch, AFF_CRITSTANCE ) )
+         return TRUE;
+      if( dt == gsn_sworddash )
+         return FALSE;
    }
    else if( skill_table[dt]->type == SKILL_SPELL )
    {
@@ -3574,6 +3690,9 @@ bool get_crit( CHAR_DATA *ch, int dt )
       chance = URANGE( 0, (int) chance, 75 );
    }
    chance = URANGE( 0, (int)( chance + ch->crit_chance ), 75 );
+
+   if( dt == gsn_ragingrush )
+      chance += 10;
 
    if( number_percent( ) > chance )
       return FALSE;

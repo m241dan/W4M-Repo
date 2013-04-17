@@ -1038,25 +1038,25 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_NONE:
          break;
       case APPLY_STR:
-         ch->mod_str += mod;
+         adjust_stat( ch, STAT_STRENGTH, mod );
          break;
       case APPLY_DEX:
-         ch->mod_dex += mod;
+         adjust_stat( ch, STAT_DEXTERITY, mod );
          break;
       case APPLY_INT:
-         ch->mod_int += mod;
+         adjust_stat( ch, STAT_INTELLIGENCE, mod );
          break;
       case APPLY_WIS:
-         ch->mod_wis += mod;
+         adjust_stat( ch, STAT_WISDOM, mod );
          break;
       case APPLY_CON:
-         ch->mod_con += mod;
+         adjust_stat( ch, STAT_CONSTITUTION, mod );
          break;
       case APPLY_CHA:
          ch->mod_cha += mod;
          break;
       case APPLY_PAS:
-         ch->mod_pas += mod;
+         adjust_stat( ch, STAT_PASSION, mod );
          break;
       case APPLY_SEX:
          ch->sex = ( ch->sex + mod ) % 3;
@@ -1089,19 +1089,19 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
          ch->weight += mod;
          break;
       case APPLY_MANA:
-         ch->max_mana += mod;
+         adjust_stat( ch, STAT_MAXMANA, mod );
          break;
       case APPLY_HIT:
-         ch->max_hit += mod;
+         adjust_stat( ch, STAT_MAXHIT, mod );
          break;
       case APPLY_MOVE:
-         ch->max_move += mod;
+         adjust_stat( ch, STAT_MAXMOVE, mod );
          break;
       case APPLY_ARMOR:
-         ch->armor += mod;
+         adjust_stat( ch, STAT_DEFENSE, mod );
          break;
       case APPLY_ATTACK:
-         ch->attack += mod;
+         adjust_stat( ch, STAT_ATTACK, mod );
          break;
       case APPLY_SAVING_POISON:
          ch->saving_poison_death += mod;
@@ -1299,32 +1299,16 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
       case APPLY_TELEVNUM:
          break;
       case APPLY_PENETRATION:
-         int damtype, amount;
-         /*
-          * Undo our little hack to get two sets of varying info from one variable
-          * Don't doubt, just trust -Davenge
-          */
-         damtype = get_value_one( mod );
-         amount = get_value_two( mod );
-
-         ch->penetration[damtype] += amount;
+         adjust_stat( ch, STAT_PENETRATION, mod );
          break;
       case APPLY_RESISTANCE:
-         /*
-          * Undo our little hack to get two sets of varying info from one variable
-          * Don't doubt, just trust -Davenge
-          */
-         damtype = get_value_one( mod );
-         amount = get_value_two( mod );
-
-         ch->resistance[damtype] += amount;
+         adjust_stat( ch, STAT_RESISTANCE, mod );
          break;
       case APPLY_DTYPEPOTENCY:
-         damtype = get_value_one( mod );
-         amount = get_value_two( mod );
-         ch->damtype_potency[damtype] += amount;
+         adjust_stat( ch, STAT_DTYPEPOTENCY, mod );
          break;
       case APPLY_SKILLPOTENCY:
+         int amount;
          sn = get_value_one( mod );
          amount = get_value_two( mod );
          ch->pcdata->potency[sn] += amount;
@@ -1344,106 +1328,116 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
          amount = get_value_two( mod );
          ch->pcdata->cooldown[sn] += amount;
          break;
+      case APPLY_SKILLHITS:
+         sn = get_value_one( mod );
+         amount = get_value_two( mod );
+         ch->pcdata->hits[sn] += amount;
       case APPLY_GRANTSKILL:
          if( IS_VALID_SN( mod ) )
             xSET_BIT( ch->granted_skills, mod );
          break;
       case APPLY_BARENUMDIE:
-         ch->barenumdie += mod;
+         adjust_stat( ch, STAT_BARENUMDIE, mod );
          break;
       case APPLY_BARESIZEDIE:
-         ch->baresizedie += mod;
+         adjust_stat( ch, STAT_BARESIZEDIE, mod );
          break;
       case APPLY_WEPNUMDIE:
-         ch->wepnumdie += mod;
+         adjust_stat( ch, STAT_WEPNUMDIE, mod );
          break;
       case APPLY_WEPSIZEDIE:
-         ch->wepsizedie +=  mod;
+         adjust_stat( ch, STAT_WEPSIZEDIE, mod );
          break;
       case APPLY_MAGICATTACK:
-         ch->magic_attack += mod;
+         adjust_stat( ch, STAT_MAGICATTACK, mod );
          break;
       case APPLY_HASTE:
-         ch->haste += mod;
+         adjust_stat( ch, STAT_HASTE, mod );
+         break;
+      case APPLY_HASTEFROMMAGIC:
+         adjust_stat( ch, STAT_HASTEFROMMAGIC, mod );
          break;
       case APPLY_MAGICDEFENSE:
-         ch->magic_defense += mod;
+         adjust_stat( ch, STAT_MAGICDEFENSE, mod );
          break;
       case APPLY_THREAT:
-         ch->threat += mod;
+         adjust_stat( ch, STAT_THREAT, mod );
          break;
       case APPLY_PERMSTR:
-         ch->perm_str += mod;
+         adjust_stat( ch, STAT_PERMSTR, mod );
          break;
       case APPLY_PERMDEX:
-         ch->perm_dex += mod;
+         adjust_stat( ch, STAT_PERMDEX, mod );
          break;
       case APPLY_PERMCON:
-         ch->perm_con += mod;
+         adjust_stat( ch, STAT_PERMCON, mod );
          break;
       case APPLY_PERMINT:
-         ch->perm_int += mod;
+         adjust_stat( ch, STAT_PERMINT, mod );
          break;
       case APPLY_PERMWIS:
-         ch->perm_wis += mod;
+         adjust_stat( ch, STAT_PERMWIS, mod );
          break;
       case APPLY_PERMPAS:
-         ch->perm_pas += mod;
+         adjust_stat( ch, STAT_PERMPAS, mod );
          break;
       case APPLY_POTENCY:
-         ch->potency += mod;
+         adjust_stat( ch, STAT_POTENCY, mod );
          break;
       case APPLY_RANGE:
-         ch->range += mod;
+         adjust_stat( ch, STAT_RANGE, mod );
          break;
       case APPLY_COOLDOWNS:
-         ch->cooldowns += mod;
+         adjust_stat( ch, STAT_COOLDOWNS, mod );
          break;
       case APPLY_DURATIONS:
-         ch->durations += mod;
+         adjust_stat( ch, STAT_DURATIONS, mod );
          break;
       case APPLY_REGEN:
-         ch->regen += mod;
+         adjust_stat( ch, STAT_REGEN, mod );
          break;
       case APPLY_REFRESH:
-         ch->refresh += mod;
+         adjust_stat( ch, STAT_REFRESH, mod );
          break;
       case APPLY_FEEDBACKPOTENCY:
-         ch->feedback_potency += mod;
+         adjust_stat( ch, STAT_FEEDBACKPOTENCY, mod );
          break;
       case APPLY_DOUBLEATTACK:
-         ch->double_attack += mod;
+         adjust_stat( ch, STAT_DOUBLEATTACK, mod );
          break;
       case APPLY_CRITCHANCE:
-         ch->crit_chance += mod;
+         adjust_stat( ch, STAT_CRITCHANCE, mod );
          break;
       case APPLY_CRITDAMAGE:
-         ch->crit_dam += mod;
+         adjust_stat( ch, STAT_CRITDAM, mod );
          break;
       case APPLY_COUNTER:
-         ch->counter += mod;
+         adjust_stat( ch, STAT_COUNTER, mod );
          break;
       case APPLY_PHASE:
-         ch->phase += mod;
+         adjust_stat( ch, STAT_PHASE, mod );
          break;
       case APPLY_BLOCK:
-         ch->block += mod;
+         adjust_stat( ch, STAT_BLOCK, mod );
          break;
       case APPLY_DODGE:
-         ch->dodge += mod;
+         adjust_stat( ch, STAT_DODGE, mod );
          break;
       case APPLY_PARRY:
-         ch->parry += mod;
+         adjust_stat( ch, STAT_PARRY, mod );
          break;
       case APPLY_COMBODMG:
-         ch->combo_dmg += mod;
+         adjust_stat( ch, STAT_COMBODMG, mod );
          break;
       case APPLY_CHARMEDDMGBOOST:
-         ch->charmed_dmg += mod;
+         adjust_stat( ch, STAT_CHARMEDDMG, mod );
          break;
       case APPLY_CHARMEDDEFBOOST:
-         ch->charmed_def += mod;
-         break; 
+         adjust_stat( ch, STAT_CHARMEDDEF, mod );
+         break;
+      case APPLY_GRAVITY:
+         adjust_stat( ch, STAT_GRAVITY, mod );
+         break;
          /*
           * Object apply types
           */
@@ -1475,7 +1469,12 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
 /*
  * Give an affect to a char.
  */
-void affect_to_char( CHAR_DATA * ch, AFFECT_DATA * paf )
+void affect_to_char( CHAR_DATA *ch, AFFECT_DATA *paf )
+{
+   affect_to_char( ch, NULL, paf );
+   return;
+}
+void affect_to_char( CHAR_DATA * ch, CHAR_DATA *from, AFFECT_DATA * paf )
 {
    AFFECT_DATA *paf_new;
 
@@ -1510,6 +1509,9 @@ void affect_to_char( CHAR_DATA * ch, AFFECT_DATA * paf )
 
    if( !is_queued( ch, AFFECT_TIMER ) )
       add_queue( ch, AFFECT_TIMER );
+
+   if( from )
+      generate_buff_threat( from, ch, get_threat( from, paf->type ) );
    return;
 }
 
@@ -3782,7 +3784,9 @@ const char *affect_bit_name( EXT_BV * vector )
    if( xIS_SET( *vector, AFF_PROTECT ) )
       mudstrlcat( buf, " protect", 512 );
    if( xIS_SET( *vector, AFF_PARALYSIS ) )
-      mudstrlcat( buf, " paralysis", 512 );
+      mudstrlcat( buf, " paralyzed", 512 );
+   if( xIS_SET( *vector, AFF_STUN ) )
+      mudstrlcat( buf, " stunned", 512 );
    if( xIS_SET( *vector, AFF_SLEEP ) )
       mudstrlcat( buf, " sleep", 512 );
    if( xIS_SET( *vector, AFF_SNEAK ) )
@@ -4607,6 +4611,9 @@ void showaffect( CHAR_DATA * ch, AFFECT_DATA * paf )
          case APPLY_SKILLDURATION:
             snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' duration by %d &cseconds.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
             break;
+         case APPLY_SKILLHITS:
+            snprintf( buf, MAX_STRING_LENGTH, "Affects '%s' hits per use by %d.\r\n", skill_table[get_value_one( paf->modifier )]->name, get_value_two( paf->modifier ) );
+            break;
       }
       send_to_char( buf, ch );
    }
@@ -4793,11 +4800,17 @@ void clean_char_queue(  )
    }
 }
 
+void add_timer( CHAR_DATA *ch, short type, int count, DO_FUN * fun, int value )
+{
+   add_timer( ch, type, (double)count, fun, value );
+   return; 
+}
+
 /*
  * Add a timer to ch						-Thoric
  * Support for "call back" time delayed commands
  */
-void add_timer( CHAR_DATA * ch, short type, int count, DO_FUN * fun, int value )
+void add_timer( CHAR_DATA * ch, short type, double count, DO_FUN * fun, int value )
 {
    TIMER *timer;
 
@@ -5799,30 +5812,97 @@ void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
    return;
 }
 
+void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
+{
+   if( ch->charge_target )
+      free_charge_target( ch, ch->charge_target );
+
+   ch->charge_target = target;
+   if( !target->victim )
+   {
+      bug( "%s: somehow passed a NULL victim within target_data passed.", __FUNCTION__ );
+      return;
+   }
+   LINK( ch, target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
+   return;
+}
+
 /*
- * Clear the target pointer and the targeted by stuff
- * -Davenge
+ * Clear the characters target pointer
  */
 
 void clear_target( CHAR_DATA *ch )
 {
-   CHAR_DATA *tvictim;
-
    if( ch->target )
-   {
-      if( ch->target->victim->first_targetedby )
-         for( tvictim = ch->target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
-            if( ch == tvictim )
-               UNLINK( tvictim, tvictim->target->victim->first_targetedby, tvictim->target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
-      ch->target->victim = NULL;
-      DISPOSE( ch->target );
-   }
-
-
+      free_target( ch, ch->target );
    return;
 }
 
+void clear_charge_target( CHAR_DATA *ch )
+{
+   if( ch->charge_target )
+      free_charge_target( ch, ch->charge_target );
+   return;
+}
+
+/*
+ * Free the data at said pointer
+ * -Davenge
+ */
+
+
+void free_target( CHAR_DATA *ch, TARGET_DATA *target )
+{
+   CHAR_DATA *tvictim;
+
+   if( ch->target == target )
+      ch->target = NULL;
+
+   if( ch->charge_target == target )
+      free_charge_target( ch, target );
+
+
+   if( target->victim->first_targetedby )
+      for( tvictim = target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
+         if( ch == tvictim )
+            UNLINK( tvictim, tvictim->target->victim->first_targetedby, tvictim->target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+   target->victim = NULL;
+   DISPOSE( target );
+}
+
+void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
+{
+   CHAR_DATA *cvictim;
+
+   if( ch->charge_target == target )
+      ch->charge_target = NULL;
+
+   if( target->victim->first_charge_targetedby )
+      for( cvictim = target->victim->first_charge_targetedby; cvictim; cvictim = cvictim->next_person_charge_targetting_your_target )
+         if( ch == cvictim )
+            UNLINK( cvictim, target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
+   target->victim = NULL;
+   DISPOSE( target );
+}
+
 /* Return a skill's range -Davenge */
+
+int get_skill_hits( CHAR_DATA *ch, int gsn )
+{
+   OBJ_DATA *obj;
+   int hits;
+
+   hits = skill_table[gsn]->hits;
+
+   if( !IS_NPC( ch ) )
+      hits += ch->pcdata->hits[gsn];
+
+   if( skill_table[gsn]->type == SKILL_SKILL )
+      if( ( obj = get_eq_char( ch, WEAR_DUAL_WIELD ) ) != NULL && obj->item_type == ITEM_WEAPON )
+         hits++;
+
+   return hits;
+}
 
 int get_skill_range( CHAR_DATA *ch, int gsn )
 {
@@ -5832,6 +5912,9 @@ int get_skill_range( CHAR_DATA *ch, int gsn )
       range = (get_eq_char( ch, WEAR_WIELD ))->range;
    else
       range = skill_table[gsn]->range;
+
+   if( !IS_NPC( ch ) )
+      range += ch->pcdata->range[gsn];
 
    return range;
 }
@@ -5913,9 +5996,19 @@ void update_target_ch_moved( CHAR_DATA *ch )
       set_new_target( ch, get_target_2( ch, victim, -1 ) );
    }
 
+   if( ch->charge_target )
+   {
+      victim = ch->target->victim;
+      set_new_charge_target( ch, get_target_2( ch, victim, -1 ) );
+   }
+
    if( ch->first_targetedby )
       for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_targetting_your_target )
          set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
+
+   if( ch->first_charge_targetedby )
+      for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_charge_targetting_your_target )
+          set_new_charge_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
 }
 
 void add_queue( CHAR_DATA *ch, int type )
@@ -5927,7 +6020,7 @@ void add_queue( CHAR_DATA *ch, int type )
       case COMBAT_LAG_TIMER:
          double lag;
 
-         lag = base_class_lag[ch->Class];
+         lag = base_class_lag[ch->Class] + ch->gravity;
 
          if( ch->combat_lag > 0 && is_queued( ch, COMBAT_LAG_TIMER ) ) //If we already have timer, just reset it -Davenge
          {
@@ -5943,6 +6036,7 @@ void add_queue( CHAR_DATA *ch, int type )
 
          LINK( queue, first_qtimer, last_qtimer, next, prev );
          break;
+      case TIMER_TIMER:
       case COOLDOWN_TIMER:
       case AFFECT_TIMER:
          if( is_queued( ch, type) )
@@ -6009,13 +6103,46 @@ bool is_on_cooldown( CHAR_DATA *ch, int gsn )
    return FALSE;
 }
 
+double get_skill_potency( CHAR_DATA *ch, int gsn )
+{
+   double potency;
+
+   potency = ch->potency;
+
+   if( !IS_NPC( ch ) )
+      potency += ch->pcdata->potency[gsn];
+
+   potency = ( potency / 100 ) + 1;
+
+   if( is_affected( ch, gsn_potency ) )
+      potency *= 2;
+
+   return potency;
+}
+
+double get_skill_duration( CHAR_DATA *ch, int gsn )
+{
+   double duration;
+
+   duration = skill_table[gsn]->duration + ch->durations;
+
+   if( !IS_NPC( ch ) )
+      duration += ch->pcdata->duration[gsn];
+
+   return duration;;
+
+}
+
 double get_skill_cooldown( CHAR_DATA *ch, int gsn )
 {
    double cooldown;
 
    cooldown = skill_table[gsn]->cooldown;
 
-   cooldown *= ( 1 + ( get_haste( ch ) / 100 ) );
+   if( !IS_NPC( ch ) )
+      cooldown -= ch->pcdata->cooldown[gsn];
+
+   cooldown *= ( 1 - ( get_haste( ch ) / 100 ) ) ;
 
    return cooldown;
 }
@@ -6025,11 +6152,16 @@ void set_on_cooldown( CHAR_DATA *ch, int gsn )
    CD_DATA *cdat;
    double cooldown = get_skill_cooldown( ch, gsn );
 
+   if( cooldown <= 0 )
+      return;
+
    CREATE( cdat, CD_DATA, 1 );
    cdat->message = str_dup( skill_table[gsn]->cdmsg );
    cdat->sn = gsn;
    cdat->time_remaining = cooldown;
    LINK( cdat, ch->first_cooldown, ch->last_cooldown, next, prev );
+   if( !is_queued( ch, COOLDOWN_TIMER ) )
+      add_queue( ch, COOLDOWN_TIMER );
    return;
 }
 
@@ -6071,7 +6203,7 @@ HIT_DATA *init_hitdata( void )
    return hit_data;
 }
 
-HIT_DATA *generate_hit_data( CHAR_DATA *victim )
+HIT_DATA *generate_hit_data( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    OBJ_DATA *obj;
    HIT_DATA *hit_data;
@@ -6103,6 +6235,16 @@ HIT_DATA *generate_hit_data( CHAR_DATA *victim )
             for( counter = 0; counter < amount; counter++ )
             {
                hit_data->locations[hit_data->max_locations] = ( obj->wear_loc * -1);
+               hit_data->miss_locs++;
+               hit_data->max_locations++;
+            }
+         }
+         if( IS_AFFECTED( ch, AFF_BLINDRUSH ) )
+         {
+            amount = hit_data->max_locations / 2;
+            for( counter = 0; counter < amount; counter ++ )
+            {
+               hit_data->locations[hit_data->max_locations] = MISS_GENERAL;
                hit_data->miss_locs++;
                hit_data->max_locations++;
             }
@@ -6179,7 +6321,13 @@ double get_round( CHAR_DATA *ch )
       if( counter > 70 )
          round += .25;
    };
-   return ( round * ( 1 - ( get_haste( ch ) / 10 ) ) );
+
+   round *= 1 + ( get_haste( ch ) / 100 );
+
+   if( IS_AFFECTED( ch, AFF_STRONGBLOWS ) )
+      round *= 1.5;
+
+   return round;
 }
 
 void switch_class( CHAR_DATA *ch, int Class )
@@ -6574,7 +6722,7 @@ int get_stat_num_from_short_name( const char *argument )
    int x;
 
    for( x = 0; x < MAX_STAT; x++ )
-      if( !str_cmp( strlower( argument ), short_stat_names[x] ) )
+      if( !str_cmp( strlower( argument ), basic_short_stat_names[x] ) )
          return x;
 
    return -1;
@@ -6588,4 +6736,212 @@ void clear_stat_array( CHAR_DATA *ch )
       ch->class_data[ch->Class]->stat[x] = 0;
 
    return;
+}
+
+void adjust_stat( CHAR_DATA *ch, int type, int amount )
+{
+   int v1, v2;
+
+   switch( type )
+   {
+      default:
+         bug( "%s: Invalid type passed: %d", __FUNCTION__, type );
+      case STAT_HIT:
+         ch->hit += amount;
+         break;
+      case STAT_MAXHIT:
+         ch->max_hit += amount;
+         break;
+      case STAT_MANA:
+         ch->mana += amount;
+         break;
+      case STAT_MAXMANA:
+         ch->max_mana += amount;
+         break;
+      case STAT_MOVE:
+         ch->move += amount;
+         break;
+      case STAT_MAXMOVE:
+         ch->max_move += amount;
+         break;
+      case STAT_ALIGN:
+         ch->alignment += amount;
+         break;
+      case STAT_BARENUMDIE:
+         ch->barenumdie += amount;
+         break;
+      case STAT_BARESIZEDIE:
+         ch->baresizedie += amount;
+         break;
+      case STAT_ATTACK:
+         ch->attack += amount;
+         break;
+      case STAT_MAGICATTACK:
+         ch->magic_attack += amount;
+         break;
+      case STAT_DEFENSE:
+         ch->armor += amount;
+         break;
+      case STAT_MAGICDEFENSE:
+         ch->magic_defense += amount;
+         break;
+      case STAT_HASTE:
+         ch->haste += amount;
+         break;
+      case STAT_HASTEFROMMAGIC:
+         ch->haste_from_magic += amount;
+         break;
+      case STAT_THREAT:
+         ch->threat += amount;
+         break;
+      case STAT_PERMSTR:
+         ch->perm_str += amount;
+         break;
+      case STAT_PERMDEX:
+         ch->perm_dex += amount;
+         break;
+      case STAT_PERMCON:
+         ch->perm_con += amount;
+         break;
+      case STAT_PERMINT:
+         ch->perm_int += amount;
+         break;
+      case STAT_PERMWIS:
+         ch->perm_wis += amount;
+         break;
+      case STAT_PERMPAS:
+         ch->perm_pas += amount;
+         break;
+      case STAT_STRENGTH:
+         ch->mod_str += amount;
+         break;
+      case STAT_DEXTERITY:
+         ch->mod_dex += amount;
+         break;
+      case STAT_CONSTITUTION:
+         ch->mod_con += amount;
+         break;
+      case STAT_INTELLIGENCE:
+         ch->mod_int += amount;
+         break;
+      case STAT_WISDOM:
+         ch->mod_wis += amount;
+         break;
+      case STAT_PASSION:
+         ch->mod_pas += amount;
+         break;
+      case STAT_RESISTANCE:
+         v1 = get_value_one( amount );
+         v2 = get_value_two( amount );
+         ch->resistance[v1] += v2;
+         break;
+      case STAT_PENETRATION:
+         v1 = get_value_one( amount );
+         v2 = get_value_two( amount );
+         ch->penetration[v1] += v2;
+         break;
+      case STAT_DTYPEPOTENCY:
+         v1 = get_value_one( amount );
+         v2 = get_value_two( amount );
+         ch->damtype_potency[v1] += v2;
+         break;
+      case STAT_WEPNUMDIE:
+         ch->wepnumdie += amount;
+         break;
+      case STAT_WEPSIZEDIE:
+         ch->wepsizedie += amount;
+         break;
+      case STAT_POTENCY:
+         ch->potency += amount;
+         break;
+      case STAT_COOLDOWNS:
+         ch->cooldowns += amount;
+         break;
+      case STAT_RANGE:
+         ch->range += amount;
+         break;
+      case STAT_DURATIONS:
+         ch->durations += amount;
+         break;
+      case STAT_REGEN:
+         ch->regen += amount;
+         break;
+      case STAT_REFRESH:
+         ch->refresh += amount;
+         break;
+      case STAT_DOUBLEATTACK:
+         ch->double_attack += amount;
+         break;
+      case STAT_CRITCHANCE:
+         ch->crit_chance += amount;
+         break;
+      case STAT_CRITDAM:
+         ch->crit_dam += amount;
+         break;
+      case STAT_DODGE:
+         ch->dodge += amount;
+         break;
+      case STAT_PARRY:
+         ch->parry += amount;
+         break;
+      case STAT_COUNTER:
+         ch->counter += amount;
+         break;
+      case STAT_BLOCK:
+         ch->counter += amount;
+         break;
+      case STAT_PHASE:
+         ch->phase += amount;
+         break;
+      case STAT_COMBODMG:
+         ch->combo_dmg += amount;
+         break;
+      case STAT_CHARMEDDMG:
+         ch->charmed_dmg += amount;
+         break;
+      case STAT_CHARMEDDEF:
+         ch->charmed_def += amount;
+         break;
+      case STAT_FEEDBACKPOTENCY:
+         ch->feedback_potency += amount;
+         break;
+      case STAT_GRAVITY:
+         ch->gravity += amount;
+         break;
+   }
+}
+
+int check_mana( CHAR_DATA *ch, int sn )
+{
+   int mana, increase, x;
+
+   if( ( mana = skill_table[sn]->min_mana ) > 0 )
+   {
+      for( x = 0; x < ch->level; x++ )
+      {
+         increase = (int)( mana *.05 );
+         mana += increase < 1 ? 1 : increase;
+      }
+   }
+   return mana;
+}
+
+int check_move( CHAR_DATA *ch, int sn )
+{
+   int move, increase, x;
+
+   if( ( move = skill_table[sn]->min_move ) > 0 )
+   {
+      for( x = 0; x < ch->level; x++ )
+      {
+         increase = (int)( move *.05 );
+         move += increase < 1 ? 1: increase;
+      }
+   }
+   return move;
+}
+
+int get_threat( CHAR_DATA *ch, int gsn )
+{
+   return skill_table[gsn]->threat * ch->level;
 }

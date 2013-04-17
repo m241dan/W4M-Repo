@@ -56,8 +56,18 @@ const char *const trigger_types[MAX_TRIGGER_TYPE] = {
    "obj_drop", "obj_get", "obj_receive", "obj_put", "obj_give", "obj_destroy", "mob_kill", "mob_talk_general", "mob_talk_script_advance", "mob_follow"
 };
 
-const char *const short_stat_names[MAX_STAT] = {
+const char *const basic_short_stat_names[MAX_STAT] = {
    "str", "dex", "con", "int", "wis", "pas"
+};
+
+const char *const short_stat_names[MAX_STATTYPE] = {
+   "hit", "max hit", "mana", "max mana", "move", "max_move",
+   "align", "bhd", "bsd", "atk", "matk", "def", "mdef", "hst",
+   "hst from mag", "thr", "pstr", "pdex", "pcon", "pint",
+   "pwis", "ppas", "str", "dex", "con", "int", "wis", "pas",
+   "res", "pen", "dtpot", "wnd", "wsd", "poten", "cds", "rng",
+   "drs", "rgn", "rfh", "da", "crch", "crdam", "dge", "pry",
+   "cntr", "blk", "pha", "cbodmg", "petdmg", "petdef", "fbpot"
 };
 
 const double base_class_lag[MAX_CLASS] = {

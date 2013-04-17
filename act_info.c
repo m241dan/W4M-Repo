@@ -2918,7 +2918,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
       CHAR_DATA *wch;
       char const *Class;
 
-      if( ( d->connected != CON_PLAYING && d->connected != CON_EDITING ) || !can_see( ch, d->character ) || d->original )
+      if( ( d->connected != CON_PLAYING && d->connected != CON_EDITING  && d->connected != CON_QUEST_OLC && d->connected != CON_TALKING ) || !can_see( ch, d->character ) || d->original )
          continue;
       wch = d->original ? d->original : d->character;
       if( wch->level < iLevelLower || wch->level > iLevelUpper || ( fPkill && !CAN_PKILL( wch ) ) || ( fImmortalOnly && wch->level < LEVEL_IMMORTAL ) || ( fClassRestrict && !rgfClass[wch->Class] ) || ( fRaceRestrict && !rgfRace[wch->race] ) || ( fClanMatch && ( pClan != wch->pcdata->clan ) )  /* SB */
@@ -3124,7 +3124,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
        */
       CREATE( cur_who, WHO_DATA, 1 );
       cur_who->text = str_dup( buf );
-      if( wch->level > LEVEL_AVATAR && IS_IMMORTAL( wch ) )
+      if( wch->top_level > LEVEL_AVATAR && IS_IMMORTAL( wch ) )
          cur_who->type = WT_IMM;
       else if( fGroup )
          if( wch->leader || ( whogr_p && whogr_p->indent ) )

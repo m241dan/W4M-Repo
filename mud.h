@@ -787,7 +787,7 @@ typedef enum
    SUB_PROJ_DESC, SUB_NEWS_POST, SUB_NEWS_EDIT, SUB_TALK_CONTENT,
    SUB_TALK_SCRIPT, SUB_QUEST_EDIT, SUB_STAGE_EDIT, SUB_PATH_EDIT,
    SUB_TRIGGER_EDIT, SUB_OBJECTIVE_EDIT, SUB_REWARD_EDIT, SUB_TRIGGER_SCRIPT,
-   SUB_QUEST_DESC,
+   SUB_QUEST_DESC, SUB_CHARGE,
    /*
     * timer types ONLY below this point
     */
@@ -1402,7 +1402,13 @@ typedef enum
    AFF_FLYING, AFF_PASS_DOOR, AFF_FLOATING, AFF_TRUESIGHT, AFF_DETECTTRAPS,
    AFF_SCRYING, AFF_FIRESHIELD, AFF_SHOCKSHIELD, AFF_HAUS1, AFF_ICESHIELD,
    AFF_POSSESS, AFF_BERSERK, AFF_AQUA_BREATH, AFF_RECURRINGSPELL,
-   AFF_CONTAGIOUS, AFF_ACIDMIST, AFF_VENOMSHIELD, MAX_AFFECTED_BY
+   AFF_CONTAGIOUS, AFF_ACIDMIST, AFF_VENOMSHIELD, AFF_STUN, AFF_BIND,
+   AFF_GRAVITY, AFF_BURN, AFF_BIO, AFF_DIA, AFF_DRAIN, AFF_RAGE,
+   AFF_BLINDRUSH, AFF_STRONGBLOWS, AFF_COUNTERSTANCE, AFF_CRITSTANCE,
+   AFF_CROSSSLASH, AFF_FLASH, AFF_HOLYSHIELD, AFF_HOLYBLADE, AFF_SHOUT,
+   AFF_BATTLECRY, AFF_ONGUARD, AFF_NATURECURSE, AFF_SENTINEL, AFF_CHAINWEAPON,
+   AFF_STONESKIN, AFF_HOLYDEBUFF,
+   MAX_AFFECTED_BY
 } affected_by_types;
 
 /*
@@ -1598,6 +1604,13 @@ typedef enum
    SE_3QTRDAM, SE_REFLECT, SE_ABSORB
 } spell_save_effects;
 
+/* Druid Summons */
+
+typedef enum
+{
+   DRUID_BEAR, DRUID_WOLF, DRUID_OWL, MAX_DRUIDSUMMON
+} druid_summons;
+
 /*
  * Sex.
  * Used in #MOBILES.
@@ -1722,13 +1735,8 @@ typedef enum
    ITEM_MULTI_INVOKE, ITEM_ENCHANTED, MAX_ITEM_FLAG
 } item_extra_flags;
 
-typedef enum
-{
-   STAT_STR, STAT_DEX, STAT_CON, STAT_INT, STAT_WIS, STAT_PAS,
-   MAX_STAT
-} stat_types;
-
 /* Magic flags - extra extra_flags for objects that are used in spells */
+
 #define ITEM_RETURNING		BV00
 #define ITEM_BACKSTABBER  	BV01
 #define ITEM_BANE		BV02
@@ -1833,7 +1841,7 @@ typedef enum
    APPLY_FEEDBACKPOTENCY, APPLY_DURATIONS,
    APPLY_SKILLDURATION, APPLY_DOUBLEATTACK, APPLY_CRITCHANCE,
    APPLY_CRITDAMAGE, APPLY_COUNTER, APPLY_PHASE, APPLY_BLOCK, APPLY_COMBODMG,
-   APPLY_CHARMEDDMGBOOST, APPLY_CHARMEDDEFBOOST,
+   APPLY_CHARMEDDMGBOOST, APPLY_CHARMEDDEFBOOST, APPLY_SKILLHITS, APPLY_GRAVITY, APPLY_HASTEFROMMAGIC,
    MAX_APPLY_TYPE
 } apply_types;
 
@@ -2318,6 +2326,7 @@ struct char_data
    CHAR_DATA *prev_in_room;
    CHAR_DATA *master;
    CHAR_DATA *leader;
+   CHAR_DATA *redirect;
    FIGHT_DATA *fighting;
    CHAR_DATA *reply;
    CHAR_DATA *retell;
@@ -2448,11 +2457,16 @@ struct char_data
    int home_vnum; /* hotboot tracker */
    int resetvnum;
    int resetnum;
+   TARGET_DATA *charge_target;
    TARGET_DATA *target;
    CHAR_DATA *first_targetedby;
    CHAR_DATA *last_targetedby;
+   CHAR_DATA *first_charge_targetedby;
+   CHAR_DATA *last_charge_targetedby;
    CHAR_DATA *next_person_targetting_your_target;
    CHAR_DATA *prev_person_targetting_your_target;
+   CHAR_DATA *next_person_charge_targetting_your_target;
+   CHAR_DATA *prev_person_charge_targetting_your_target;
    double combat_lag;
    bool stopkill;
    CD_DATA *first_cooldown;
@@ -2487,7 +2501,30 @@ struct char_data
    int charmed_dmg;
    int charmed_def;
    int feedback_potency;
+   int gsn;
+   double gravity;
 };
+
+typedef enum
+{
+   STAT_STR, STAT_DEX, STAT_CON, STAT_INT, STAT_WIS, STAT_PAS,
+   MAX_STAT
+} stats;
+
+typedef enum
+{
+   STAT_HIT, STAT_MAXHIT, STAT_MANA, STAT_MAXMANA, STAT_MOVE, STAT_MAXMOVE,
+   STAT_ALIGN, STAT_BARENUMDIE, STAT_BARESIZEDIE, STAT_ATTACK, STAT_MAGICATTACK,
+   STAT_DEFENSE, STAT_MAGICDEFENSE, STAT_HASTE, STAT_HASTEFROMMAGIC, STAT_THREAT,
+   STAT_PERMSTR, STAT_PERMDEX, STAT_PERMCON, STAT_PERMINT, STAT_PERMWIS,
+   STAT_PERMPAS, STAT_STRENGTH, STAT_DEXTERITY, STAT_CONSTITUTION, STAT_INTELLIGENCE, STAT_WISDOM, STAT_PASSION,
+   STAT_RESISTANCE, STAT_PENETRATION, STAT_DTYPEPOTENCY, STAT_WEPNUMDIE,
+   STAT_WEPSIZEDIE, STAT_POTENCY, STAT_COOLDOWNS, STAT_RANGE, STAT_DURATIONS,
+   STAT_REGEN, STAT_REFRESH, STAT_DOUBLEATTACK, STAT_CRITCHANCE, STAT_CRITDAM,
+   STAT_DODGE, STAT_PARRY, STAT_COUNTER, STAT_BLOCK, STAT_PHASE, STAT_COMBODMG,
+   STAT_CHARMEDDMG, STAT_CHARMEDDEF, STAT_FEEDBACKPOTENCY, STAT_GRAVITY,
+   MAX_STATTYPE
+} stat_types;
 
 struct gthreat_data
 {
@@ -2585,6 +2622,7 @@ struct pc_data
    short range[MAX_SKILL];
    short cooldown[MAX_SKILL];
    short duration[MAX_SKILL];
+   short hits[MAX_SKILL];
    short quest_number;  /* current *QUEST BEING DONE* DON'T REMOVE! */
    short quest_curr; /* current number of quest points */
    int quest_accum;  /* quest points accumulated in players life */
@@ -3236,7 +3274,7 @@ struct teleport_data
 typedef enum
 {
    TAR_IGNORE, TAR_CHAR_OFFENSIVE, TAR_CHAR_DEFENSIVE, TAR_CHAR_SELF,
-   TAR_OBJ_INV
+   TAR_CHAR_ANY, TAR_OBJ_INV
 } target_types;
 
 typedef enum
@@ -3271,6 +3309,7 @@ struct skill_type
    short minimum_position; /* Position for caster / user */
    short slot; /* Slot for #OBJECT loading   */
    short min_mana;   /* Minimum mana used    */
+   short min_move;   /* Minimum move used    */
    short beats;   /* Rounds required to use skill  */
    const char *noun_damage;   /* Damage message    */
    const char *msg_off; /* Wear off message     */
@@ -3307,6 +3346,10 @@ struct skill_type
    const char *cdmsg; /* Message for when skill is on cooldown */
    double cooldown; /* Amount of time before skill can be used again */
    EXT_BV damtype;
+   double charge;
+   double duration;
+   int threat;
+   int hits;
 };
 
 /* how many items to track.... prevent repeat auctions */
@@ -3333,6 +3376,88 @@ extern int port;
 /*
  * These are skill_lookup return values for common skills and spells.
  */
+
+/* Priest */
+extern short gsn_heal;
+extern short gsn_erase;
+extern short gsn_holy;
+extern short gsn_stoneskin;
+extern short gsn_potency;
+extern short gsn_glory;
+extern short gsn_martyr;
+
+/* Wizard */
+extern short gsn_lightning;
+extern short gsn_ice;
+extern short gsn_fire;
+extern short gsn_water;
+extern short gsn_augmentspell;
+extern short gsn_ignorewis;
+extern short gsn_sblast;
+
+/* Sorceror */
+extern short gsn_bio;
+extern short gsn_dia;
+extern short gsn_curse;
+extern short gsn_drain;
+extern short gsn_doubletrouble;
+extern short gsn_vacuum;
+extern short gsn_redirect;
+
+/* Berserker */
+extern short gsn_whirlwind;
+extern short gsn_ragingrush;
+extern short gsn_decimation;
+extern short gsn_rage;
+extern short gsn_blindrush;
+extern short gsn_strongblows;
+extern short gsn_smashaxe;
+
+/* TerasKasi */
+extern short gsn_counterstance;
+extern short gsn_rancorrising;
+extern short gsn_grondastomp;
+extern short gsn_chargingwampa;
+extern short gsn_spittingrawl;
+extern short gsn_slashingwampa;
+extern short gsn_chakra;
+
+/* BladeMaster */
+extern short gsn_critstance;
+extern short gsn_crossslash;
+extern short gsn_dancingedge;
+extern short gsn_onguard;
+extern short gsn_sworddash;
+extern short gsn_disarm;
+extern short gsn_bladeflash;
+
+/* Druid */
+extern short gsn_summonbear;
+extern short gsn_summonwolf;
+extern short gsn_summonowl;
+extern short gsn_charm;
+extern short gsn_infuse;
+extern short gsn_naturecurse;
+extern short gsn_vinegrasp;
+
+/* Paladin */
+extern short gsn_flash;
+extern short gsn_cure;
+extern short gsn_holyshield;
+extern short gsn_holyblade;
+extern short gsn_sentinel;
+extern short gsn_shieldbash;
+extern short gsn_defender;
+
+/* Barbarian */
+extern short gsn_warcry;
+extern short gsn_howl;
+extern short gsn_shout;
+extern short gsn_boomingvoice;
+extern short gsn_battlecry;
+extern short gsn_doubleswing;
+extern short gsn_chainweapon;
+
 extern short gsn_style_evasive;
 extern short gsn_style_defensive;
 extern short gsn_style_standard;
@@ -3890,7 +4015,8 @@ extern const struct dex_app_type dex_app[26];
 extern const struct con_app_type con_app[26];
 extern const struct cha_app_type cha_app[26];
 extern const struct lck_app_type lck_app[26];
-extern const char *const short_stat_names[MAX_STAT];
+extern const char *const basic_short_stat_names[MAX_STAT];
+extern const char *const short_stat_names[MAX_STATTYPE];
 
 extern const struct race_type _race_table[MAX_RACE];
 extern struct race_type *race_table[MAX_RACE];
@@ -4513,6 +4639,9 @@ DECLARE_DO_FUN( do_yell );
 DECLARE_DO_FUN( do_zap );
 DECLARE_DO_FUN( do_zones );
 
+/* Skills */
+DECLARE_DO_FUN( do_skill );
+
 /* Changes.c */
 
 DECLARE_DO_FUN( do_changes );
@@ -5041,6 +5170,8 @@ void sort_area_by_name args( ( AREA_DATA * pArea ) ); /* Fireblade */
 void write_projects args( ( void ) );
 size_t mudstrlcpy args( ( char *dst, const char *src, size_t siz ) );
 size_t mudstrlcat args( ( char *dst, const char *src, size_t siz ) );
+void smash_underscore args( ( char *str ) );
+const char *smash_underscore args( ( const char *str ) );
 
 /* fight.c */
 void violence_update args( ( void ) );
@@ -5199,6 +5330,49 @@ void disarm( CHAR_DATA * ch, CHAR_DATA * victim );
 void trip( CHAR_DATA * ch, CHAR_DATA * victim );
 bool mob_fire( CHAR_DATA * ch, const char *name );
 CD *scan_for_victim( CHAR_DATA * ch, EXIT_DATA * pexit, const char *name );
+TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn, bool StartCasting );
+void analyze_retcode( CHAR_DATA *ch, CHAR_DATA *victim, ch_ret ret, int gsn );
+void charge_message( CHAR_DATA *ch, CHAR_DATA *victim, int gsn, bool StartCasting );
+bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN *fun );
+void heal_msg( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
+void buff_msg( CHAR_DATA *ch, CHAR_DATA *victim, int gsn );
+void rbuff_msg( CHAR_DATA *ch, CHAR_DATA *victim, AFFECT_DATA *paf );
+void generate_buff_threat( CHAR_DATA *ch, CHAR_DATA *victim, int amount );
+void glory_echo args( ( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA, CHAR_DATA) ) );
+void glory_echo args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dt ) );
+void vacuum_spell args( ( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA, CHAR_DATA) ) );
+void vacuum_spell args( ( CHAR_DATA *ch, CHAR_DATA *victim, int dt ) );
+void sorc_enfeeb( CHAR_DATA *ch, CHAR_DATA *victim, int gsn );
+void heal_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void erase_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void holy_debuff( CHAR_DATA *ch, CHAR_DATA *victim );
+void stoneskin_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_stun( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_bind( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_burn( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_gravity( CHAR_DATA *ch, CHAR_DATA *victim );
+void wizard_sblast( CHAR_DATA *ch, CHAR_DATA *victim );
+void bio_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void dia_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void sorc_curse( CHAR_DATA *ch, CHAR_DATA *victim );
+void sorc_drain( CHAR_DATA *ch, CHAR_DATA *victim );
+void feedback( CHAR_DATA *ch, AFFECT_DATA *af );
+void set_redirect( CHAR_DATA *ch, CHAR_DATA *redirect );
+void sorc_enfeeb( CHAR_DATA *ch, CHAR_DATA *victim );
+void chakra_heal( CHAR_DATA *ch );
+bool disarm_char( CHAR_DATA *ch, CHAR_DATA *victim );
+void druid_summon( CHAR_DATA *ch, int summon );
+void druid_charm( CHAR_DATA *ch, CHAR_DATA *victim );
+void druid_infuse( CHAR_DATA *ch );
+void paladin_flash( CHAR_DATA *ch, CHAR_DATA *victim );
+void paladin_cure( CHAR_DATA *ch, CHAR_DATA *victim );
+void holy_shield( CHAR_DATA *ch, CHAR_DATA *victim );
+void holy_blade( CHAR_DATA *ch, CHAR_DATA *victim );
+void barb_warcry( CHAR_DATA *ch );
+void barb_shout( CHAR_DATA *ch );
+void barb_howl( CHAR_DATA *ch );
+void barb_battlecry( CHAR_DATA *ch );
+
 
 /* ban.c */
 int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int type );
@@ -5239,6 +5413,7 @@ bool nifty_is_name args( ( const char *str, const char *namelist ) );
 bool nifty_is_name_prefix args( ( const char *str, const char *namelist ) );
 void affect_modify args( ( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd ) );
 void affect_to_char args( ( CHAR_DATA * ch, AFFECT_DATA * paf ) );
+void affect_to_char args( ( CHAR_DATA * ch, CHAR_DATA *from, AFFECT_DATA *paf ) );
 void affect_remove args( ( CHAR_DATA * ch, AFFECT_DATA * paf ) );
 void affect_strip args( ( CHAR_DATA * ch, int sn ) );
 bool is_affected args( ( CHAR_DATA * ch, int sn ) );
@@ -5306,6 +5481,7 @@ void set_cur_char args( ( CHAR_DATA * ch ) );
 bool char_died args( ( CHAR_DATA * ch ) );
 void queue_extracted_char args( ( CHAR_DATA * ch, bool extract ) );
 void clean_char_queue args( ( void ) );
+void add_timer args( ( CHAR_DATA *ch, short type, double count, DO_FUN * fun, int value ) );
 void add_timer args( ( CHAR_DATA * ch, short type, int count, DO_FUN * fun, int value ) );
 TIMER *get_timerptr args( ( CHAR_DATA * ch, short type ) );
 double get_timer args( ( CHAR_DATA * ch, short type ) );
@@ -5338,11 +5514,13 @@ int get_max_range( CHAR_DATA * ch );
 TARGET_DATA *get_target( CHAR_DATA * ch, const char *argument, int dir );
 TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir );
 void set_new_target( CHAR_DATA *ch, TARGET_DATA *target );
+void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
 int get_skill_range( CHAR_DATA *ch, int gsn );
 int reverse_dir( int dir );
 bool is_skill( int dt );
 TARGET_DATA *make_new_target( CHAR_DATA * victim, int range, int dir );
 void clear_target( CHAR_DATA *ch );
+void clear_charge_target( CHAR_DATA *ch );
 REALM_DATA *get_realm( const char * argument );
 AREA_DATA *get_area_file( const char * name );
 int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir );
@@ -5358,7 +5536,7 @@ void extract_cooldown args( ( CHAR_DATA * ch, CD_DATA * cdat ) );
 double get_skill_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 void set_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
 bool is_on_cooldown args( ( CHAR_DATA * ch, int gsn ) );
-HIT_DATA *generate_hit_data( CHAR_DATA * victim );
+HIT_DATA *generate_hit_data( CHAR_DATA *ch, CHAR_DATA * victim );
 HIT_DATA *init_hitdata( void );
 int weight_ratio_dex( int dex, int weight );
 int weight_ratio_str( int str, int weight );
@@ -5389,6 +5567,14 @@ void display_statallocation( CHAR_DATA * ch );
 void reset_stats( CHAR_DATA *ch );
 int get_stat_num_from_short_name( const char *argument );
 void clear_stat_array( CHAR_DATA *ch );
+void adjust_stat( CHAR_DATA *ch, int type, int amount );
+int check_mana( CHAR_DATA *ch, int gsn );
+int check_move( CHAR_DATA *ch, int gsn );
+void free_target( CHAR_DATA *ch, TARGET_DATA *target );
+void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
+int get_threat( CHAR_DATA *ch, int gsn );
+double get_skill_duration( CHAR_DATA *ch, int gsn );
+int get_skill_hits( CHAR_DATA *ch, int gsn );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );
@@ -5410,7 +5596,7 @@ int store_two_value( int v1, int v2 );
 int get_value_one( int value );
 int get_value_two( int value );
 void apply_class_stats( CHAR_DATA *ch );
-
+double get_skill_potency( CHAR_DATA *ch, int gsn );
 
 /* magic.c */
 bool process_spell_components( CHAR_DATA * ch, int sn );

@@ -69,13 +69,13 @@ void advance_level( CHAR_DATA * ch, bool change_class )
    add_mana = mana_lvl_gain[ch->Class];
    add_move = move_lvl_gain[ch->Class];
 
-   ch->max_hit += add_hp;
-   ch->max_mana += add_mana;
-   ch->max_move += add_move;
+   adjust_stat( ch, STAT_MAXHIT, add_hp );
+   adjust_stat( ch, STAT_MAXMANA, add_mana );
+   adjust_stat( ch, STAT_MAXMOVE, add_move );
 
-   ch->hit = ch->max_hit;
-   ch->mana = ch->max_mana;
-   ch->move = ch->max_move;
+   adjust_stat( ch, STAT_HIT, ( ch->max_hit - ch->hit ) );
+   adjust_stat( ch, STAT_MANA, ( ch->max_mana - ch->mana ) );
+   adjust_stat( ch, STAT_MOVE, ( ch->max_move - ch->move ) );
 
    if( !IS_NPC( ch ) )
       xREMOVE_BIT( ch->act, PLR_BOUGHT_PET );
@@ -763,13 +763,13 @@ void char_update( void )
       if( ch->position >= POS_STUNNED )
       {
          if( ch->hit < ch->max_hit )
-            ch->hit += hit_gain( ch );
+            adjust_stat( ch, STAT_HIT, hit_gain( ch ) );
 
          if( ch->mana < ch->max_mana )
-            ch->mana += mana_gain( ch );
+            adjust_stat( ch, STAT_MANA, mana_gain( ch ) );
 
          if( ch->move < ch->max_move )
-            ch->move += move_gain( ch );
+            adjust_stat( ch, STAT_MOVE,  move_gain( ch ) );
       }
 
       if( ch->position == POS_STUNNED )
@@ -831,7 +831,7 @@ void char_update( void )
          }
       }
 
-      if( !IS_NPC( ch ) && ch->level < LEVEL_IMMORTAL )
+      if( !IS_NPC( ch ) && ch->top_level < LEVEL_IMMORTAL )
       {
          OBJ_DATA *obj;
 
