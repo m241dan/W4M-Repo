@@ -543,7 +543,6 @@ bool check_skill( CHAR_DATA * ch, char *command, char *argument )
       if( is_affected( ch, gsn_augmentspell ) );
          affect_strip( ch, gsn_augmentspell );
    }
-   clear_charge_target( ch );
 
    tail_chain(  );
    return TRUE;
@@ -5906,14 +5905,14 @@ bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN 
          }
          if( skill_table[gsn]->charge > 0 )
          {
-            if( !range_check( ch, charge_target, gsn, FALSE ) )
+            if( !range_check( ch, ch->charge_target, gsn, FALSE ) )
             {
                if( !IS_NPC( ch ) )
                   send_to_char( "Target moved out of rangee.\r\n", ch );
                act( AT_PLAIN, "$n's target is out of range.", ch, NULL, NULL, TO_ROOM );
                return TRUE;
             }
-            else if( !check_los( ch, charge_target->victim ) )
+            else if( !check_los( ch, ch->charge_target->victim ) )
             {
                if( !IS_NPC( ch ) )
                   send_to_char( "Your target moved out of your line of sight.\r\n", ch );
@@ -5921,10 +5920,7 @@ bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN 
                return TRUE;
             }
          }
-         charge_message( ch, charge_target->victim, gsn, FALSE );
-         set_on_cooldown( ch, gsn );
-         adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn ) );
-         adjust_stat( ch, STAT_MOVE, -check_move( ch, gsn ) );
+         charge_message( ch, ch->charge_target->victim, gsn, FALSE );
          break;
       case SUB_TIMER_DO_ABORT:
          clear_charge_target( ch );
@@ -5933,6 +5929,10 @@ bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN 
          act( AT_PLAIN, "%n is interrupted before they can finish!.", ch, NULL, NULL, TO_ROOM );
          return TRUE;
    }
+
+   set_on_cooldown( ch, gsn );
+   adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn ) );
+   adjust_stat( ch, STAT_MOVE, -check_move( ch, gsn ) );
    ch->substate = SUB_NONE;
    return FALSE;
 }
@@ -6493,6 +6493,12 @@ void do_skill( CHAR_DATA *ch, const char *argument )
    else if( gsn == gsn_battlecry )
    {
       barb_battlecry( ch );
+      return;
+   }
+   else if( gsn == gsn_doubleswing )
+   {
+      multi_hit( ch, victim, TYPE_UNDEFINED );
+      multi_hit( ch, victim, TYPE_UNDEFINED );
       return;
    }
    else if( gsn == gsn_chainweapon )

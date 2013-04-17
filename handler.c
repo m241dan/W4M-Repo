@@ -6036,6 +6036,7 @@ void add_queue( CHAR_DATA *ch, int type )
 
          LINK( queue, first_qtimer, last_qtimer, next, prev );
          break;
+      case TIMER_TIMER:
       case COOLDOWN_TIMER:
       case AFFECT_TIMER:
          if( is_queued( ch, type) )
@@ -6151,11 +6152,16 @@ void set_on_cooldown( CHAR_DATA *ch, int gsn )
    CD_DATA *cdat;
    double cooldown = get_skill_cooldown( ch, gsn );
 
+   if( cooldown <= 0 )
+      return;
+
    CREATE( cdat, CD_DATA, 1 );
    cdat->message = str_dup( skill_table[gsn]->cdmsg );
    cdat->sn = gsn;
    cdat->time_remaining = cooldown;
    LINK( cdat, ch->first_cooldown, ch->last_cooldown, next, prev );
+   if( !is_queued( ch, COOLDOWN_TIMER ) )
+      add_queue( ch, COOLDOWN_TIMER );
    return;
 }
 

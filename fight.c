@@ -600,12 +600,51 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
           */
          wpnroll = number_range( ch->barenumdie, ch->baresizedie * ch->barenumdie ) + ch->damplus;
       else
-         wpnroll = number_range( ( wield->value[1] + ch->wepnumdie ), ( wield->value[2] + ch->wepsizedie ));
+         wpnroll = number_range( ( wield->value[1] + ch->wepnumdie ), ( wield->value[2] + ch->wepsizedie ) );
       /*
        * STR v. CON calculation, flat addition/subtraction to weapon roll -Davenge
        */
       strvcon = get_curr_str( ch ) - get_curr_con( victim );
       dam = wpnroll + strvcon;
+
+      /* Berserker */
+      if( dt == gsn_whirlwind )
+         dam = (int)( dam * 2.75 );
+      else if( dt == gsn_ragingrush )
+         dam *= 9;
+      else if( dt == gsn_decimation )
+         dam *= 6;
+      else if( dt == gsn_smashaxe )
+         dam *= 2;
+
+      /* Teras Kasi */
+      else if( dt == gsn_rancorrising )
+         dam = (int)( dam * 1.25 );
+      else if( dt == gsn_grondastomp )
+         dam = (int)( dam * 1.1 );
+      else if( dt == gsn_chargingwampa )
+         dam = (int)( dam * 1.25 );
+      else if( dt == gsn_spittingrawl )
+         dam *= 2;
+      else if( dt == gsn_slashingwampa )
+         dam = (int)( dam * 1.25 );
+
+      /* Blade Master */
+      else if( dt == gsn_crossslash )
+         dam *= 2;
+      else if( dt == gsn_dancingedge )
+         dam *= 12;
+      else if( dt == gsn_sworddash )
+         dam *= 6;
+
+      /* Paladin */
+      else if( dt == gsn_shieldbash )
+         dam = (get_eq_char( ch, WEAR_DUAL_WIELD))->value[0] * 2;
+
+      /* Barbarian */
+      else if( dt == gsn_boomingvoice )
+         dam *= 6;
+
       if( IS_BETA( ) )
          ch_printf( ch, "Weapon Roll: %d Stat Roll(pSTR - vCON): %d Init Dam Total: %d\r\n", wpnroll, strvcon, dam );
    }
@@ -615,10 +654,28 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
        * Need to come up with base damage for spells -Davenge
        */
       speroll = 0;
+
+      /* Priest */
+      if( dt == gsn_holy )
+         speroll = 1 * ch->level;
+
+      /* Wizard */
+      else if( dt == gsn_lightning || dt == gsn_ice || dt == gsn_fire || dt == gsn_water )
+         speroll = (int)( 4 * ch->level );
+
+      /* Sorceror */
+      else if( dt == gsn_bio || dt == gsn_dia )
+         speroll = (int)( .2 * ch->level );
+      else if( dt == gsn_drain )
+         speroll = (int)( 1.2 * ch->level );
       /*
        * Roll int vs. wis for more base damage stuff -Davenge
        */
-      intvwis = get_curr_int( ch ) - get_curr_wis( victim );
+      if( is_affected( ch, gsn_ignorewis ) )
+         intvwis = get_curr_int( ch );
+      else
+         intvwis = get_curr_int( ch ) - get_curr_wis( victim );
+
       dam = speroll + intvwis;
       if( IS_BETA( ) )
          ch_printf( ch, "Spell Roll: %d Stat Roll(pINT - vWIS): %d Init Dam Total: %d\r\n", speroll, intvwis, dam );
@@ -3614,6 +3671,8 @@ bool get_crit( CHAR_DATA *ch, int dt )
       chance = URANGE( 0, (int)chance, 50 );
       if( IS_AFFECTED( ch, AFF_CRITSTANCE ) )
          return TRUE;
+      if( dt == gsn_sworddash )
+         return FALSE;
    }
    else if( skill_table[dt]->type == SKILL_SPELL )
    {
@@ -3631,6 +3690,9 @@ bool get_crit( CHAR_DATA *ch, int dt )
       chance = URANGE( 0, (int) chance, 75 );
    }
    chance = URANGE( 0, (int)( chance + ch->crit_chance ), 75 );
+
+   if( dt == gsn_ragingrush )
+      chance += 10;
 
    if( number_percent( ) > chance )
       return FALSE;
