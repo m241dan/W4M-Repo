@@ -1964,7 +1964,7 @@ void do_mset( CHAR_DATA* ch, const char* argument)
             continue;
          }   
          xTOGGLE_BIT( victim->damtype, value );
-         if( IS_NPC( victim ) && xIS_SET( victim->damtype, ACT_PROTOTYPE ) )
+         if( IS_NPC( victim ) && xIS_SET( victim->act, ACT_PROTOTYPE ) )
             xTOGGLE_BIT( victim->pIndexData->damtype, value );
       }
       send_to_char( "Ok.\r\n", ch );
