@@ -1207,7 +1207,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
    char *line;
    const char *word;
    int x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14;
-   int potency, range, cooldown, duration;
+   int potency, range, cooldown, duration, hits;
    short killcnt;
    bool fMatch;
    int max_colors = 0;  /* Color code */
@@ -1579,7 +1579,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                fMatch = TRUE;
                break;
             }
-            KEY( "Gravity", ch->gravity, fread_number( fp ) );
+            KEY( "Gravity", ch->gravity, fread_float( fp ) );
             break;
 
          case 'H':
@@ -2015,10 +2015,8 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   range = fread_number( fp );
                   cooldown = fread_number( fp );
                   duration = fread_number( fp );
-                  if( file_ver < 3 )
-                     sn = skill_lookup( fread_word( fp ) );
-                  else
-                     sn = find_skill( NULL, fread_word( fp ), FALSE );
+                  hits = fread_number( fp );
+                  sn = skill_lookup( fread_word( fp ) );
 
                   if( sn < 0 )
                      bug( "%s: unknown skill.", __FUNCTION__ );
@@ -2029,6 +2027,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                      ch->pcdata->range[sn] = range;
                      ch->pcdata->cooldown[sn] = cooldown;
                      ch->pcdata->duration[sn] = duration;
+                     ch->pcdata->hits[sn] = hits;
                      /*
                       * Take care of people who have stuff they shouldn't     *
                       * * Assumes class and level were loaded before. -- Altrag *
@@ -2061,8 +2060,8 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                   range = fread_number( fp );
                   cooldown = fread_number( fp );
                   duration = fread_number( fp );
-
-                  sn = find_spell( NULL, fread_word( fp ), FALSE );
+                  hits = fread_number( fp );
+                  sn = skill_lookup( fread_word( fp ) );
                   if( sn < 0 )
                      bug( "%s: unknown spell.", __FUNCTION__ );
                   else
@@ -2072,6 +2071,7 @@ void fread_char( CHAR_DATA * ch, FILE * fp, bool preload, bool copyover )
                      ch->pcdata->range[sn] = range;
                      ch->pcdata->cooldown[sn] = cooldown;
                      ch->pcdata->duration[sn] = duration;
+                     ch->pcdata->hits[sn] = hits;
                      if( ch->level < LEVEL_IMMORTAL )
                         if( skill_table[sn]->skill_level[ch->Class] >= LEVEL_IMMORTAL )
                         {
