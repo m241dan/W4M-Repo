@@ -6188,9 +6188,9 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       adjust_stat( ch, STAT_MANA, -mana );
       adjust_stat( ch, STAT_MOVE, -move );
 
-      adjust_stat( victim, STAT_HIT, ( hit * get_skill_potency( ch, gsn_martyr ) ) );
-      adjust_stat( victim, STAT_MANA, ( mana * get_skill_potency( ch, gsn_martyr ) ) );
-      adjust_stat( victim, STAT_MOVE, ( move * get_skill_potency( ch, gsn_martyr ) ) );
+      adjust_stat( victim, STAT_HIT, (int)( hit * get_skill_potency( ch, gsn_martyr ) ) );
+      adjust_stat( victim, STAT_MANA, (int)( mana * get_skill_potency( ch, gsn_martyr ) ) );
+      adjust_stat( victim, STAT_MOVE, (int)( move * get_skill_potency( ch, gsn_martyr ) ) );
       return;
    }
    else if( gsn == gsn_lightning && is_affected( ch, gsn_augmentspell ) )
@@ -6273,7 +6273,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.type = gsn;
       af.location = APPLY_HASTEFROMMAGIC;
       af.bitvector = meb( AFF_RAGE );
-      af.modifier = 10 * get_skill_potency( ch, gsn );
+      af.modifier = (int)( 10 * get_skill_potency( ch, gsn ) );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
       affect_to_char( ch, &af );
       return;
@@ -6283,7 +6283,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.type = gsn;
       af.location = APPLY_HASTEFROMMAGIC;
       af.bitvector = meb( AFF_BLINDRUSH );
-      af.modifier = 20 * get_skill_potency( ch, gsn );
+      af.modifier = (int)( 20 * get_skill_potency( ch, gsn ) );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 );
       affect_to_char( ch, &af );
       return;
@@ -6330,7 +6330,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_CROSSSLASH );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 7 );
       af.location = APPLY_ARMOR;
-      af.modifier = ( GET_AC( victim ) * -.1 ) * get_skill_potency( ch, gsn );
+      af.modifier = (int)( ( GET_AC( victim ) * -.1 ) * get_skill_potency( ch, gsn ) );
       affect_to_char( victim, &af );
    }
    else if( gsn == gsn_onguard )
@@ -6357,7 +6357,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       {
          af.type = gsn;
          af.location = APPLY_STR;
-         af.modifier = 5 * get_skill_potency( ch, gsn );
+         af.modifier = (int)( 5 * get_skill_potency( ch, gsn ) );
          af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 ) ;
          affect_to_char( ch, &af );
       }
@@ -6402,7 +6402,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_NATURECURSE );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 2 );
       af.location = APPLY_HASTEFROMMAGIC;
-      af.modifier = ( 20 + ( get_curr_wis( ch ) / 8 ) ) * get_skill_potency( ch, gsn );
+      af.modifier = (int)( ( 20 + ( get_curr_wis( ch ) / 8 ) ) * get_skill_potency( ch, gsn ) );
       affect_to_char( victim, ch, &af );
       return;
    }
@@ -6462,10 +6462,10 @@ void do_skill( CHAR_DATA *ch, const char *argument )
    {
       af.type = gsn;
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
-      af.modifier = GET_AC( ch ) * .25;
+      af.modifier = (int)(GET_AC( ch ) * .25);
       af.location = APPLY_ARMOR;
       affect_to_char( ch, &af );
-      af.modifier = GET_MAGICDEFENSE( ch ) * .25;
+      af.modifier = (int)(GET_MAGICDEFENSE( ch ) * .25);
       af.location = APPLY_MAGICDEFENSE;
       affect_to_char( ch, &af );
       return;
@@ -6487,7 +6487,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
    }
    else if( gsn == gsn_boomingvoice )
    {
-      WAIT_STATE( victim, get_skill_duration( ch, gsn ) );
+      WAIT_STATE( victim, (int)get_skill_duration( ch, gsn ) );
       generate_threat( ch, victim, get_threat( ch, gsn ) );
    }
    else if( gsn == gsn_battlecry )
@@ -6560,9 +6560,9 @@ void heal_char( CHAR_DATA *ch, CHAR_DATA *victim )
    if( get_crit( ch, gsn_heal ) )
       amount = (int)( amount * 1.35 );
 
-   amount = (int)UMIN( amount, ( victim->max_hit - victim->hit ) );
-   heal_msg( ch, victim, amount );
-   adjust_stat( victim, STAT_HIT, amount );
+   amount = UMIN( (int)amount, ( victim->max_hit - victim->hit ) );
+   heal_msg( ch, victim, (int)amount );
+   adjust_stat( victim, STAT_HIT, (int)amount );
    generate_buff_threat( ch, victim, (int)( amount * .6 ) );
 }
 
@@ -6605,14 +6605,14 @@ void holy_debuff( CHAR_DATA *ch, CHAR_DATA *victim )
 void stoneskin_char( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    AFFECT_DATA af;
-   int amount;
+   double amount;
 
    amount = ch->level;
    amount *=  get_curr_wis( ch ) / 2;
    amount *= get_skill_potency( ch, gsn_stoneskin );
 
    af.location = APPLY_ARMOR;
-   af.modifier = amount;
+   af.modifier = (int)amount;
    af.type = gsn_stoneskin;
    af.bitvector = meb( AFF_STONESKIN );
    af.duration = get_skill_duration( ch, gsn_stoneskin ) + get_curr_pas( ch );
@@ -6659,7 +6659,7 @@ void wizard_burn( CHAR_DATA *ch, CHAR_DATA *victim )
    af.location = APPLY_WIS;
    af.bitvector = meb( AFF_BURN );
    af.duration = get_skill_duration( ch, gsn_fire );
-   af.modifier = get_curr_wis( victim ) * -.1;
+   af.modifier = (int)( get_curr_wis( victim ) * -.1 );
    affect_to_char( victim, &af );
    generate_threat( ch, victim, get_threat( ch, gsn_fire ) );
    return;
@@ -6699,7 +6699,7 @@ void bio_char( CHAR_DATA *ch, CHAR_DATA *victim )
    af.bitvector = meb( AFF_BIO );
    af.duration = get_skill_duration( ch, gsn_bio ) + ( get_curr_pas( ch ) / 10 );
    af.location = APPLY_ATTACK;
-   af.modifier = ( get_curr_wis( ch ) / 2 ) + ( ( GET_ATTACK( victim ) *  -.1 ) * get_skill_potency( ch, gsn_bio ) );
+   af.modifier = (int)( ( get_curr_wis( ch ) / 2 ) + ( ( GET_ATTACK( victim ) *  -.1 ) * get_skill_potency( ch, gsn_bio ) ) );
    affect_to_char( victim, &af );
    generate_threat( ch, victim, get_threat( ch, gsn_bio ) );
    feedback( ch, &af );
@@ -6713,7 +6713,7 @@ void dia_char( CHAR_DATA *ch, CHAR_DATA *victim )
    af.bitvector = meb( AFF_DIA );
    af.duration = get_skill_duration( ch, gsn_dia ) + ( get_curr_pas( ch ) / 10 );
    af.location = APPLY_ARMOR;
-   af.modifier = ( get_curr_wis( ch ) / 2 ) + ( ( GET_AC( victim ) *  -.1 ) * get_skill_potency( ch, gsn_dia ) );
+   af.modifier = (int)( ( get_curr_wis( ch ) / 2 ) + ( ( GET_AC( victim ) *  -.1 ) * get_skill_potency( ch, gsn_dia ) ) );
    affect_to_char( victim, &af );
    generate_threat( ch, victim, get_threat( ch, gsn_dia ) );
    feedback( ch, &af );
@@ -6727,7 +6727,7 @@ void sorc_curse( CHAR_DATA *ch, CHAR_DATA *victim )
    af.bitvector = meb( AFF_CURSE );
    af.duration = get_skill_duration( ch, gsn_curse ) + ( get_curr_pas( ch ) / 10 );
    af.location = APPLY_HASTEFROMMAGIC;
-   af.modifier = ( ( get_curr_wis( ch ) / 10 ) + 10 * get_skill_potency( ch, gsn_curse ) ) * -1;
+   af.modifier = (int)( ( ( get_curr_wis( ch ) / 10 ) + 10 * get_skill_potency( ch, gsn_curse ) ) * -1 );
    affect_to_char( victim, &af );
    generate_threat( ch, victim, get_threat( ch, gsn_curse ) );
    feedback( ch, &af );
@@ -6742,7 +6742,7 @@ void sorc_drain( CHAR_DATA *ch, CHAR_DATA *victim )
    af.bitvector = meb( AFF_DRAIN );
    af.duration = get_skill_duration( ch, gsn_drain ) + ( get_curr_pas( ch ) / 10 );
    af.location = APPLY_MAGICDEFENSE;
-   af.modifier = ( get_curr_wis( ch ) / 2 ) + ( ( GET_MAGICDEFENSE( victim ) * -.1 ) * get_skill_potency( ch, gsn_drain ) );
+   af.modifier = (int)( ( get_curr_wis( ch ) / 2 ) + ( ( GET_MAGICDEFENSE( victim ) * -.1 ) * get_skill_potency( ch, gsn_drain ) ) );
    affect_to_char( victim, &af );
    generate_threat( ch, victim, get_threat( ch, gsn_drain ) );
    feedback( ch, &af );
@@ -6754,7 +6754,7 @@ void feedback( CHAR_DATA *ch, AFFECT_DATA *af )
    af->modifier *= -1;
    xCLEAR_BITS( af->bitvector );
    if( ch->feedback_potency > 0 )
-      af->modifier *= 1 + ( ch->feedback_potency / 100 );
+      af->modifier *= (int)( 1 + ( ch->feedback_potency / 100 ) );
 
    if( ch->redirect )
    {
@@ -6818,9 +6818,9 @@ void chakra_heal( CHAR_DATA *ch )
    if( get_crit( ch, gsn_chakra ) )
       amount = (int)( amount * 1.35 );
 
-   amount = (int)UMIN( amount, ( ch->max_hit - ch->hit ) );
-   heal_msg( ch, ch, amount );
-   adjust_stat( ch, STAT_HIT, amount );
+   amount = UMIN( (int)amount, ( ch->max_hit - ch->hit ) );
+   heal_msg( ch, ch, (int)amount );
+   adjust_stat( ch, STAT_HIT, (int)amount );
    amount *= .5;
    amount += ( get_curr_con( ch ) + get_curr_str( ch ) ) / 3;
    generate_buff_threat( ch, ch, (int)amount );
@@ -6904,9 +6904,9 @@ void paladin_cure( CHAR_DATA *ch, CHAR_DATA *victim )
    if( get_crit( ch, gsn_cure ) )
       amount = (int)( amount * 1.35 );
 
-   amount = (int)UMIN( amount, ( victim->max_hit - victim->hit ) );
-   heal_msg( ch, victim, amount );
-   adjust_stat( victim, STAT_HIT, amount );
+   amount = UMIN( (int)amount, ( victim->max_hit - victim->hit ) );
+   heal_msg( ch, victim, (int)amount );
+   adjust_stat( victim, STAT_HIT, (int)amount );
    generate_buff_threat( ch, victim, (int)amount );
    return;
 }
@@ -6981,7 +6981,7 @@ void barb_shout( CHAR_DATA *ch )
    int mod;
 
    room = trvch_create( ch, TR_CHAR_ROOM_FORW );
-   mod = 20 * get_skill_potency( ch, gsn_shout );
+   mod = (int)( 20 * get_skill_potency( ch, gsn_shout ) );
 
    af.type = gsn_shout;
    af.bitvector = meb( AFF_SHOUT );
@@ -7044,13 +7044,13 @@ void barb_battlecry( CHAR_DATA *ch )
       if( !is_same_group( ch, gch ) )
          continue;
       af.location = APPLY_HIT;
-      af.modifier = ch->max_hit * ( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 );
+      af.modifier = (int)( ch->max_hit * ( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 ) );
       affect_to_char( gch, ch, &af );
       af.location = APPLY_MANA;
-      af.modifier = ch->max_mana * ( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 );
+      af.modifier = (int)( ch->max_mana * ( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 ) );
       affect_to_char( gch, &af );
       af.location = APPLY_MOVE;
-      af.modifier = ch->max_move  *( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 );
+      af.modifier = (int)( ch->max_move  *( ( 15 * get_skill_potency( ch, gsn_battlecry ) ) / 100 ) );
       affect_to_char( gch, &af );
    }
    trv_dispose( &room );

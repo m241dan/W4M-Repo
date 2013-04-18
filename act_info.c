@@ -2921,7 +2921,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
       if( ( d->connected != CON_PLAYING && d->connected != CON_EDITING  && d->connected != CON_QUEST_OLC && d->connected != CON_TALKING ) || !can_see( ch, d->character ) || d->original )
          continue;
       wch = d->original ? d->original : d->character;
-      if( wch->level < iLevelLower || wch->level > iLevelUpper || ( fPkill && !CAN_PKILL( wch ) ) || ( fImmortalOnly && wch->level < LEVEL_IMMORTAL ) || ( fClassRestrict && !rgfClass[wch->Class] ) || ( fRaceRestrict && !rgfRace[wch->race] ) || ( fClanMatch && ( pClan != wch->pcdata->clan ) )  /* SB */
+      if( wch->top_level < iLevelLower || wch->top_level > iLevelUpper || ( fPkill && !CAN_PKILL( wch ) ) || ( fImmortalOnly && wch->top_level < LEVEL_IMMORTAL ) || ( fClassRestrict && !rgfClass[wch->Class] ) || ( fRaceRestrict && !rgfRace[wch->race] ) || ( fClanMatch && ( pClan != wch->pcdata->clan ) )  /* SB */
           || ( fCouncilMatch && ( pCouncil != wch->pcdata->council ) )  /* SB */
           || ( fDeityMatch && ( pDeity != wch->pcdata->deity ) ) )
          continue;
@@ -2950,7 +2950,7 @@ void do_who( CHAR_DATA* ch, const char* argument)
       else
          mudstrlcpy( char_name, wch->name, MAX_INPUT_LENGTH );
 
-      snprintf( class_text, MAX_INPUT_LENGTH, "%s%d %s", NOT_AUTHED( wch ) ? "N" : "", wch->level,
+      snprintf( class_text, MAX_INPUT_LENGTH, "%s%d %s", NOT_AUTHED( wch ) ? "N" : "", wch->top_level,
                 class_table[wch->Class]->who_name );
       Class = class_text;
       switch ( wch->top_level )
