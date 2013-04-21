@@ -5749,7 +5749,7 @@ TARGET_DATA *check_can( CHAR_DATA *ch, const char *argument, int gsn, bool Start
    /* Grab our target data */
 
    if( skill_table[gsn]->target == TAR_CHAR_SELF )
-      target = make_new_target( ch, 0, -1 );
+      return make_new_target( ch, 0, -1 );
    else
    {
       if( arg[0] == '\0' && !ch->target )
