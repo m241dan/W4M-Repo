@@ -6570,22 +6570,22 @@ void erase_char( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    AFFECT_DATA *paf, *paf_next;
    int count = 0;
-   int target_type;
+   int target_skill_type;
 
    if( is_same_group( ch, victim ) )
-      target_type = TAR_CHAR_OFFENSIVE;
+      target_skill_type = TAR_CHAR_OFFENSIVE;
    else
-      target_type = TAR_CHAR_DEFENSIVE;
+      target_skill_type = TAR_CHAR_DEFENSIVE;
 
    for( paf = ch->charge_target->victim->first_affect; paf; paf = paf_next )
    {
       paf_next = paf->next;
-      if( skill_table[paf->type]->target == target_type )
+      if( skill_table[paf->type]->target == target_skill_type )
       {
          count++;
          affect_remove( victim, paf );
          rbuff_msg( ch, victim, paf->type );
-         if( target_type == TAR_CHAR_OFFENSIVE )
+         if( target_skill_type == TAR_CHAR_OFFENSIVE )
             generate_buff_threat( ch, victim, get_threat( ch, gsn_erase ) );
          else
             generate_threat( ch, victim, get_threat( ch, gsn_erase ) );
@@ -6617,7 +6617,7 @@ void stoneskin_char( CHAR_DATA *ch, CHAR_DATA *victim )
    double amount;
 
    amount = ch->level;
-   amount *=  get_curr_wis( ch ) / 2;
+   amount *=  get_curr_wis( ch ) / 4;
    amount *= get_skill_potency( ch, gsn_stoneskin );
 
    af.location = APPLY_ARMOR;

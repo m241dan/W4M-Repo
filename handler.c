@@ -5909,10 +5909,14 @@ int get_skill_hits( CHAR_DATA *ch, int gsn )
 
 int get_skill_range( CHAR_DATA *ch, int gsn )
 {
+   OBJ_DATA *obj;
    int range = 0;
 
    if( skill_table[gsn]->range == 0 )
-      range = (get_eq_char( ch, WEAR_WIELD ))->range;
+   {
+      if( ( obj = get_eq_char( ch, WEAR_WIELD ) ) != NULL )
+         range = obj->range;
+   }
    else
       range = skill_table[gsn]->range;
 
