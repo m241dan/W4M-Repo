@@ -588,6 +588,8 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
          }
       }
    }
+   else
+      hit_wear = HIT_BODY;
    /*
     * Hit.
     * Calc damage.
@@ -2801,8 +2803,8 @@ int xp_compute( CHAR_DATA * gch, CHAR_DATA * victim )
    int level_dif;
 
    level_dif = victim->level - gch->level;
-
-   ch_printf( gch, "Level Difference: %d\r\n", level_dif );
+   if( IS_BETA( ) )
+      ch_printf( gch, "Level Difference: %d\r\n", level_dif );
 
    if( level_dif >= 5 )
       return 200;

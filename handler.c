@@ -5510,15 +5510,18 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
    count = 0;
 
    if( dir == -1 )
-      dir = find_first_step( ch->in_room, (get_char_world( ch, argument))->in_room, 10 );
+   {
+      if( ( victim = get_char_world( ch, argument ) ) == NULL )
+         return NULL;
+      dir = find_first_step( ch->in_room, victim->in_room, 10 );
+   }
 
    if( dir == BFS_ALREADY_THERE )
    {
-      victim = get_char_room( ch, argument );
-      if( victim != NULL && can_see( ch, victim ) )
-         return make_new_target( victim, 0, -1 );
-      else
+      if( ( victim = get_char_room( ch, argument ) ) == NULL || !can_see( ch, victim ) )
          return NULL;
+      else
+         return make_new_target( victim, 0, -1 );
    }
 
    if( ( pexit = get_exit( in_room, dir ) ) == NULL || IS_SET( pexit->exit_info, EX_SECRET ) )
@@ -5865,7 +5868,7 @@ void free_target( CHAR_DATA *ch, TARGET_DATA *target )
    if( target->victim->first_targetedby )
       for( tvictim = target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
          if( ch == tvictim )
-            UNLINK( tvictim, tvictim->target->victim->first_targetedby, tvictim->target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+            UNLINK( tvictim, target->victim->first_targetedby, target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
    target->victim = NULL;
    DISPOSE( target );
 }

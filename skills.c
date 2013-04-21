@@ -6570,11 +6570,17 @@ void erase_char( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    AFFECT_DATA *paf, *paf_next;
    int count = 0;
+   int target;
+
+   if( is_same_group( ch, victim ) )
+      target = TAR_CHAR_OFFENSIVE;
+   else
+      target = TAR_CHAR_DEFENSIVE;
 
    for( paf = ch->charge_target->victim->first_affect; paf; paf = paf_next )
    {
       paf_next = paf->next;
-      if( skill_table[paf->type]->target == TAR_CHAR_OFFENSIVE )
+      if( skill_table[paf->type]->target == target )
       {
          count++;
          affect_remove( victim, paf );
