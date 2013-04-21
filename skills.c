@@ -6585,7 +6585,10 @@ void erase_char( CHAR_DATA *ch, CHAR_DATA *victim )
          count++;
          affect_remove( victim, paf );
          rbuff_msg( ch, victim, paf->type );
-         generate_buff_threat( ch, victim, get_threat( ch, gsn_erase ));
+         if( target == TAR_CHAR_OFFENSIVE )
+            generate_buff_threat( ch, victim, get_threat( ch, gsn_erase ) );
+         else
+            generate_threat( ch, victim, get_threat( ch, gsn_erase ) );
          if( is_affected( ch, gsn_potency ) && count < 2 )
             continue;
          else
