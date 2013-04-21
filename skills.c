@@ -6570,22 +6570,22 @@ void erase_char( CHAR_DATA *ch, CHAR_DATA *victim )
 {
    AFFECT_DATA *paf, *paf_next;
    int count = 0;
-   int target;
+   int target_type;
 
    if( is_same_group( ch, victim ) )
-      target = TAR_CHAR_OFFENSIVE;
+      target_type = TAR_CHAR_OFFENSIVE;
    else
-      target = TAR_CHAR_DEFENSIVE;
+      target_type = TAR_CHAR_DEFENSIVE;
 
    for( paf = ch->charge_target->victim->first_affect; paf; paf = paf_next )
    {
       paf_next = paf->next;
-      if( skill_table[paf->type]->target == target )
+      if( skill_table[paf->type]->target == target_type )
       {
          count++;
          affect_remove( victim, paf );
          rbuff_msg( ch, victim, paf->type );
-         if( target == TAR_CHAR_OFFENSIVE )
+         if( target_type == TAR_CHAR_OFFENSIVE )
             generate_buff_threat( ch, victim, get_threat( ch, gsn_erase ) );
          else
             generate_threat( ch, victim, get_threat( ch, gsn_erase ) );
