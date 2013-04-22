@@ -281,7 +281,7 @@ void violence_update( void )
                affect_remove( ch, paf );
                continue;
             }
-            dam = (int)( ch->hit *.025 );
+            dam = (int)( ch->max_hit *.025 );
             if( paf->type == gsn_dia )
                xSET_BIT( damtype, DAM_LIGHT );
             else
