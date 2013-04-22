@@ -1317,6 +1317,7 @@ struct affect_data
    short location;
    int modifier;
    EXT_BV bitvector;
+   CHAR_DATA *affect_from;
 };
 
 /*

@@ -1773,6 +1773,9 @@ void do_qui( CHAR_DATA* ch, const char* argument)
 
 void do_quit( CHAR_DATA* ch, const char* argument)
 {
+   CHAR_DATA *wch;
+   TRV_WORLD *lcw;
+   AFFECT_DATA *af, *af_next;
    char log_buf[MAX_STRING_LENGTH];
    int x, y;
    int level;
@@ -1818,6 +1821,21 @@ void do_quit( CHAR_DATA* ch, const char* argument)
     */
    if( ch->position == POS_MOUNTED )
       do_dismount( ch, "" );
+
+   lcw = trworld_create( TR_CHAR_WORLD_BACK );
+   for( wch = last_char; wch; wch = trvch_wnext( lcw ) )
+   {
+      if( wch == ch )
+         continue;
+      for( af = ch->first_affect; af; af = af_next )
+      {
+         af_next = af->next;
+         if( af->affect_from == ch )
+            affect_remove( wch, af );
+      }
+   }
+   trworld_dispose( &lcw );
+
    set_char_color( AT_WHITE, ch );
    send_to_char
       ( "Your surroundings begin to fade as a mystical swirling vortex of colors\r\nenvelops your body... When you come to, things are not as they were.\r\n\r\n",
