@@ -1512,7 +1512,10 @@ void affect_to_char( CHAR_DATA * ch, CHAR_DATA *from, AFFECT_DATA * paf )
 
    if( from )
    {
-      generate_buff_threat( from, ch, get_threat( from, paf->type ) );
+      if( skill_table[paf_new->type]->target == TAR_CHAR_DEFENSIVE )
+         generate_buff_threat( from, ch, get_threat( from, paf_new->type ) );
+      else if( skill_table[paf_new->type]->target == TAR_CHAR_OFFENSIVE )
+         generate_threat( from, ch, get_threat( from, paf_new->type ) );
       paf_new->affect_from = from;
    }
    return;

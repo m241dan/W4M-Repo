@@ -6601,8 +6601,7 @@ void holy_debuff( CHAR_DATA *ch, CHAR_DATA *victim )
    af.type = gsn_holy;
    af.bitvector = meb( AFF_HOLYDEBUFF );
    af.duration = get_skill_duration( ch, gsn_holy );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_holy ) );
+   affect_to_char( victim, ch, &af );
    return;
 }
 
@@ -6636,8 +6635,7 @@ void wizard_stun( CHAR_DATA *ch, CHAR_DATA *victim )
    af.location = APPLY_NONE;
    af.bitvector = meb( AFF_STUN );
    af.duration = get_skill_duration( ch, gsn_lightning );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_lightning ) );
+   affect_to_char( victim, ch, &af );
    return;
 }
 
@@ -6649,8 +6647,7 @@ void wizard_bind( CHAR_DATA *ch, CHAR_DATA *victim )
    af.location = APPLY_NONE;
    af.bitvector = meb( AFF_BIND );
    af.duration = get_skill_duration( ch, gsn_ice );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_ice ) );
+   affect_to_char( victim, ch, &af );
    return;
 
 }
@@ -6664,8 +6661,7 @@ void wizard_burn( CHAR_DATA *ch, CHAR_DATA *victim )
    af.bitvector = meb( AFF_BURN );
    af.duration = get_skill_duration( ch, gsn_fire );
    af.modifier = (int)( get_curr_wis( victim ) * -.1 );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_fire ) );
+   affect_to_char( victim, ch, &af );
    return;
 }
 
@@ -6678,8 +6674,7 @@ void wizard_gravity( CHAR_DATA *ch, CHAR_DATA *victim )
    af.bitvector = meb( AFF_GRAVITY );
    af.duration = get_skill_duration( ch, gsn_water );
    af.modifier = -1;
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_water ) );
+   affect_to_char( victim, ch, &af );
    return;
 }
 
@@ -6690,8 +6685,7 @@ void wizard_sblast( CHAR_DATA *ch, CHAR_DATA *victim )
    af.type = gsn_sblast;
    af.bitvector = meb( AFF_SLEEP );
    af.duration = get_skill_duration( ch, gsn_sblast );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_sblast ) );
+   affect_to_char( victim, ch, &af );
    victim->position = POS_SLEEPING;
    return;
 }
@@ -6705,8 +6699,7 @@ void bio_char( CHAR_DATA *ch, CHAR_DATA *victim )
    af.duration = get_skill_duration( ch, gsn_bio ) + ( get_curr_pas( ch ) / 10 );
    af.location = APPLY_ATTACK;
    af.modifier = (int)( ( get_curr_wis( ch ) / 2 ) + ( ( GET_ATTACK( victim ) *  -.1 ) * get_skill_potency( ch, gsn_bio ) ) );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_bio ) );
+   affect_to_char( victim, ch, &af );
    feedback( ch, &af );
    return;
 }
@@ -6719,8 +6712,7 @@ void dia_char( CHAR_DATA *ch, CHAR_DATA *victim )
    af.duration = get_skill_duration( ch, gsn_dia ) + ( get_curr_pas( ch ) / 10 );
    af.location = APPLY_ARMOR;
    af.modifier = (int)( ( get_curr_wis( ch ) / 2 ) + ( ( GET_AC( victim ) *  -.1 ) * get_skill_potency( ch, gsn_dia ) ) );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_dia ) );
+   affect_to_char( victim, ch, &af );
    feedback( ch, &af );
    return;
 }
@@ -6733,8 +6725,7 @@ void sorc_curse( CHAR_DATA *ch, CHAR_DATA *victim )
    af.duration = get_skill_duration( ch, gsn_curse ) + ( get_curr_pas( ch ) / 10 );
    af.location = APPLY_HASTEFROMMAGIC;
    af.modifier = (int)( ( ( get_curr_wis( ch ) / 10 ) + 10 * get_skill_potency( ch, gsn_curse ) ) * -1 );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_curse ) );
+   affect_to_char( victim, ch, &af );
    feedback( ch, &af );
    return;
 
@@ -6748,8 +6739,7 @@ void sorc_drain( CHAR_DATA *ch, CHAR_DATA *victim )
    af.duration = get_skill_duration( ch, gsn_drain ) + ( get_curr_pas( ch ) / 10 );
    af.location = APPLY_MAGICDEFENSE;
    af.modifier = (int)( ( get_curr_wis( ch ) / 2 ) + ( ( GET_MAGICDEFENSE( victim ) * -.1 ) * get_skill_potency( ch, gsn_drain ) ) );
-   affect_to_char( victim, &af );
-   generate_threat( ch, victim, get_threat( ch, gsn_drain ) );
+   affect_to_char( victim, ch, &af );
    feedback( ch, &af );
    return;
 }
