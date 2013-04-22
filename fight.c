@@ -247,8 +247,10 @@ void violence_update( void )
    CHAR_DATA *ch;
    CHAR_DATA *lst_ch;
    TRV_WORLD *lcw;
+   AFFECT_DATA *paf, *paf_next;
    ch_ret retcode;
    static int pulse = 0;
+   int dam;
 
    lst_ch = NULL;
    pulse = ( pulse + 1 ) % 100;
@@ -267,6 +269,28 @@ void violence_update( void )
        */
       if( char_died( ch ) )
          continue;
+
+      for( paf = ch->first_affect; paf; paf = paf_next )
+      {
+         paf_next = paf->next;
+         if( paf->type == gsn_dia || paf->type == gsn_bio )
+         {
+            EXT_BV damtype;
+            if( !paf->affect_from )
+            {
+               affect_remove( ch, paf );
+               continue;
+            }
+            dam = (int)( ch->hit *.025 );
+            if( paf->type == gsn_dia )
+               xSET_BIT( damtype, DAM_LIGHT );
+            else
+               xSET_BIT( damtype, DAM_DARK );
+            dam = res_pen( paf->affect_from, ch, dam, damtype );
+
+            damage( paf->affect_from, ch, dam, paf->type, HIT_BODY, FALSE, damtype );
+         }
+      }
 
       /*
        * check for exits moving players around 
