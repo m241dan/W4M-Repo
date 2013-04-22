@@ -289,7 +289,6 @@ void violence_update( void )
             dam = res_pen( paf->affect_from, ch, dam, damtype );
 
             damage( paf->affect_from, ch, dam, paf->type, HIT_BODY, FALSE, damtype );
-            ch_printf( ch, "DoT From: %s.\r\n", paf->affect_from->name );
          }
       }
 
