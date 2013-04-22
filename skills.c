@@ -6119,7 +6119,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
    TARGET_DATA *target;
    CHAR_DATA *victim;
    AFFECT_DATA af;
-   bool dmg_skill = FALSE;
+   bool dmg_skill = TRUE;
    ch_ret retcode;
 
    int gsn = ch->gsn;
@@ -6137,25 +6137,27 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       heal_char( ch, victim );
       glory_echo( ch, victim, heal_char );
       vacuum_spell( ch, victim, heal_char );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_erase )
    {
       erase_char( ch, victim );
       glory_echo( ch, victim, erase_char );
       vacuum_spell( ch, victim, erase_char );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_holy )
    {
       holy_debuff( ch, victim );
       glory_echo( ch, victim, holy_debuff );
       vacuum_spell( ch, victim, holy_debuff );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_stoneskin )
    {
       stoneskin_char( ch, victim );
       glory_echo( ch, victim, stoneskin_char );
       vacuum_spell( ch, victim, stoneskin_char );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_potency || gsn == gsn_glory || gsn == gsn_augmentspell || gsn == gsn_ignorewis || gsn == gsn_vacuum || gsn == gsn_doubletrouble )
    {
@@ -6163,6 +6165,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.duration = get_skill_duration( ch, gsn );
       af.location = APPLY_NONE;
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_martyr )
    {
@@ -6179,33 +6182,41 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       adjust_stat( victim, STAT_HIT, (int)( hit * get_skill_potency( ch, gsn_martyr ) ) );
       adjust_stat( victim, STAT_MANA, (int)( mana * get_skill_potency( ch, gsn_martyr ) ) );
       adjust_stat( victim, STAT_MOVE, (int)( move * get_skill_potency( ch, gsn_martyr ) ) );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_lightning && is_affected( ch, gsn_augmentspell ) )
    {
       wizard_stun( ch, victim );
       glory_echo( ch, victim, wizard_stun );
       vacuum_spell( ch, victim, wizard_stun );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_ice && is_affected( ch, gsn_augmentspell ) )
    {
       wizard_bind( ch, victim );
       glory_echo( ch, victim, wizard_bind );
       vacuum_spell( ch, victim, wizard_bind );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_fire && is_affected( ch, gsn_augmentspell ) )
    {
       wizard_burn( ch, victim );
       glory_echo( ch, victim, wizard_burn );
       vacuum_spell( ch, victim, wizard_burn );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_water && is_affected( ch, gsn_augmentspell ) )
    {
       wizard_gravity( ch, victim );
       glory_echo( ch, victim, wizard_gravity );
       vacuum_spell( ch, victim, wizard_gravity );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_sblast )
+   {
       wizard_sblast( ch, victim );
+      dmg_skill = FALSE;
+   } 
    else if( gsn == gsn_bio )
    {
       sorc_enfeeb( ch, victim, gsn );
@@ -6214,7 +6225,6 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       vacuum_spell( ch, victim, bio_char );
       if( is_affected( ch, gsn_doubletrouble ) )
          affect_strip( ch, gsn_doubletrouble );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_dia )
    {
@@ -6224,7 +6234,6 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       vacuum_spell( ch, victim, dia_char );
       if( is_affected( ch, gsn_doubletrouble ) )
          affect_strip( ch, gsn_doubletrouble );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_curse )
    {
@@ -6234,6 +6243,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       vacuum_spell( ch, victim, sorc_curse );
       if( is_affected( ch, gsn_doubletrouble ) )
          affect_strip( ch, gsn_doubletrouble );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_drain )
    {
@@ -6243,10 +6253,12 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       vacuum_spell( ch, victim, sorc_drain );
       if( is_affected( ch, gsn_doubletrouble ) )
          affect_strip( ch, gsn_doubletrouble );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_redirect )
+   {
       set_redirect( ch, victim );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_rage )
    {
       af.type = gsn;
@@ -6255,6 +6267,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.modifier = (int)( 10 * get_skill_potency( ch, gsn ) );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_blindrush )
    {
@@ -6264,6 +6277,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.modifier = (int)( 20 * get_skill_potency( ch, gsn ) );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 );
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_strongblows )
    {
@@ -6271,6 +6285,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_STRONGBLOWS );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_smashaxe )
    {
@@ -6278,7 +6293,6 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_STUN );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 15 );
       affect_to_char( ch, &af );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_counterstance )
    {
@@ -6286,15 +6300,20 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_COUNTERSTANCE );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 );
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_chakra )
+   {
       chakra_heal( ch );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_critstance )
    {
       af.type = gsn;
       af.bitvector = meb( AFF_CRITSTANCE );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 2 );
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_crossslash )
    {
@@ -6304,7 +6323,6 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.location = APPLY_ARMOR;
       af.modifier = (int)( ( GET_AC( victim ) * -.1 ) * get_skill_potency( ch, gsn ) );
       affect_to_char( victim, &af );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_onguard )
    {
@@ -6312,6 +6330,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_ONGUARD );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 10 );
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_sworddash )
    {
@@ -6322,7 +6341,6 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       act( AT_PLAIN, "You dash into the room with $N.", ch, NULL, victim, TO_CHAR );
       act( AT_PLAIN, "$n dashes into the room.", ch, NULL, victim, TO_VICT );
       act( AT_PLAIN, "$n dashes into the room as $N.", ch, NULL, victim, TO_NOTVICT );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_disarm )
    {
@@ -6334,6 +6352,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
          af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 ) ;
          affect_to_char( ch, &af );
       }
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_bladeflash )
    {
@@ -6341,17 +6360,33 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_FLASH );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 5 );
       affect_to_char( victim, ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_summonbear )
+   {
       druid_summon( ch, DRUID_BEAR );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_summonwolf )
+   {
       druid_summon( ch, DRUID_WOLF );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_summonowl )
+   {
       druid_summon( ch, DRUID_OWL );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_charm )
+   {
       druid_charm( ch, victim );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_infuse )
+   {
       druid_infuse( ch );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_naturecurse )
    {
       af.type = gsn;
@@ -6360,6 +6395,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.location = APPLY_HASTEFROMMAGIC;
       af.modifier = (int)( ( 20 + ( get_curr_wis( ch ) / 8 ) ) * get_skill_potency( ch, gsn ) );
       affect_to_char( victim, ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_vinegrasp )
    {
@@ -6367,30 +6403,35 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_BIND );
       af.duration = get_skill_duration( ch, gsn ) + get_curr_pas( ch );
       affect_to_char( victim, ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_flash )
    {
       paladin_flash( ch, victim );
       glory_echo( ch, victim, paladin_flash );
       vacuum_spell( ch, victim, paladin_flash );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_cure )
    {
       paladin_cure( ch, victim );
       glory_echo( ch, victim, paladin_cure );
       vacuum_spell( ch, victim, paladin_cure );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_holyshield )
    {
       holy_shield( ch, victim );
       glory_echo( ch, victim, holy_shield );
       vacuum_spell( ch, victim, holy_shield );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_holyblade )
    {
       holy_blade( ch, victim );
       glory_echo( ch, victim, holy_blade );
       vacuum_spell( ch, victim, holy_blade );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_sentinel )
    {
@@ -6400,6 +6441,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.modifier = store_two_value( DAM_ALL, 80 );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 );
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_shieldbash )
    {
@@ -6407,7 +6449,6 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_STUN );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) /  30 );
       affect_to_char( victim, ch, &af );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_defender )
    {
@@ -6419,31 +6460,45 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.modifier = (int)(GET_MAGICDEFENSE( ch ) * .25);
       af.location = APPLY_MAGICDEFENSE;
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_warcry )
+   {
       barb_warcry( ch );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_shout )
+   {
       barb_shout( ch );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_howl )
+   {
       barb_howl( ch );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_boomingvoice )
    {
       WAIT_STATE( victim, (int)get_skill_duration( ch, gsn ) );
       generate_threat( ch, victim, get_threat( ch, gsn ) );
-      dmg_skill = TRUE;
    }
    else if( gsn == gsn_battlecry )
+   {
       barb_battlecry( ch );
+      dmg_skill = FALSE;
+   }
    else if( gsn == gsn_doubleswing )
    {
       multi_hit( ch, victim, TYPE_UNDEFINED );
       multi_hit( ch, victim, TYPE_UNDEFINED );
+      dmg_skill = FALSE;
    }
    else if( gsn == gsn_chainweapon )
    {
       af.type = -1;
       af.bitvector = meb( AFF_CHAINWEAPON );
       affect_to_char( ch, &af );
+      dmg_skill = FALSE;
    }
    if( dmg_skill )
    {
