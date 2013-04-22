@@ -289,6 +289,7 @@ void violence_update( void )
             dam = res_pen( paf->affect_from, ch, dam, damtype );
 
             damage( paf->affect_from, ch, dam, paf->type, HIT_BODY, FALSE, damtype );
+            ch_printf( ch, "DoT From: %s.\r\n", paf->affect_from->name );
          }
       }
 
@@ -2888,9 +2889,9 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
    if( is_skill( dt ) )
       sprintf( skill_message, "%s's", smash_underscore( skill_table[dt]->name ) );
 
-   sprintf( to_char, "Your %s %s&wstrikes %s on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? "$N" : "$n", hit_locations[hit_wear], dam );
-   sprintf( to_vict, "%s's %s %s&wstrikes you on the %s dealing %d damage.\r\n", IS_NPC( ch ) ? "$N" : "$n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
-   sprintf( to_room, "%s's %s %s&wstrikes %s on the %s dealing %d damage.\r\n", IS_NPC( ch ) ? ch->short_descr : ch->name, is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? victim->short_descr : victim->name, hit_locations[hit_wear], dam );
+   sprintf( to_char, "Your %s %s&wstrikes $N on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+   sprintf( to_vict, "$n's %s %s&wstrikes you on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+   sprintf( to_room, "$n's %s %s&wstrikes $N on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
    /*
     * Doing it by DTs
     */
