@@ -5888,6 +5888,16 @@ void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
    DISPOSE( target );
 }
 
+double get_skill_charge( CHAR_DATA *ch, int gsn )
+{
+   double charge = skill_table[gsn]->charge;
+
+   if( is_affected( ch, gsn_augmentspell ) )
+      return 1;
+
+   return charge;
+}
+
 /* Return a skill's range -Davenge */
 
 int get_skill_hits( CHAR_DATA *ch, int gsn )

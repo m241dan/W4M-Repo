@@ -5515,6 +5515,7 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char *argument, int dir );
 TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir );
 void set_new_target( CHAR_DATA *ch, TARGET_DATA *target );
 void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
+double get_skill_charge( CHAR_DATA *ch, int gsn );
 int get_skill_range( CHAR_DATA *ch, int gsn );
 int reverse_dir( int dir );
 bool is_skill( int dt );

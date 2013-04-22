@@ -5880,7 +5880,7 @@ bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN 
          if( skill_table[gsn]->charge > 0 )
          {
             charge_message( ch, charge_target->victim, gsn, TRUE );
-            add_timer( ch, TIMER_DO_FUN, skill_table[gsn]->charge, do_skill, SUB_CHARGE );
+            add_timer( ch, TIMER_DO_FUN, get_skill_charge( ch, gsn ), do_skill, SUB_CHARGE );
             return TRUE;
          }
          charge_message( ch, charge_target->victim, gsn, FALSE );
@@ -6692,6 +6692,7 @@ void wizard_sblast( CHAR_DATA *ch, CHAR_DATA *victim )
    af.duration = get_skill_duration( ch, gsn_sblast );
    affect_to_char( victim, &af );
    generate_threat( ch, victim, get_threat( ch, gsn_sblast ) );
+   victim->position = POS_SLEEPING;
    return;
 }
 
