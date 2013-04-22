@@ -1830,6 +1830,8 @@ void do_quit( CHAR_DATA* ch, const char* argument)
       for( af = ch->first_affect; af; af = af_next )
       {
          af_next = af->next;
+         if( skill_table[af->type]->target != TAR_CHAR_OFFENSIVE )
+            continue;
          if( af->affect_from == ch )
             affect_remove( wch, af );
       }
