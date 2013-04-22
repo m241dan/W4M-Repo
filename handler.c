@@ -1511,7 +1511,10 @@ void affect_to_char( CHAR_DATA * ch, CHAR_DATA *from, AFFECT_DATA * paf )
       add_queue( ch, AFFECT_TIMER );
 
    if( from )
+   {
       generate_buff_threat( from, ch, get_threat( from, paf->type ) );
+      paf_new->affect_from = from;
+   }
    return;
 }
 
