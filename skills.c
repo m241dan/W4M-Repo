@@ -50,6 +50,7 @@ const char *const target_type[] = { "ignore", "offensive", "defensive", "self", 
 void show_char_to_char( CHAR_DATA * list, CHAR_DATA * ch );
 int ris_save( CHAR_DATA * ch, int schance, int ris );
 bool check_illegal_psteal( CHAR_DATA * ch, CHAR_DATA * victim );
+ROOM_INDEX_DATA *echo_room;
 
 /* from magic.c */
 void failed_casting( struct skill_type *skill, CHAR_DATA * ch, CHAR_DATA * victim, OBJ_DATA * obj );
@@ -6034,7 +6035,7 @@ void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DAT
    if( is_affected( ch, gsn_glory ) )
    {
       room = trvch_create( victim, TR_CHAR_ROOM_FORW );
-      for( gvictim = victim->in_room->first_person; gvictim; gvictim = trvch_next( room ) )
+      for( gvictim = echo_room->first_person; gvictim; gvictim = trvch_next( room ) )
       {
          if( char_died( gvictim ) )
             continue;
@@ -6057,7 +6058,7 @@ void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
    {
       affect_strip( ch, gsn_glory ); // To prevent a lot of recursion, possibly infinite looping
       room = trvch_create( victim, TR_CHAR_ROOM_FORW );
-      for( gvictim = victim->in_room->first_person; gvictim; gvictim = trvch_next( room ) )
+      for( gvictim = echo_room->first_person; gvictim; gvictim = trvch_next( room ) )
       {
          if( !is_same_group( victim, gvictim ) )
             continue;
@@ -6078,7 +6079,7 @@ void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_D
    if( is_affected( ch, gsn_vacuum ) )
    {
       room = trvch_create( victim, TR_CHAR_ROOM_FORW );
-      for( vvictim = victim->in_room->first_person; vvictim; vvictim = trvch_next( room ) )
+      for( vvictim = echo_room->first_person; vvictim; vvictim = trvch_next( room ) )
       {
          if( char_died( vvictim ) )
             continue;
@@ -6101,7 +6102,7 @@ void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
    {
       affect_strip( ch, gsn_vacuum ); // To prevent a lot of recursion, possibly infinite looping
       room = trvch_create( victim, TR_CHAR_ROOM_FORW );
-      for( vvictim = victim->in_room->first_person; vvictim; vvictim = trvch_next( room ) )
+      for( vvictim = echo_room->first_person; vvictim; vvictim = trvch_next( room ) )
       {
          if( is_same_group( ch, vvictim ) )
             continue;
@@ -6133,11 +6134,12 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       return;
 
    victim = ch->charge_target->victim;
+   echo_room = victim->in_room;
 
    if( gsn == gsn_heal )
    {
       heal_char( ch, victim );
-      glory_echo( ch, victim, heal_char );
+      glory_echo( ch, victim,  heal_char );
       vacuum_spell( ch, victim, heal_char );
       dmg_skill = FALSE;
    }
