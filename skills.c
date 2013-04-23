@@ -6753,6 +6753,15 @@ void feedback( CHAR_DATA *ch, AFFECT_DATA *af )
    if( ch->feedback_potency > 0 )
       af->modifier *= (int)( 1 + ( ch->feedback_potency / 100 ) );
 
+   if( af->type == gsn_dia )
+      af->type = gsn_diabuff;
+   else if( af->type == gsn_bio )
+      af->type = gsn_biobuff;
+   else if( af->type == gsn_drain )
+      af->type = gsn_drainbuff;
+   else if( af->type == gsn_curse )
+      af->type = gsn_cursebuff;
+
    if( ch->redirect )
    {
       affect_to_char( ch->redirect, ch, af );

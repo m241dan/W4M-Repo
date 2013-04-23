@@ -124,9 +124,13 @@ short gsn_sblast;
 
 /* Sorceror */
 short gsn_bio;
+short gsn_biobuff;
 short gsn_dia;
+short gsn_diabuff;
 short gsn_curse;
+short gsn_cursebuff;
 short gsn_drain;
+short gsn_drainbuff;
 short gsn_doubletrouble;
 short gsn_vacuum;
 short gsn_redirect;
@@ -675,9 +679,13 @@ void boot_db( bool fCopyOver )
 
       /* Sorceror */
       ASSIGN_GSN( gsn_bio, "bio" );
+      ASSIGN_GSN( gsn_biobuff, "bio_buff" );
       ASSIGN_GSN( gsn_dia, "dia" );
+      ASSIGN_GSN( gsn_diabuff, "dia_buff" );
       ASSIGN_GSN( gsn_curse, "curse" );
+      ASSIGN_GSN( gsn_cursebuff, "curse_buff" );
       ASSIGN_GSN( gsn_drain, "drain" );
+      ASSIGN_GSN( gsn_drainbuff, "drain_buff" );
       ASSIGN_GSN( gsn_doubletrouble, "double_trouble" );
       ASSIGN_GSN( gsn_vacuum, "vacuum" );
       ASSIGN_GSN( gsn_redirect, "redirect" );

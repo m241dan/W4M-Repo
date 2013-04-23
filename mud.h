@@ -3398,9 +3398,13 @@ extern short gsn_sblast;
 
 /* Sorceror */
 extern short gsn_bio;
+extern short gsn_biobuff;
 extern short gsn_dia;
+extern short gsn_diabuff;
 extern short gsn_curse;
+extern short gsn_cursebuff;
 extern short gsn_drain;
+extern short gsn_drainbuff;
 extern short gsn_doubletrouble;
 extern short gsn_vacuum;
 extern short gsn_redirect;
