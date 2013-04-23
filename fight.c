@@ -1496,6 +1496,9 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     */
    adjust_stat( victim, STAT_HIT, -dam );
 
+   if( dt == gsn_drain )
+      adjust_stat( ch, STAT_HIT, dam );
+
    if( ch != victim )
    {
       generate_threat( ch, victim, dam );
