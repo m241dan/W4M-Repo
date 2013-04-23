@@ -1696,6 +1696,7 @@ void ability_learn_from_success( CHAR_DATA * ch, int sn )
 
 void learn_from_success( CHAR_DATA * ch, int sn )
 {
+   return;
    int adept, gain, sklvl, learn, percent, schance;
 
    if( IS_NPC( ch ) || ch->pcdata->learned[sn] <= 0 )
@@ -1744,6 +1745,7 @@ void learn_from_success( CHAR_DATA * ch, int sn )
 
 void learn_from_failure( CHAR_DATA * ch, int sn )
 {
+   return;
    int adept, schance;
 
    if( IS_NPC( ch ) || ch->pcdata->learned[sn] <= 0 )

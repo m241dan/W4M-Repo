@@ -2888,9 +2888,24 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
    if( is_skill( dt ) )
       sprintf( skill_message, "%s's", smash_underscore( skill_table[dt]->name ) );
 
-   sprintf( to_char, "Your %s %s&wstrikes $N on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
-   sprintf( to_vict, "$n's %s %s&wstrikes you on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
-   sprintf( to_room, "$n's %s %s&wstrikes $N on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+   if( hit_wear > 0 )
+   {
+      sprintf( to_char, "Your %s %s&wstrikes $N on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+      sprintf( to_vict, "$n's %s %s&wstrikes you on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+      sprintf( to_room, "$n's %s %s&wstrikes $N on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+   }
+   else if( hit_wear == MISS_GENERAL )
+   {
+      sprintf( to_char, "Your %s %s&wmisses $N.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message );
+      sprintf( to_vict, "$n's %s %s&wmisses you.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message );
+      sprintf( to_room, "$n's %s %s&wmisses $N.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message );
+   }
+   else
+   {
+      sprintf( to_char, "Your %s %s&wmisses $N's %s.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[abs(hit_wear)] );
+      sprintf( to_vict, "$n's %s %s&wmisses your %s.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[abs(hit_wear)] );
+      sprintf( to_room, "$n's %s %s&wmisses $N's %s.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[abs(hit_wear)] );
+   }
    /*
     * Doing it by DTs
     */
