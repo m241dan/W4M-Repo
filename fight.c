@@ -288,6 +288,9 @@ void violence_update( void )
                xSET_BIT( damtype, DAM_DARK );
             dam = res_pen( paf->affect_from, ch, dam, damtype );
 
+            if( dam < 1 )
+               dam = 1;
+
             damage( paf->affect_from, ch, dam, paf->type, HIT_BODY, FALSE, damtype );
          }
       }
@@ -496,7 +499,7 @@ short off_shld_lvl( CHAR_DATA * ch, CHAR_DATA * victim )
 ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
 {
    OBJ_DATA *wield, *vic_eq;
-   HIT_DATA *hit_data;
+   HIT_DATA *hit_data = NULL;
    EXT_BV damtype;
 
    int dam, prof_bonus, prof_gsn = -1;
@@ -785,7 +788,8 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
    if( IS_AFFECTED( ch, AFF_CRITSTANCE ) )
       dam /= 2;
 
-   DISPOSE( hit_data );
+   if( hit_data )
+      DISPOSE( hit_data );
 
    if( ( retcode = damage( ch, victim, dam, dt, hit_wear, crit, damtype ) ) != rNONE )
       return retcode;
@@ -2895,19 +2899,19 @@ void new_dam_message( CHAR_DATA * ch, CHAR_DATA * victim, int dam, unsigned int 
    {
       sprintf( to_char, "Your %s %s&wstrikes $N on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
       sprintf( to_vict, "$n's %s %s&wstrikes you on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
-      sprintf( to_room, "$n's %s %s&wstrikes $N on the %s dealing %d damage.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[hit_wear], dam );
+      sprintf( to_room, "%s %s %s&wstrikes %s on the %s dealing %d damage.\r\n", IS_NPC( ch ) ? ch->short_descr : ch->name, is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? ch->short_descr : ch->name, hit_locations[hit_wear], dam );
    }
    else if( hit_wear == MISS_GENERAL )
    {
       sprintf( to_char, "Your %s %s&wmisses $N.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message );
       sprintf( to_vict, "$n's %s %s&wmisses you.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message );
-      sprintf( to_room, "$n's %s %s&wmisses $N.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message );
+      sprintf( to_room, "%s's %s %s&wmisses %s.\r\n", IS_NPC( ch ) ? ch->short_descr : ch->name, is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? ch->short_descr : ch->name );
    }
    else
    {
       sprintf( to_char, "Your %s %s&wmisses $N's %s.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[abs(hit_wear)] );
       sprintf( to_vict, "$n's %s %s&wmisses your %s.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[abs(hit_wear)] );
-      sprintf( to_room, "$n's %s %s&wmisses $N's %s.\r\n", is_skill( dt ) ? skill_message : "\b", damtype_message, hit_locations[abs(hit_wear)] );
+      sprintf( to_room, "%s's %s %s&wmisses %s's %s.\r\n", IS_NPC( ch ) ? ch->short_descr : ch->name, is_skill( dt ) ? skill_message : "\b", damtype_message, IS_NPC( victim ) ? ch->short_descr : ch->name, hit_locations[abs(hit_wear)] );
    }
    /*
     * Doing it by DTs
