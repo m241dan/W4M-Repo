@@ -6034,7 +6034,7 @@ void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_DAT
 
    if( is_affected( ch, gsn_glory ) )
    {
-      room = trvch_create( victim, TR_CHAR_ROOM_FORW );
+      room = trvch_create( echo_room->first_person, TR_CHAR_ROOM_FORW );
       for( gvictim = echo_room->first_person; gvictim; gvictim = trvch_next( room ) )
       {
          if( char_died( gvictim ) )
@@ -6057,7 +6057,7 @@ void glory_echo( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
    if( is_affected( ch, gsn_glory ) )
    {
       affect_strip( ch, gsn_glory ); // To prevent a lot of recursion, possibly infinite looping
-      room = trvch_create( victim, TR_CHAR_ROOM_FORW );
+      room = trvch_create( echo_room->first_person, TR_CHAR_ROOM_FORW );
       for( gvictim = echo_room->first_person; gvictim; gvictim = trvch_next( room ) )
       {
          if( !is_same_group( victim, gvictim ) )
@@ -6078,7 +6078,7 @@ void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, void(*f)(CHAR_DATA*, CHAR_D
 
    if( is_affected( ch, gsn_vacuum ) )
    {
-      room = trvch_create( victim, TR_CHAR_ROOM_FORW );
+      room = trvch_create( echo_room->first_person, TR_CHAR_ROOM_FORW );
       for( vvictim = echo_room->first_person; vvictim; vvictim = trvch_next( room ) )
       {
          if( char_died( vvictim ) )
@@ -6101,7 +6101,7 @@ void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
    if( is_affected( ch, gsn_vacuum ) )
    {
       affect_strip( ch, gsn_vacuum ); // To prevent a lot of recursion, possibly infinite looping
-      room = trvch_create( victim, TR_CHAR_ROOM_FORW );
+      room = trvch_create( echo_room->first_person, TR_CHAR_ROOM_FORW );
       for( vvictim = echo_room->first_person; vvictim; vvictim = trvch_next( room ) )
       {
          if( is_same_group( ch, vvictim ) )
