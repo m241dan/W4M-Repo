@@ -1317,6 +1317,7 @@ struct affect_data
    short location;
    int modifier;
    EXT_BV bitvector;
+   CHAR_DATA *affect_from;
 };
 
 /*
@@ -3397,9 +3398,13 @@ extern short gsn_sblast;
 
 /* Sorceror */
 extern short gsn_bio;
+extern short gsn_biobuff;
 extern short gsn_dia;
+extern short gsn_diabuff;
 extern short gsn_curse;
+extern short gsn_cursebuff;
 extern short gsn_drain;
+extern short gsn_drainbuff;
 extern short gsn_doubletrouble;
 extern short gsn_vacuum;
 extern short gsn_redirect;
@@ -5515,6 +5520,7 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char *argument, int dir );
 TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir );
 void set_new_target( CHAR_DATA *ch, TARGET_DATA *target );
 void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
+double get_skill_charge( CHAR_DATA *ch, int gsn );
 int get_skill_range( CHAR_DATA *ch, int gsn );
 int reverse_dir( int dir );
 bool is_skill( int dt );

@@ -1511,7 +1511,13 @@ void affect_to_char( CHAR_DATA * ch, CHAR_DATA *from, AFFECT_DATA * paf )
       add_queue( ch, AFFECT_TIMER );
 
    if( from )
-      generate_buff_threat( from, ch, get_threat( from, paf->type ) );
+   {
+      if( skill_table[paf_new->type]->target == TAR_CHAR_DEFENSIVE )
+         generate_buff_threat( from, ch, get_threat( from, paf_new->type ) );
+      else if( skill_table[paf_new->type]->target == TAR_CHAR_OFFENSIVE )
+         generate_threat( from, ch, get_threat( from, paf_new->type ) );
+      paf_new->affect_from = from;
+   }
    return;
 }
 
@@ -5510,15 +5516,18 @@ TARGET_DATA *get_target( CHAR_DATA * ch, const char * argument, int dir )
    count = 0;
 
    if( dir == -1 )
-      dir = find_first_step( ch->in_room, (get_char_world( ch, argument))->in_room, 10 );
+   {
+      if( ( victim = get_char_world( ch, argument ) ) == NULL )
+         return NULL;
+      dir = find_first_step( ch->in_room, victim->in_room, 10 );
+   }
 
    if( dir == BFS_ALREADY_THERE )
    {
-      victim = get_char_room( ch, argument );
-      if( victim != NULL && can_see( ch, victim ) )
-         return make_new_target( victim, 0, -1 );
-      else
+      if( ( victim = get_char_room( ch, argument ) ) == NULL || !can_see( ch, victim ) )
          return NULL;
+      else
+         return make_new_target( victim, 0, -1 );
    }
 
    if( ( pexit = get_exit( in_room, dir ) ) == NULL || IS_SET( pexit->exit_info, EX_SECRET ) )
@@ -5865,7 +5874,7 @@ void free_target( CHAR_DATA *ch, TARGET_DATA *target )
    if( target->victim->first_targetedby )
       for( tvictim = target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
          if( ch == tvictim )
-            UNLINK( tvictim, tvictim->target->victim->first_targetedby, tvictim->target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+            UNLINK( tvictim, target->victim->first_targetedby, target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
    target->victim = NULL;
    DISPOSE( target );
 }
@@ -5883,6 +5892,16 @@ void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
             UNLINK( cvictim, target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
    target->victim = NULL;
    DISPOSE( target );
+}
+
+double get_skill_charge( CHAR_DATA *ch, int gsn )
+{
+   double charge = skill_table[gsn]->charge;
+
+   if( is_affected( ch, gsn_augmentspell ) )
+      return 1;
+
+   return charge;
 }
 
 /* Return a skill's range -Davenge */
@@ -5906,10 +5925,14 @@ int get_skill_hits( CHAR_DATA *ch, int gsn )
 
 int get_skill_range( CHAR_DATA *ch, int gsn )
 {
+   OBJ_DATA *obj;
    int range = 0;
 
    if( skill_table[gsn]->range == 0 )
-      range = (get_eq_char( ch, WEAR_WIELD ))->range;
+   {
+      if( ( obj = get_eq_char( ch, WEAR_WIELD ) ) != NULL )
+         range = obj->range;
+   }
    else
       range = skill_table[gsn]->range;
 
