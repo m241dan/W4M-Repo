@@ -745,7 +745,7 @@ int get_damtype( const char *type )
 {
    int x;
 
-   for( x = 0; x < MAX_DAMTYPE; x++ )
+   for( x = 0; x < (DAM_INHERITED+1); x++ )
       if( !str_cmp( type, damage_table[x] ) )
          return x;
    return -1;
