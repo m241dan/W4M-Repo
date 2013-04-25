@@ -4811,8 +4811,10 @@ void do_peace( CHAR_DATA* ch, const char* argument)
       }
       if( IS_NPC( rch ) )
       {
-         clear_target( rch, NORMAL_TARGET );
-         clear_target( rch, CHARGE_TARGET );
+         if( ch->target )
+            clear_target( rch, NORMAL_TARGET );
+         if( ch->charge_target )
+            clear_target( rch, CHARGE_TARGET );
       }
     
       /*

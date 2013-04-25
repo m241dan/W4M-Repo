@@ -6296,7 +6296,8 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.type = gsn;
       af.bitvector = meb( AFF_STUN );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 15 );
-      affect_to_char( ch, &af );
+      affect_to_char( victim, &af );
+      interrupt( victim );
    }
    else if( gsn == gsn_counterstance )
    {
@@ -6453,6 +6454,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.bitvector = meb( AFF_STUN );
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) /  30 );
       affect_to_char( victim, ch, &af );
+      interrupt( victim );
    }
    else if( gsn == gsn_defender )
    {
@@ -6535,7 +6537,8 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       if( is_affected( ch, gsn_ignorewis ) )
          affect_strip( ch, gsn_ignorewis );
    }
-   clear_target( ch, CHARGE_TARGET );
+   if( ch->charge_target )
+      clear_target( ch, CHARGE_TARGET );
 }
 
 /* Priest executables */
@@ -6640,6 +6643,7 @@ void wizard_stun( CHAR_DATA *ch, CHAR_DATA *victim )
    af.bitvector = meb( AFF_STUN );
    af.duration = get_skill_duration( ch, gsn_lightning );
    affect_to_char( victim, ch, &af );
+   interrupt( victim );
    return;
 }
 
@@ -7020,7 +7024,6 @@ void barb_howl( CHAR_DATA *ch )
    af.type = gsn_howl;
    af.bitvector = meb( AFF_STUN );
    af.duration = get_skill_duration( ch, gsn_howl ) + ( get_curr_pas( ch ) / 15 );
-
    for( victim = ch->in_room->first_person; victim; victim = trvch_next( room ) )
    {
       if( char_died( victim ) )
@@ -7028,6 +7031,7 @@ void barb_howl( CHAR_DATA *ch )
       if( is_same_group( ch, victim ) )
          continue;
       affect_to_char( victim, ch, &af );
+      interrupt( victim );
    }
    trv_dispose( &room );
    return;

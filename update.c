@@ -2464,7 +2464,6 @@ void timers_update(  )
             if( ( victim = ch->target->victim ) == NULL )
             {
                clear_target( ch, NORMAL_TARGET );
-               clear_target( ch, CHARGE_TARGET );
                break;
             }
          

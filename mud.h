@@ -5582,6 +5582,7 @@ int get_threat( CHAR_DATA *ch, int gsn );
 double get_skill_duration( CHAR_DATA *ch, int gsn );
 int get_skill_hits( CHAR_DATA *ch, int gsn );
 void untarget( CHAR_DATA *ch, CHAR_DATA *victim, int type );
+void interrupt( CHAR_DATA *ch );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

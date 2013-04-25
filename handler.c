@@ -2585,6 +2585,7 @@ void extract_char( CHAR_DATA * ch, bool fPull )
       for( wch = ch->first_charge_targetedby; wch; wch = next_wch )
       {
          next_wch = wch->next_person_charge_targetting_your_target;
+         interrupt( wch );
          clear_target( wch, CHARGE_TARGET );
       }
 
@@ -6997,4 +6998,31 @@ int check_move( CHAR_DATA *ch, int sn )
 int get_threat( CHAR_DATA *ch, int gsn )
 {
    return skill_table[gsn]->threat * ch->level;
+}
+
+void interrupt( CHAR_DATA *ch ) 
+{
+   TIMER *timer;
+
+   timer = get_timerptr( ch, TIMER_DO_FUN );
+   if( timer )
+   {
+      int tempsub;
+
+      tempsub = ch->substate;
+      ch->substate = SUB_TIMER_DO_ABORT;
+      ( timer->do_fun ) ( ch, "" );
+      if( char_died( ch ) )
+         return;
+      if( ch->substate != SUB_TIMER_CANT_ABORT )
+      {
+         ch->substate = tempsub;
+         extract_timer( ch, timer );
+      }
+      else
+      {
+         ch->substate = tempsub;
+         return;
+      }
+   }
 }
