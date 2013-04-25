@@ -2570,8 +2570,10 @@ void extract_char( CHAR_DATA * ch, bool fPull )
 
    stop_fighting( ch, TRUE );
 
-   clear_target( ch, NORMAL_TARGET );
-   clear_target( ch, CHARGE_TARGET );
+   if( ch->target )
+      clear_target( ch, NORMAL_TARGET );
+   if( ch->charge_target )
+      clear_target( ch, CHARGE_TARGET );
 
    if( ch->first_targetedby )
       for( wch = ch->first_targetedby; wch; wch = next_wch )
