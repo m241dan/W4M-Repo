@@ -2299,6 +2299,8 @@ void timers_update(  )
       next_timer = timer->next;
       ch = timer->timer_ch;
       set_cur_char( ch );
+      if( char_died( ch ) )
+         continue;
       switch( timer->type )
       {
          default:
@@ -2307,7 +2309,8 @@ void timers_update(  )
             ch->combat_lag -= .25;
             if( ch->combat_lag <= 0 )
             {
-               send_to_char( "You can move again.\r\n", ch );
+               if( !IS_NPC( ch ) )
+                  send_to_char( "You can move again.\r\n", ch );
                UNLINK( timer, first_qtimer, last_qtimer, next, prev );
                timer->timer_ch = NULL;
                DISPOSE( timer );
