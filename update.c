@@ -2458,10 +2458,16 @@ void timers_update(  )
                CHAR_DATA *most_threatening;
 
                if( ch->target->victim != ( most_threatening = most_threat( ch ) ) )
-                  set_new_target( ch, get_target_2( ch, most_threatening, -1 ) );
+                  set_new_target( ch, get_target_2( ch, most_threatening, -1 ), NORMAL_TARGET );
             }
 
-            victim = ch->target->victim;
+            if( ( victim = ch->target->victim ) == NULL )
+            {
+               clear_target( ch, NORMAL_TARGET );
+               clear_target( ch, CHARGE_TARGET );
+               break;
+            }
+         
             retcode = rNONE;
 
             if( xIS_SET( ch->in_room->room_flags, ROOM_SAFE ) )

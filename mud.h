@@ -2560,6 +2560,9 @@ struct target_data
    int dir;
 };
 
+#define NORMAL_TARGET 0
+#define CHARGE_TARGET 1
+
 struct killed_data
 {
    int vnum;
@@ -5518,15 +5521,13 @@ void check_switch( CHAR_DATA * ch, bool possess );
 int get_max_range( CHAR_DATA * ch );
 TARGET_DATA *get_target( CHAR_DATA * ch, const char *argument, int dir );
 TARGET_DATA *get_target_2( CHAR_DATA *ch, CHAR_DATA *victim, int dir );
-void set_new_target( CHAR_DATA *ch, TARGET_DATA *target );
-void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
+void set_new_target( CHAR_DATA *ch, TARGET_DATA *target, int type );
 double get_skill_charge( CHAR_DATA *ch, int gsn );
 int get_skill_range( CHAR_DATA *ch, int gsn );
 int reverse_dir( int dir );
 bool is_skill( int dt );
 TARGET_DATA *make_new_target( CHAR_DATA * victim, int range, int dir );
-void clear_target( CHAR_DATA *ch );
-void clear_charge_target( CHAR_DATA *ch );
+void clear_target( CHAR_DATA *ch, int type );
 REALM_DATA *get_realm( const char * argument );
 AREA_DATA *get_area_file( const char * name );
 int find_distance( CHAR_DATA *ch, CHAR_DATA *victim, int init_dir );
@@ -5577,10 +5578,10 @@ void adjust_stat( CHAR_DATA *ch, int type, int amount );
 int check_mana( CHAR_DATA *ch, int gsn );
 int check_move( CHAR_DATA *ch, int gsn );
 void free_target( CHAR_DATA *ch, TARGET_DATA *target );
-void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
 int get_threat( CHAR_DATA *ch, int gsn );
 double get_skill_duration( CHAR_DATA *ch, int gsn );
 int get_skill_hits( CHAR_DATA *ch, int gsn );
+void untarget( CHAR_DATA *ch, CHAR_DATA *victim, int type );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

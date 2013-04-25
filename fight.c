@@ -372,7 +372,7 @@ ch_ret multi_hit( CHAR_DATA * ch, TARGET_DATA *target, int dt )
     * -Davenge
     */
    if( dt == TYPE_UNDEFINED && !ch->target )
-      set_new_target( ch, target );
+      set_new_target( ch, target, NORMAL_TARGET );
 
     /* Range Checks -Davenge */
 
@@ -1330,7 +1330,7 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
       if( victim->position > POS_STUNNED )
       {
          if( !victim->target )
-            set_new_target( victim, get_target_2( victim, ch, -1 ) );
+            set_new_target( victim, get_target_2( victim, ch, -1 ), NORMAL_TARGET );
 
          /*
           * vwas: victim->position = POS_FIGHTING;
@@ -1600,13 +1600,9 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
    if( victim->position == POS_DEAD )
    {
       OBJ_DATA *new_corpse;
+
       if( IS_NPC( victim ) )
          update_quests( ch, victim, NULL, TYPE_MOB_KILL, 0 );
-
-      clear_target( ch );
-      clear_target( victim );
-
-      free_threat( victim );
 
       stop_fighting( ch, TRUE );
 
@@ -2310,9 +2306,9 @@ void set_fighting( CHAR_DATA * ch, CHAR_DATA * victim )
    ch->fighting = fight;
 
    if( !ch->target )
-      set_new_target( ch, get_target_2( ch, victim, -1 ) );
+      set_new_target( ch, get_target_2( ch, victim, -1 ), NORMAL_TARGET );
    if( !victim->target )
-      set_new_target( victim, get_target_2( victim, ch, -1 ) );
+      set_new_target( victim, get_target_2( victim, ch, -1 ), NORMAL_TARGET );
 
    victim->num_fighting++;
    if( victim->switched && IS_AFFECTED( victim->switched, AFF_POSSESS ) )
@@ -2991,7 +2987,7 @@ void do_target( CHAR_DATA *ch, const char *argument )
    if( !str_cmp( strlower( arg ), "none" ) )
    {
       send_to_char( "Clearing target.\r\n", ch );
-      clear_target( ch );
+      clear_target( ch, NORMAL_TARGET );
       return;
    }
 
@@ -3012,7 +3008,7 @@ void do_target( CHAR_DATA *ch, const char *argument )
       return;
    }
    ch_printf( ch, "Targetting: %s...\r\n", target->victim->name );
-   set_new_target( ch, target );
+   set_new_target( ch, target, NORMAL_TARGET );
    return;
 }
 
@@ -3091,7 +3087,7 @@ void do_kill( CHAR_DATA* ch, const char* argument)
          send_to_char( "You drop into a fighting stance!\r\n", ch );
       else
       {
-         clear_target( ch );
+         clear_target( ch, NORMAL_TARGET );
          do_kill( ch, orig_argument );
          return;
       }
@@ -3132,7 +3128,7 @@ void do_kill( CHAR_DATA* ch, const char* argument)
 
    ch_printf( ch, "You begin targeting %s and drop to a fighting stance.\r\n", target->victim->name );
    ch->position = POS_FIGHTING;
-   set_new_target( ch, target );
+   set_new_target( ch, target, NORMAL_TARGET );
    check_attacker( ch, target->victim );
    add_queue( ch, COMBAT_ROUND );
    return;

@@ -4810,7 +4810,11 @@ void do_peace( CHAR_DATA* ch, const char* argument)
          do_sit( rch, "" );
       }
       if( IS_NPC( rch ) )
-         clear_target( rch );
+      {
+         clear_target( rch, NORMAL_TARGET );
+         clear_target( rch, CHARGE_TARGET );
+      }
+    
       /*
        * Added by Narn, Nov 28/95 
        */
