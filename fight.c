@@ -295,7 +295,8 @@ void violence_update( void )
             damage( paf->affect_from, ch, dam, paf->type, HIT_BODY, FALSE, damtype );
          }
       }
-
+      if( char_died( ch ) )
+         continue;
       /*
        * check for exits moving players around 
        */
