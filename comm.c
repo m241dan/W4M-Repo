@@ -3623,7 +3623,7 @@ void display_prompt( DESCRIPTOR_DATA * d )
       }
    }
    *pbuf = '\0';
-   if( ch->target )
+   if( ch->target && ch->target->victim )
       ch_printf( ch, "&cTarget&C:&w %s &cRange&C:&w %d &cDir&C:&w &w\r\n", 
                  ch->target->victim->name, ch->target->range );
 //                 ch->target->dir == -1 ? "(null)" : dir_name[ch->target->dir] );
