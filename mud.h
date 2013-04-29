@@ -2504,6 +2504,8 @@ struct char_data
    int feedback_potency;
    int gsn;
    double gravity;
+   int combo[10]; //Skill tracker
+   int combination; // Counter
 };
 
 typedef enum
@@ -5377,7 +5379,7 @@ void barb_warcry( CHAR_DATA *ch );
 void barb_shout( CHAR_DATA *ch );
 void barb_howl( CHAR_DATA *ch );
 void barb_battlecry( CHAR_DATA *ch );
-
+void update_skill_stack( CHAR_DATA *ch, int gsn );
 
 /* ban.c */
 int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int type );

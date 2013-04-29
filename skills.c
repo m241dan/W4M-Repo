@@ -5922,7 +5922,7 @@ bool start_charging( CHAR_DATA *ch, TARGET_DATA *charge_target, int gsn, DO_FUN 
          act( AT_PLAIN, "%n is interrupted before they can finish!.", ch, NULL, NULL, TO_ROOM );
          return TRUE;
    }
-
+   update_skill_stack( ch, gsn );
    set_on_cooldown( ch, gsn );
    adjust_stat( ch, STAT_MANA, -check_mana( ch, gsn ) );
    adjust_stat( ch, STAT_MOVE, -check_move( ch, gsn ) );
@@ -6117,6 +6117,28 @@ void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
 
 //void glory_echo( CHAR_DATA *ch, CHAR_DATA* victim
 
+void update_skill_stack( CHAR_DATA *ch, int gsn )
+{
+   int x;
+
+   if( gsn == -1 )
+   {
+      send_to_char( "Reseting Skill Stack.\r\n", ch );
+      ch->combination = 0;
+      for( x = 0; x < 10; x++ )
+         ch->combo[x] = 0;
+      return;
+   }
+
+   if( ch->combination == 9 )
+      update_skill_stack( ch, -1 );
+
+   ch->combo[ch->combination] = gsn;
+   ch->combination++;
+   return;
+}
+
+
 void do_skill( CHAR_DATA *ch, const char *argument )
 {
    TARGET_DATA *target;
@@ -6305,6 +6327,62 @@ void do_skill( CHAR_DATA *ch, const char *argument )
       af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 3 );
       affect_to_char( ch, &af );
       dmg_skill = FALSE;
+   }
+   else if( gsn == gsn_rancorrising )
+   {
+      af.type = gsn;
+      af.bitvector = meb( AFF_GRAVITY );
+      af.location = APPLY_GRAVITY;
+      if( !is_affected( ch, gsn ) )
+         af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 10 );
+      else
+         af.duration = 1;
+      af.modifier = .1;
+      affect_join( victim, &af );
+   }
+   else if( gsn == gsn_grondastomp )
+   {
+      af.type = gsn;
+      af.location = APPLY_CON;
+      if( !is_affected( ch, gsn ) )
+         af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 10 );
+      else
+         af.duration = 1;
+      af.modifier = -1;
+      affect_join( victim, &af );
+   }
+   else if( gsn == gsn_chargingwampa )
+   {
+      af.type = gsn;
+      af.location = APPLY_DEX;
+      if( !is_affected( ch, gsn ) )
+         af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 10 );
+      else
+         af.duration = 1;
+      af.modifier = -1;
+      affect_join( victim, &af );
+   }
+   else if( gsn == gsn_spittingrawl )
+   {
+      af.type = gsn;
+      af.location = APPLY_ARMOR );
+      if( !is_affected( ch, gsn ) )
+         af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 10 );
+      else
+         af.duration = 1;
+      af.modifier = -10;
+      affect_join( victim, &af );
+   }
+   else if( gsn == gsn_slashingwampa )
+   {
+      af.type = gsn;
+      af.location = APPLY_STR;
+      if( !is_affected( ch, gsn ) )
+         af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 10 );
+      else
+         af.duration = 1;
+      af.modifier = -1;
+      affect_join( victim, &af );
    }
    else if( gsn == gsn_chakra )
    {
