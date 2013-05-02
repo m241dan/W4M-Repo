@@ -1501,6 +1501,11 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
     */
    adjust_stat( victim, STAT_HIT, -dam );
 
+   /* Set Combos On Cooldown */
+
+   if( is_combo( dt ) )
+      set_on_cooldown( ch, dt );
+
    if( dt == gsn_drain )
       adjust_stat( ch, STAT_HIT, dam );
 

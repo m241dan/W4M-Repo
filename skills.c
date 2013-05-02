@@ -6115,6 +6115,62 @@ void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
    }
 }
 
+void combo_check( CHAR_DATA *ch, int gsn )
+{
+   /* Make sure we don't access array out of bounds */
+
+   if( ch->combination < 2 )
+      return;
+
+   /* Combos Ending in Slashing Wampa */
+
+   if( gsn == gsn_slashingwampa )
+   {
+      if( ch->combo[( ch->combination - 2 )] == gsn_chargingwampa && !is_on_cooldown( ch, gsn_cswampa ) )
+         multi_hit( ch, ch->charge_target, gsn_cswampa );
+   }
+
+   /* Combos Ending in Charging Wampa */
+
+   else if( gsn == gsn_chargingwampa )
+   {
+      if( ch->combo[( ch->combination - 2 )] == gsn_slashingwampa && !is_on_cooldown( ch, gsn_scwampa ) )
+         multi_hit( ch, ch->charge_target, gsn_scwampa );
+   }
+
+   /* Combos Ending in Gronda Stomp */
+
+   else if( gsn == gsn_grondastomp )
+   {
+      if( ch->combo[( ch->combination - 2 )] == gsn_rancorrising )
+      {
+         if( ch->combination == 2 )
+            multi_hit( ch, ch->charge_target, gsn_interrupt );
+         else if( ch->combination > 2 && ( ch->combo[( ch->combination - 3 )] != gsn_chargingwampa || ch->combo[( ch->combination - 3 )] != gsn_slashingwampa ) )
+            multi_hit( ch, ch->charge_target, gsn_interrupt );
+         else
+            multi_hit( ch, ch->charge_target, gsn_stuncombo );
+      }
+      else if( ch->combination > 4 && ( ch->combo[( ch->combination - 2 )] == gsn_slashwampa && ch->combo[( ch->combination - 3 ) == gsn_rancorrising && ch->combo[( ch->combination -4 )] == gsn_chargingwampa ) )
+         multi_hit( ch, ch->charge_target, gsn_extension );
+   }
+
+   /* Combo Ending in Spitting Rawl */
+
+   else if( gsn == gsn_spittingrawl )
+   {
+   }
+
+   return;
+}
+
+bool is_combo( int gsn )
+{
+   if( dt == gsn_cswampa || dt == gsn_scwampa || dt == gsn_stuncombo || dt == gsn_interrupt || dt == gsn_extension || dt == gsn_damage )
+      return TRUE;
+   return FALSE;
+}
+
 //void glory_echo( CHAR_DATA *ch, CHAR_DATA* victim
 
 void update_skill_stack( CHAR_DATA *ch, int gsn )
@@ -6365,7 +6421,7 @@ void do_skill( CHAR_DATA *ch, const char *argument )
    else if( gsn == gsn_spittingrawl )
    {
       af.type = gsn;
-      af.location = APPLY_ARMOR );
+      af.location = APPLY_ARMOR;
       if( !is_affected( ch, gsn ) )
          af.duration = get_skill_duration( ch, gsn ) + ( get_curr_pas( ch ) / 10 );
       else
@@ -6598,6 +6654,8 @@ void do_skill( CHAR_DATA *ch, const char *argument )
             act( AT_PLAIN, "$n rushes into the same room as you and grabs $O.", ch, wield, victim, TO_VICT );
             act( AT_PLAIN, "$n rushes into the same room as $n and grabs $O.", ch, wield, victim, TO_NOTVICT );
          }
+         else if( gsn == gsn_slashingwampa || gsn == gsn_chargingwampa || gsn == gsn_grondastomp || gsn == gsn_spittingrawl )
+            combo_check( ch, gsn );
       }
    }
    if( skill_table[gsn]->type == SKILL_SPELL )
