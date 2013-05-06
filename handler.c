@@ -974,6 +974,8 @@ void affect_modify( CHAR_DATA * ch, AFFECT_DATA * paf, bool fAdd )
    if( fAdd )
    {
       xSET_BITS( ch->affected_by, paf->bitvector );
+      if( xIS_SET( paf->bitvector, AFF_STUN ) )
+         interrupt( ch );
       if( paf->location % REVERSE_APPLY == APPLY_RECURRINGSPELL )
       {
          mod = abs( mod );
@@ -6152,8 +6154,10 @@ double get_skill_duration( CHAR_DATA *ch, int gsn )
    if( !IS_NPC( ch ) )
       duration += ch->pcdata->duration[gsn];
 
-   return duration;;
+   if( is_affected( ch, gsn_extensioncombo ) )
+      duration *= 2;
 
+   return duration;;
 }
 
 double get_skill_cooldown( CHAR_DATA *ch, int gsn )
@@ -6968,3 +6972,31 @@ int get_threat( CHAR_DATA *ch, int gsn )
 {
    return skill_table[gsn]->threat * ch->level;
 }
+
+void interrupt( CHAR_DATA *ch )
+{
+   TIMER *timer;
+
+   timer = get_timerptr( ch, TIMER_DO_FUN );
+   if( timer )
+   {
+      int tempsub;
+
+      tempsub = ch->substate;
+      ch->substate = SUB_TIMER_DO_ABORT;
+      ( timer->do_fun ) ( ch, "" );
+      if( char_died( ch ) )
+         return;
+      if( ch->substate != SUB_TIMER_CANT_ABORT )
+      {
+         ch->substate = tempsub;
+         extract_timer( ch, timer );
+      }
+      else
+      {
+         ch->substate = tempsub;
+         return;
+      }
+   }
+}
+

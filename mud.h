@@ -3371,6 +3371,11 @@ struct auction_data
    short hist_timer; /* clear out history buffer if auction is idle */
 };
 
+typedef enum
+{
+   FIRST_PREV_SKILL, SECOND_PREV_SKILL, THIRD_PREV_SKILL
+} skill_stack_locations;
+
 /*
  * So we can have different configs for different ports -- Shaddai
  */
@@ -3428,6 +3433,14 @@ extern short gsn_chargingwampa;
 extern short gsn_spittingrawl;
 extern short gsn_slashingwampa;
 extern short gsn_chakra;
+
+/* TerasKasi Combos */
+extern short gsn_cswampa;
+extern short gsn_scwampa;
+extern short gsn_stuncombo;
+extern short gsn_interruptcombo;
+extern short gsn_extensioncombo;
+extern short gsn_damagecombo;
 
 /* BladeMaster */
 extern short gsn_critstance;
@@ -5380,6 +5393,9 @@ void barb_shout( CHAR_DATA *ch );
 void barb_howl( CHAR_DATA *ch );
 void barb_battlecry( CHAR_DATA *ch );
 void update_skill_stack( CHAR_DATA *ch, int gsn );
+int get_skill_stack( CHAR_DATA *ch, int location );
+void combo_check( CHAR_DATA *ch, int gsn );
+bool is_combo( int gsn );
 
 /* ban.c */
 int add_ban( CHAR_DATA * ch, const char *arg1, const char *arg2, int btime, int type );
@@ -5583,6 +5599,7 @@ void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target );
 int get_threat( CHAR_DATA *ch, int gsn );
 double get_skill_duration( CHAR_DATA *ch, int gsn );
 int get_skill_hits( CHAR_DATA *ch, int gsn );
+void interrupt( CHAR_DATA *ch );
 
 /* interp.c */
 bool check_pos args( ( CHAR_DATA * ch, short position ) );

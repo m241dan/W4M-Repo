@@ -153,6 +153,14 @@ short gsn_spittingrawl;
 short gsn_slashingwampa;
 short gsn_chakra;
 
+/* TerasKasi Combos */
+short gsn_cswampa;
+short gsn_scwampa;
+short gsn_stuncombo;
+short gsn_interruptcombo;
+short gsn_extensioncombo;
+short gsn_damagecombo;
+
 /* BladeMaster */
 short gsn_critstance;
 short gsn_crossslash;
@@ -707,6 +715,14 @@ void boot_db( bool fCopyOver )
       ASSIGN_GSN( gsn_spittingrawl, "spitting_rawl" );
       ASSIGN_GSN( gsn_slashingwampa, "slashing_wampa" );
       ASSIGN_GSN( gsn_chakra, "chakra" );
+
+      /* TerasKasi Combos */
+      ASSIGN_GSN( gsn_cswampa, "cs_combo" );
+      ASSIGN_GSN( gsn_scwampa, "sc_combo" );
+      ASSIGN_GSN( gsn_stuncombo, "stun_combo" );
+      ASSIGN_GSN( gsn_interruptcombo, "interrupt_combo" );
+      ASSIGN_GSN( gsn_extensioncombo, "extension_combo" );
+      ASSIGN_GSN( gsn_damagecombo, "damage_combo" );
 
       /* BladeMaster */
       ASSIGN_GSN( gsn_critstance, "crit_stance" );

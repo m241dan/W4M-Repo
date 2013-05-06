@@ -6117,16 +6117,11 @@ void vacuum_spell( CHAR_DATA *ch, CHAR_DATA *victim, int dt )
 
 void combo_check( CHAR_DATA *ch, int gsn )
 {
-   /* Make sure we don't access array out of bounds */
-
-   if( ch->combination < 2 )
-      return;
-
    /* Combos Ending in Slashing Wampa */
 
    if( gsn == gsn_slashingwampa )
    {
-      if( ch->combo[( ch->combination - 2 )] == gsn_chargingwampa && !is_on_cooldown( ch, gsn_cswampa ) )
+      if( get_skill_stack( ch, FIRST_PREV_SKILL ) == gsn_chargingwampa && !is_on_cooldown( ch, gsn_cswampa ) )
          multi_hit( ch, ch->charge_target, gsn_cswampa );
    }
 
@@ -6134,7 +6129,7 @@ void combo_check( CHAR_DATA *ch, int gsn )
 
    else if( gsn == gsn_chargingwampa )
    {
-      if( ch->combo[( ch->combination - 2 )] == gsn_slashingwampa && !is_on_cooldown( ch, gsn_scwampa ) )
+      if( get_skill_stack( ch, FIRST_PREV_SKILL ) == gsn_slashingwampa && !is_on_cooldown( ch, gsn_scwampa ) )
          multi_hit( ch, ch->charge_target, gsn_scwampa );
    }
 
@@ -6142,31 +6137,56 @@ void combo_check( CHAR_DATA *ch, int gsn )
 
    else if( gsn == gsn_grondastomp )
    {
-      if( ch->combo[( ch->combination - 2 )] == gsn_rancorrising )
+      if( get_skill_stack( ch, FIRST_PREV_SKILL ) == gsn_rancorrising )
       {
-         if( ch->combination == 2 )
-            multi_hit( ch, ch->charge_target, gsn_interrupt );
-         else if( ch->combination > 2 && ( ch->combo[( ch->combination - 3 )] != gsn_chargingwampa || ch->combo[( ch->combination - 3 )] != gsn_slashingwampa ) )
-            multi_hit( ch, ch->charge_target, gsn_interrupt );
-         else
+         if( ( get_skill_stack( ch, SECOND_PREV_SKILL ) != gsn_chargingwampa || get_skill_stack( ch, SECOND_PREV_SKILL ) != gsn_slashingwampa ) && !is_on_cooldown( ch, gsn_interruptcombo ) )
+            multi_hit( ch, ch->charge_target, gsn_interruptcombo );
+         else if( !is_on_cooldown( ch, gsn_stuncombo ) )
             multi_hit( ch, ch->charge_target, gsn_stuncombo );
       }
-      else if( ch->combination > 4 && ( ch->combo[( ch->combination - 2 )] == gsn_slashwampa && ch->combo[( ch->combination - 3 ) == gsn_rancorrising && ch->combo[( ch->combination -4 )] == gsn_chargingwampa ) )
-         multi_hit( ch, ch->charge_target, gsn_extension );
+      else if( ch->combination > 4 && ( get_skill_stack( ch, FIRST_PREV_SKILL ) == gsn_slashingwampa && get_skill_stack( ch, SECOND_PREV_SKILL ) == gsn_rancorrising && get_skill_stack( ch, THIRD_PREV_SKILL ) == gsn_chargingwampa && !is_on_cooldown( ch, gsn_extensioncombo )) )
+         multi_hit( ch, ch->charge_target, gsn_extensioncombo );
    }
 
    /* Combo Ending in Spitting Rawl */
 
    else if( gsn == gsn_spittingrawl )
    {
+      if( ch->combination > 4 && ( get_skill_stack( ch, FIRST_PREV_SKILL ) == gsn_rancorrising && get_skill_stack( ch, SECOND_PREV_SKILL ) == gsn_grondastomp && get_skill_stack( ch, THIRD_PREV_SKILL ) == gsn_slashingwampa && !is_on_cooldown( ch, gsn_damagecombo ) ) )
+         multi_hit( ch, ch->charge_target, gsn_damagecombo );
    }
 
    return;
 }
 
+int get_skill_stack( CHAR_DATA *ch, int location )
+{
+   int gsn;
+
+   switch( location )
+   {
+      case FIRST_PREV_SKILL:
+         if( ch->combination < 2 )
+            break;
+         gsn = ch->combo[( ch->combination - 2 )];
+         return gsn;
+      case SECOND_PREV_SKILL:
+         if( ch->combination < 3 )
+            break;
+         gsn = ch->combo[( ch->combination - 3 )];
+         return gsn;
+      case THIRD_PREV_SKILL:
+         if( ch->combination < 4 )
+            break;
+         gsn = ch->combo[( ch->combination - 4 )];
+         return gsn;
+   }
+   return -1;
+}
+
 bool is_combo( int gsn )
 {
-   if( dt == gsn_cswampa || dt == gsn_scwampa || dt == gsn_stuncombo || dt == gsn_interrupt || dt == gsn_extension || dt == gsn_damage )
+   if( gsn == gsn_cswampa || gsn == gsn_scwampa || gsn == gsn_stuncombo || gsn == gsn_interruptcombo || gsn == gsn_extensioncombo || gsn == gsn_damagecombo )
       return TRUE;
    return FALSE;
 }

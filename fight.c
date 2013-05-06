@@ -641,9 +641,9 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
       if( dt == gsn_whirlwind )
          dam = (int)( dam * 2.75 );
       else if( dt == gsn_ragingrush )
-         dam *= 9;
+         dam *= 4;
       else if( dt == gsn_decimation )
-         dam *= 6;
+         dam *= 2;
       else if( dt == gsn_smashaxe )
          dam *= 2;
 
@@ -658,6 +658,20 @@ ch_ret one_hit( CHAR_DATA * ch, CHAR_DATA * victim, int dt )
          dam *= 2;
       else if( dt == gsn_slashingwampa )
          dam = (int)( dam * 1.25 );
+
+      /* Teras Kasi Combos */
+      else if( dt == gsn_cswampa )
+         dam = (int)( dam * 3 );
+      else if( dt == gsn_scwampa )
+         dam = (int)( dam * 3 );
+      else if( dt == gsn_stuncombo )
+         dam = (int)( dam * 4 );
+      else if( dt == gsn_interruptcombo )
+         dam = (int)( dam * 5 );
+      else if( dt == gsn_extensioncombo )
+         dam = (int)( dam * 7 );
+      else if( dt == gsn_damagecombo )
+         dam = (int)( dam * 10 );
 
       /* Blade Master */
       else if( dt == gsn_crossslash )
@@ -1504,7 +1518,36 @@ ch_ret damage( CHAR_DATA * ch, CHAR_DATA * victim, int dam, int dt, int hit_wear
    /* Set Combos On Cooldown */
 
    if( is_combo( dt ) )
+   {
+      AFFECT_DATA af;
+      af.type = dt;
+      af.duration = get_skill_duration( ch, dt );
+
       set_on_cooldown( ch, dt );
+
+      if( dt == gsn_cswampa )
+      {
+         af.location = APPLY_INT;
+         af.modifier = (int)( -10 * get_skill_potency( ch, dt ) );
+	 affect_to_char( victim, &af );
+      }
+      else if( dt == gsn_scwampa )
+      {
+         af.location = APPLY_WIS;
+         af.modifier = (int)( -10 * get_skill_potency( ch, dt ) );
+         affect_to_char( victim, &af );
+      }
+      else if( dt == gsn_stuncombo )
+      {
+         af.bitvector = meb( AFF_STUN );
+         affect_to_char( victim, &af );
+      }
+      else if( dt == gsn_interruptcombo )
+         interrupt( victim );
+      else if( dt == gsn_extensioncombo )
+         affect_to_char( ch, &af );
+   }
+
 
    if( dt == gsn_drain )
       adjust_stat( ch, STAT_HIT, dam );
