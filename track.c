@@ -352,7 +352,7 @@ void hunt_victim( CHAR_DATA * ch )
 
    if( !ch->target )
    {
-      set_new_target( ch, get_target_2( ch, ch->hunting->who, -1 ) );
+      set_new_target( ch, get_target_2( ch, ch->hunting->who, -1 ), NORMAL_TARGET );
       if( !ch->target )
          found = FALSE;
    }

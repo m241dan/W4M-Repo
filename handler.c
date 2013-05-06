@@ -2572,13 +2572,23 @@ void extract_char( CHAR_DATA * ch, bool fPull )
 
    stop_fighting( ch, TRUE );
 
-   clear_target( ch );
+   if( ch->target )
+      clear_target( ch, NORMAL_TARGET );
+   if( ch->charge_target )
+      clear_target( ch, CHARGE_TARGET );
 
    if( ch->first_targetedby )
       for( wch = ch->first_targetedby; wch; wch = next_wch )
       {
          next_wch = wch->next_person_targetting_your_target;
-         clear_target( wch );
+         clear_target( wch, NORMAL_TARGET );
+      }
+   if( ch->first_charge_targetedby )
+      for( wch = ch->first_charge_targetedby; wch; wch = next_wch )
+      {
+         next_wch = wch->next_person_charge_targetting_your_target;
+         interrupt( wch );
+         clear_target( wch, CHARGE_TARGET );
       }
 
    free_threat( ch );
@@ -5808,33 +5818,40 @@ int reverse_dir( int dir )
 
 /* Setting new targets -Davenge */
 
-void set_new_target( CHAR_DATA *ch, TARGET_DATA *target )
+void set_new_target( CHAR_DATA *ch, TARGET_DATA *target, int type )
 {
-   if( ch->target )
-      clear_target( ch );
-
-   ch->target = target;
-   if( !target->victim )
+   if( !target )
    {
-      bug( "%s: somehow passed a NULL victim within target_data passed.", __FUNCTION__ );
+      bug( "%s: passed null target.", __FUNCTION__ );
       return;
    }
-   LINK( ch, target->victim->first_targetedby, target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
-   return;
-}
 
-void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
-{
-   if( ch->charge_target )
-      free_charge_target( ch, ch->charge_target );
-
-   ch->charge_target = target;
-   if( !target->victim )
+   switch( type )
    {
-      bug( "%s: somehow passed a NULL victim within target_data passed.", __FUNCTION__ );
-      return;
+      case NORMAL_TARGET:
+         if( !target->victim )
+         {
+            bug( "%s: somehow passed a NULL victim within target_data passed.", __FUNCTION__ );
+            return;
+         }
+         if( ch->target )
+            clear_target( ch, type );
+         ch->target = target;
+         LINK( ch, target->victim->first_targetedby, target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+         break;
+
+      case CHARGE_TARGET:
+         if( !target->victim )
+         {
+            bug( "%s: somehow passed a NULL victim within charge target_data passed.", __FUNCTION__ );
+            return;
+         }
+        if( ch->charge_target )
+            free_target( ch, ch->charge_target );
+          ch->charge_target = target;
+         LINK( ch, target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
+         break;
    }
-   LINK( ch, target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
    return;
 }
 
@@ -5842,17 +5859,41 @@ void set_new_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
  * Clear the characters target pointer
  */
 
-void clear_target( CHAR_DATA *ch )
+void clear_target( CHAR_DATA *ch, int type )
 {
-   if( ch->target )
-      free_target( ch, ch->target );
-   return;
-}
-
-void clear_charge_target( CHAR_DATA *ch )
-{
-   if( ch->charge_target )
-      free_charge_target( ch, ch->charge_target );
+   switch( type )
+   {
+      case NORMAL_TARGET:
+         if( !ch->target )
+         {
+            bug( "%s: being called with ch having no target.", __FUNCTION__ );
+            return;
+         }
+         if( !ch->target->victim )
+         {
+            bug( "%s: target being cleared has NULL victim.", __FUNCTION__ );
+            free_target( ch, ch->target );
+            return;
+         }
+         untarget( ch, ch->target->victim, type );
+         free_target( ch, ch->target );
+         break;
+      case CHARGE_TARGET:
+         if( !ch->charge_target )
+         {
+            bug( "%s: being called with ch having no charge_target.", __FUNCTION__ );
+            return;
+         }
+         if( !ch->charge_target->victim )
+         {
+            bug( "%s: charge_target being cleared has NULL victim.", __FUNCTION__ );
+            free_target( ch, ch->charge_target );
+            return;
+         }
+         untarget( ch, ch->charge_target->victim, type );
+         free_target( ch, ch->charge_target );
+         break;
+   }
    return;
 }
 
@@ -5860,40 +5901,30 @@ void clear_charge_target( CHAR_DATA *ch )
  * Free the data at said pointer
  * -Davenge
  */
-
-
 void free_target( CHAR_DATA *ch, TARGET_DATA *target )
 {
-   CHAR_DATA *tvictim;
-
    if( ch->target == target )
       ch->target = NULL;
 
    if( ch->charge_target == target )
-      free_charge_target( ch, target );
+      ch->charge_target = NULL;
 
-
-   if( target->victim->first_targetedby )
-      for( tvictim = target->victim->first_targetedby; tvictim; tvictim = tvictim->next_person_targetting_your_target )
-         if( ch == tvictim )
-            UNLINK( tvictim, target->victim->first_targetedby, target->victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
    target->victim = NULL;
    DISPOSE( target );
 }
 
-void free_charge_target( CHAR_DATA *ch, TARGET_DATA *target )
+void untarget( CHAR_DATA *ch, CHAR_DATA *victim, int type )
 {
-   CHAR_DATA *cvictim;
-
-   if( ch->charge_target == target )
-      ch->charge_target = NULL;
-
-   if( target->victim->first_charge_targetedby )
-      for( cvictim = target->victim->first_charge_targetedby; cvictim; cvictim = cvictim->next_person_charge_targetting_your_target )
-         if( ch == cvictim )
-            UNLINK( cvictim, target->victim->first_charge_targetedby, target->victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
-   target->victim = NULL;
-   DISPOSE( target );
+   switch( type )
+   {
+      case NORMAL_TARGET:
+         UNLINK( ch, victim->first_targetedby, victim->last_targetedby, next_person_targetting_your_target, prev_person_targetting_your_target );
+         break;
+      case CHARGE_TARGET:
+         UNLINK( ch, victim->first_charge_targetedby, victim->last_charge_targetedby, next_person_charge_targetting_your_target, prev_person_charge_targetting_your_target );
+         break;
+   }
+   return;
 }
 
 double get_skill_charge( CHAR_DATA *ch, int gsn )
@@ -6018,22 +6049,22 @@ void update_target_ch_moved( CHAR_DATA *ch )
    if( ch->target )
    {
       victim = ch->target->victim; // to be safe -Davenge
-      set_new_target( ch, get_target_2( ch, victim, -1 ) );
+      set_new_target( ch, get_target_2( ch, victim, -1 ), NORMAL_TARGET );
    }
 
    if( ch->charge_target )
    {
       victim = ch->target->victim;
-      set_new_charge_target( ch, get_target_2( ch, victim, -1 ) );
+      set_new_target( ch, get_target_2( ch, victim, -1 ), CHARGE_TARGET );
    }
 
    if( ch->first_targetedby )
       for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_targetting_your_target )
-         set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
+         set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ), NORMAL_TARGET );
 
    if( ch->first_charge_targetedby )
       for( targeted_by = ch->first_targetedby; targeted_by; targeted_by = targeted_by->next_person_charge_targetting_your_target )
-          set_new_charge_target( targeted_by, get_target_2( targeted_by, ch, -1 ) );
+          set_new_target( targeted_by, get_target_2( targeted_by, ch, -1 ), CHARGE_TARGET );
 }
 
 void add_queue( CHAR_DATA *ch, int type )
@@ -6973,7 +7004,7 @@ int get_threat( CHAR_DATA *ch, int gsn )
    return skill_table[gsn]->threat * ch->level;
 }
 
-void interrupt( CHAR_DATA *ch )
+void interrupt( CHAR_DATA *ch ) 
 {
    TIMER *timer;
 
@@ -6999,4 +7030,3 @@ void interrupt( CHAR_DATA *ch )
       }
    }
 }
-
