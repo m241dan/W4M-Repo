@@ -2387,14 +2387,17 @@ void timers_update(  )
                      {
                         int tempsub;
 
+                        UNLINK( ptimer, ch->first_timer, ch->last_timer, next, prev );
                         tempsub = ch->substate;
                         ch->substate = ptimer->value;
                         ( ptimer->do_fun ) ( ch, "" );
                         if( char_died( ch ) )
                            break;
                         ch->substate = tempsub;
+                        DISPOSE( ptimer );
                      }
-                     extract_timer( ch, ptimer );
+                     else
+                        extract_timer( ch, ptimer );
                   }
                }
             }

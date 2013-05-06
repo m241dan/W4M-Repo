@@ -3729,7 +3729,8 @@ void do_oset( CHAR_DATA* ch, const char* argument)
       send_to_char( "  flags wear level weight cost rent timer\r\n", ch );
       send_to_char( "  name short long ed rmed actiondesc\r\n", ch );
       send_to_char( "  type value0 value1 value2 value3 value4 value5\r\n", ch );
-      send_to_char( "  affect rmaffect layers\r\n", ch );
+      send_to_char( "  affect rmaffect layers class\r\n", ch );
+	send_to_char( "  ('ed' is for descriptions, 'rmed' is to remove)\r\n", ch);
       send_to_char( "For weapons:             For armor:\r\n", ch );
       send_to_char( "  weapontype condition     ac condition\r\n", ch );
       send_to_char( "  range damtype wpntype\r\n", ch);
